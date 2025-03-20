@@ -36,6 +36,7 @@ def add_category(inFeatures, lookup_dict):
 
 # function to reclassify fire severity raster
 def reclassify_fire_severity(input_path, output_name):
+    from arcpy.sa import Raster, Reclassify, RemapRange
     raster = Raster(str(input_path))
     out_reclass = Reclassify(raster, "Value", RemapRange([[0, 0.6, 0], [0.6, 1, 1]]))
     out_reclass.save(output_name)
@@ -66,3 +67,22 @@ def get_raster_attribute_table_as_dataframe(raster):
     data = [row for row in cursor]
     return pd.DataFrame(data, columns=fields)
     
+# add acres to zonal stats tables that use 30x30 m cell size
+def add_acres_to_table(table):
+    arcpy.management.AddField(table, "Acres", "DOUBLE")
+    # calculate the acres from 30x30 m cell size in count of cells COUNT
+    arcpy.management.CalculateField(table, "Acres", "!SUM! * 0.2223948", "PYTHON3")
+
+# calculate zonal stats for raster in each management area
+def calculate_zonal_stats(mgmt_areas, zone_field, raster, zonal_stats):
+    zones  = arcpy.MakeFeatureLayer_management(str(mgmt_areas))
+    raster = Raster(raster)
+    # zonal stats as table to get acres of high fire severity in each management area
+    ZonalStatisticsAsTable(
+        in_zone_data=zones,
+        zone_field=zone_field,
+        in_value_raster=raster,
+        out_table=zonal_stats,
+        statistics_type="SUM"
+    )
+    add_acres_to_table(zonal_stats)

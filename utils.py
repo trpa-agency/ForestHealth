@@ -27,6 +27,7 @@ def add_acres(inFeatures):
 # calculate category field for desire condition - target, low, high
 def add_category(inFeatures, lookup_dict):
     arcpy.AddField_management(inFeatures, "Category", "TEXT")
+    cursor =None
     with arcpy.da.UpdateCursor(inFeatures, ["Value", "Category"]) as cursor:
         for row in cursor:
             if row[0] in lookup_dict:

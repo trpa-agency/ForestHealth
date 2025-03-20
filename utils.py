@@ -1,5 +1,4 @@
 # imports
-# import packages
 import arcpy
 from arcpy.sa import *
 from arcpy.ia import *
@@ -8,25 +7,6 @@ import pandas as pd
 from pathlib import Path
 
 # functions
-# iterate over raster attribute table 
-def export_attributes_as_rasters(in_raster, output_folder):
-    # Set local variables
-    arcpy.env.workspace = output_folder
-    # get field names to loop through and create rasters from
-    field_names = [f.name for f in arcpy.ListFields(featureclass)]
-    fields_to_remove = ['OBJECTID', 'Value', 'Count']
-    fields = [x for x in field_names if x not in fields_to_remove]
-    # Iterate over the unique attribute values and export each as a separate raster
-
-    for field in fields:
-        # Execute Lookup
-        out_raster = Lookup(in_raster, field, value)
-        # Save the output raster
-        out_raster_path = f"{in_raster}_{field}"
-        out_raster.save(out_raster_path)
-        print("Exported raster for field: ", field)
-
-        
 # function to classify raw raster into desired condition categories based on 90th and 10th percentile value comaprison 
 def raster_categorize(input_raster, upper_raster, lower_raster, output_raster_name):
     input_raster_obj = Raster(input_raster)
@@ -53,10 +33,35 @@ def add_category(inFeatures, lookup_dict):
                 row[1] = lookup_dict[row[0]]
             cursor.updateRow(row)
 
-# 
-def CreateRasterLookup(raster, field, name):
-    Lookup(
-        in_raster    =raster,
-        lookup_field =field,
-        out_raster   =name
+# function to reclassify fire severity raster
+def reclassify_fire_severity(input_path, output_name):
+    raster = Raster(str(input_path))
+    out_reclass = Reclassify(raster, "Value", RemapRange([[0, 0.6, 0], [0.6, 1, 1]]))
+    out_reclass.save(output_name)
+
+# function to extract raster by mask to tahoe extent
+def extract_by_mask_to_tahoe_extent(in_raster, output_name):
+    out_raster = ExtractByMask(
+        in_raster=in_raster,
+        in_mask_data=r"F:\GIS\DB_CONNECT\Vector.sde\sde.SDE.Jurisdictions\sde.SDE.TRPA_bdy",
+        extraction_area="INSIDE",
+        analysis_extent='-214749.813147473 -338358.008101731 228897.27559438 457005.517540967 PROJCS["NAD_1983_California_Teale_Albers",GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Albers"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",-4000000.0],PARAMETER["Central_Meridian",-120.0],PARAMETER["Standard_Parallel_1",34.0],PARAMETER["Standard_Parallel_2",40.5],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
     )
+    out_raster.save(output_name)
+
+# fucntion to add attribute table. add acres, and add category
+def add_acres_category(raster, lookup_dict):
+    # build an attribute table
+    arcpy.BuildRasterAttributeTable_management(raster, "Overwrite")
+    # calc Acres field
+    add_acres(raster)
+    # add and calc category field
+    add_category(raster, lookup_dict)
+
+# function to convert raster attribute table to pandas dataframe
+def get_raster_attribute_table_as_dataframe(raster):
+    fields = [f.name for f in arcpy.ListFields(raster)]
+    cursor = arcpy.da.SearchCursor(raster, fields)
+    data = [row for row in cursor]
+    return pd.DataFrame(data, columns=fields)
+    

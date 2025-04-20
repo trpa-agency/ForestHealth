@@ -51,6 +51,7 @@ def extract_by_mask_to_tahoe_extent(in_raster, output_name):
     )
     out_raster.save(output_name)
 
+
 # fucntion to add attribute table. add acres, and add category
 def add_acres_category(raster, lookup_dict):
     # build an attribute table
@@ -86,3 +87,16 @@ def calculate_zonal_stats(mgmt_areas, zone_field, raster, zonal_stats):
         statistics_type="SUM"
     )
     add_acres_to_table(zonal_stats)
+
+# raster to dataframe function
+def raster_to_df(raster_path, band=1):
+    """Convert raster to dataframe."""
+    # read raster
+    raster = arcpy.Raster(str(raster_path))
+    add_acres(raster)
+    # convert to numpy array
+    arr = arcpy.RasterToNumPyArray(raster, nodata_to_value=0)
+    # convert to dataframe
+    df = pd.DataFrame(arr)
+    # return dataframe
+    return df

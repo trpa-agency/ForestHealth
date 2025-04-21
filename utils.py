@@ -93,10 +93,22 @@ def raster_to_df(raster_path, band=1):
     """Convert raster to dataframe."""
     # read raster
     raster = arcpy.Raster(str(raster_path))
-    add_acres(raster)
+    # check if band is valid
+    if band > raster.bandCount:
+        raise ValueError(f"Band {band} does not exist in raster {raster_path}.")
     # convert to numpy array
-    arr = arcpy.RasterToNumPyArray(raster, nodata_to_value=0)
-    # convert to dataframe
-    df = pd.DataFrame(arr)
-    # return dataframe
+    arr = arcpy.RasterToNumPyArray(raster, band=band)
+    # get raster properties
+    cell_size = raster.meanCellHeight
+    extent = raster.extent
+    # get raster properties
+    cols = raster.width
+    rows = raster.height
+    # create a dataframe
+    df = pd.DataFrame(arr, columns=[f"Band_{band}"])
+    # add cell size and extent to dataframe
+    df["CellSize"] = cell_size
+    df["Extent"] = extent
+    df["Rows"] = rows
+    df["Cols"] = cols
     return df

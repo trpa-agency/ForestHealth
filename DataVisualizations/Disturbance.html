@@ -6,7 +6,8 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Forest Health Update - Functional Fire</title>
+    <title>2023 Threshold Evaluation - New Forest Openinings
+    </title>
     <style>
       html,
       body,
@@ -49,27 +50,24 @@
         "esri/widgets/Expand",
         "esri/widgets/Home",
         "esri/widgets/Legend",
-        "esri/widgets/Fullscreen",
-        "esri/widgets/Bookmarks"
+        "esri/widgets/Fullscreen"
       ], function(
         MapView,
         WebMap,
         Expand,
         Home,
         Legend,
-        Fullscreen,
-        Bookmarks
+        Fullscreen
       ) {
-        
-        var map = new WebMap({portalItem: {id: "35dc3ddb4ff546d2a169f6fdeb945320"}});
+          
+        var map = new WebMap({portalItem: {id: "8c7429f3f3064a7e928929b230fb5135"}});
 
         var view = new MapView({
               map: map,  // The WebMap instance created above
-              container: "viewDiv",
-              center: [-120.01,39.01],
-              zoom: 10.5
+              container: "viewDiv"
             });
         
+          
         // move zoom buttons to top left
         view.ui.move("zoom", "top-left");
         
@@ -79,12 +77,16 @@
 
         // Add map item to the legend
         view.when(function() {
-          var featureLayer = map.layers.getItemAt(0);
+          var featureLayer = map.layers.getItemAt(1);
+          var featureLayer2 = map.layers.getItemAt(2);
           var legend = new Legend({
             view: view,
             layerInfos: [
               {
                 layer: featureLayer
+              },
+              {
+                layer: featureLayer2
               }
             ]
         });
@@ -110,20 +112,10 @@
         var homeWidget = new Home({view: view});
         view.ui.add(homeWidget, "top-left");
 
-        // Create a Bookmarks widget
-         const bookmarks = new Bookmarks({
-          view: view,
-          editingEnabled: false
-        });
-        const bkExpand = new Expand({
-          view: view,
-          content: bookmarks,
-          expanded: false
-        });
-        view.ui.add(bkExpand, "top-right");
-    
         // Disable scroll on zoom
         view.on("mouse-wheel", function(evt) {evt.stopPropagation(); });
+
+        
       });
     });
 

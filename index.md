@@ -29,10 +29,10 @@ Vertical and horizontal arrangement of trees and canopy layers.
 
 **By Management Zone:**
 #### 📊 Chart
-<iframe src="DataVisualizations/FireSeverity_ManagementZone.html" width="100%" height="500" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
 
 #### 🗺️ Map
-<iframe src="DataVisualizations/FireSeverity_ManagementZone.html" width="100%" height="500" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Map.html" width="100%" height="750" frameborder="1"></iframe>  
 
 ## Perormance Meassures 
 

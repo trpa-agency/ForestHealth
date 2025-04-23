@@ -12,8 +12,11 @@
     * [Stand Structure Map](DataVisualizations\StandStructureMap.html)
     * [Stand Structure Chart](DataVisualizations\StandStructureChart.html)
 * Wildfire
-    * [Wildfire by Management Zone](DataVisualizations\FireSeverity_ManagementZone.html)
-{% include_relative DataVisualizations\FireSeverity_ManagementZone.html %}
+### 🔥 Wildfire
+
+**By Management Zone:**  
+<iframe src="DataVisualizations/FireSeverity_ManagementZone.html" width="100%" height="500" frameborder="0"></iframe>  
+
 
 ## Other
 

@@ -1,5 +1,18 @@
 # Forest Health Threshold Update
+## 📊 Chart
+Visual summary of key metrics across the forest plots.
 
+## 🗺️ Map
+Spatial overview of forest stands and geospatial boundaries.
+
+## 🌲 Stand Density
+Number of trees per unit area across different forest types.
+
+## 🌳 Forest Composition & Age
+Breakdown of species, their distribution, and age classes.
+
+##  Stand Structure
+Vertical and horizontal arrangement of trees and canopy layers.
 ## Proposed Thresholds
 
 * Stand Density
@@ -14,11 +27,14 @@
 
 ### 🔥 Wildfire
 
-**By Management Zone:**  
-<iframe src="DataVisualizations/FireSeverity_ManagementZone.html" width="100%" height="500" frameborder="0"></iframe>  
+**By Management Zone:**
+#### 📊 Chart
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
 
+#### 🗺️ Map
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Map.html" width="100%" height="750" frameborder="1"></iframe>  
 
-## Other
+## Perormance Meassures 
 
 * Forest Fuels treatments
   * [Fuel Treatments - Chart](DataVisualizations\ForestFuel.html)

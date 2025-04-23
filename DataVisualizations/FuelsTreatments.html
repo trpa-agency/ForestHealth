@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>2023 Threshold Evaluation - Forest Fuel Treatments</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #infoDiv {
+        position: absolute;
+        top: 15px;
+        left: 60px;
+      }
+      #infoDiv input {
+        border: none;
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 2px;
+      }
+
+      .esri-widget--button.active,
+      .esri-widget--button.active:hover,
+      .esri-widget--button.active:focus {
+        cursor: default;
+        background-color: #999696;
+      }
+      .esri-widget--button.active path,
+      .esri-widget--button.active:hover path,
+      .esri-widget--button.active:focus path {
+        fill: #e4e4e4;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.29/"></script>
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/widgets/Expand",
+        "esri/widgets/Home",
+        "esri/widgets/Legend",
+        "esri/widgets/Fullscreen",
+        "esri/widgets/Bookmarks"
+      ], function(
+        MapView,
+        WebMap,
+        Expand,
+        Home,
+        Legend,
+        Fullscreen,
+        Bookmarks
+      ) {
+        
+        var map = new WebMap({portalItem: {id: "0303bdff0aa04b628f8a60a8c72c53a1"}});
+
+        var view = new MapView({
+              map: map,  // The WebMap instance created above
+              container: "viewDiv",
+              center: [-120.01,39.01],
+              zoom: 8
+            });
+        
+        // move zoom buttons to top left
+        view.ui.move("zoom", "top-left");
+        
+        // add fullscreen button to top left
+        var fullscreen = new Fullscreen({view: view});
+        view.ui.add(fullscreen, "top-left");
+
+        // Add map item to the legend
+        view.when(function() {
+          var featureLayer = map.layers.getItemAt(0);
+          var legend = new Legend({
+            view: view,
+            layerInfos: [
+              {
+                layer: featureLayer
+              }
+            ]
+        });
+
+        // create legend card
+        view.ui.add(legend, "top-right");
+        
+        // Create collapasable button for legend
+        var legendExpand = new Expand({
+            expandIconClass: "esri-icon-layers", 
+            expandTooltip: "Legend",
+            view: view,
+            expanded: true,
+            autoCollapse: true,
+            content: legend.domNode,
+            group: "top-right"
+            });
+
+        // add layer list button to the top right corner of the view
+        view.ui.add(legendExpand, "top-right");
+
+        // Create a Home Button
+        var homeWidget = new Home({view: view});
+        view.ui.add(homeWidget, "top-left");
+
+        // Create a Bookmarks widget
+         const bookmarks = new Bookmarks({
+          view: view,
+          editingEnabled: false
+        });
+        const bkExpand = new Expand({
+          view: view,
+          content: bookmarks,
+          expanded: false
+        });
+        view.ui.add(bkExpand, "top-right");
+    
+        // Disable scroll on zoom
+        view.on("mouse-wheel", function(evt) {evt.stopPropagation(); });
+      });
+    });
+
+	</script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>

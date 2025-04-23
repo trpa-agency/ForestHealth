@@ -85,8 +85,8 @@
         var view = new MapView({
               map: map,  // The WebMap instance created above
               container: "viewDiv",
-              center: [-120.01,39.01],
-              zoom: 10.5
+              center: [-120.12,38.99],
+              zoom: 15
             });
           
         // move zoom buttons to top left
@@ -98,8 +98,8 @@
         view.ui.add(fullscreen, "top-left");
           
         // treatment feature layer
-        var seralLayer = new TileLayer({
-          url: "https://maps.trpa.org/server/rest/services/Vegetation_Seral_Stage/MapServer",
+        var seralLayer = new FeatureLayer({
+          url: "https://maps.trpa.org/server/rest/services/Vegetation_Late_Seral/MapServer/0",
           title: "Seral Stage"
         });
         
@@ -109,8 +109,7 @@
         var canopyLayer = new TileLayer({
           url: "https://maps.trpa.org/server/rest/services/Tahoe_Canopy_Hillshade_Cached/MapServer",
           title: "Canopy Hillshade",
-          opacity: 0.35,
-          minScale:36000
+          opacity: 0.35
         });
           
         map.add(canopyLayer);         
@@ -129,7 +128,7 @@
         layerInfos: [
           {
             layer: seralLayer,
-            title: "Seral Stage"
+            title: "Late Seral"
 
           }
         ]

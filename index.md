@@ -11,7 +11,7 @@
 * Stand Structure
     * [Stand Structure Map](DataVisualizations\StandStructureMap.html)
     * [Stand Structure Chart](DataVisualizations\StandStructureChart.html)
-* Wildfire
+
 ### 🔥 Wildfire
 
 **By Management Zone:**  

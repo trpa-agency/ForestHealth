@@ -13,6 +13,7 @@
     * [Stand Structure Chart](DataVisualizations\StandStructureChart.html)
 * Wildfire
     * [Wildfire by Management Zone](DataVisualizations\FireSeverity_ManagementZone.html)
+{% include_relative DataVisualizations\FireSeverity_ManagementZone.html %}
 
 ## Other
 

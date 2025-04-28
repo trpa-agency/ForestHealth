@@ -7,6 +7,24 @@ import pandas as pd
 from pathlib import Path
 import plotly.express as px
 # functions
+
+# Helper: Project if needed
+def project_if_needed(raster_path, output_path, target_sr):
+    desc = arcpy.Describe(raster_path)
+    if desc.spatialReference.factoryCode != 26910:
+        print(f"Projecting {raster_path} to EPSG:26910...")
+        arcpy.management.ProjectRaster(
+            raster_path,
+            output_path,
+            target_sr,
+            resampling_type="NEAREST",
+            cell_size=desc.meanCellWidth
+        )
+        return output_path
+    else:
+        print(f"{raster_path} already in EPSG:26910.")
+        return raster_path
+        
 # function to classify raw raster into desired condition categories based on 90th and 10th percentile value comaprison 
 def raster_categorize(input_raster, upper_raster, lower_raster, output_raster_name):
     input_raster_obj = Raster(input_raster)

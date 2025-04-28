@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vegetation Type Targets</title>
+
+  <!-- AG Grid Styles and Script -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/dist/ag-grid-community.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-grid.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-theme-quartz.css" rel="stylesheet" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #myGrid {
+      height: 200px;
+      width: 400px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    .container {
+      width: 100%;
+    }
+
+    /* Custom Dark Blue Header */
+    .ag-theme-quartz .ag-header {
+      background-color: #003366;
+      color: white;
+    }
+    /* Optional: make header text white and bold */
+    .ag-theme-quartz .ag-header-cell-label {
+      font-weight: bold;
+      color: white;
+    }
+        /* Right align for Target column */
+    .right-align {
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Stand Denisty Targets</h1>
+    <div id="myGrid" class="ag-theme-quartz"></div>
+  </div>
+
+  <script>
+    const gridOptions = {
+      columnDefs: [
+        { headerName: "Vegetation Type", field: "vegetationType", flex: 1 },
+        { headerName: "Target (trees per acre)", field: "target", flex: 1, cellClass: 'right-align' }
+      ],
+      rowData: [
+        { vegetationType: "Yellow pine Forest", target: "<60" },
+        // { vegetationType: "Sierra Mixed Conifer", target: "<55" },
+        { vegetationType: "Red fir Forest", target: "<80" },
+        { vegetationType: "Subalpine Forest", target: "<140" }
+      ],
+      defaultColDef: {
+        resizable: true,
+        sortable: true,
+        filter: true
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const gridDiv = document.querySelector('#myGrid');
+      agGrid.createGrid(gridDiv, gridOptions);
+    });
+  </script>
+</body>
+</html>

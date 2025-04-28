@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Composition & Age Targets</title>
+
+  <!-- AG Grid Styles and Script -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/dist/ag-grid-community.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-grid.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-theme-quartz.css" rel="stylesheet" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #myGrid {
+      height: 500px;
+      width: 800px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+    }
+    .container {
+      width: 840px;
+    }
+
+    /* Custom Dark Blue Header */
+    .ag-theme-quartz .ag-header {
+      background-color: #003366;
+      color: white;
+    }
+    .ag-theme-quartz .ag-header-cell-label {
+      font-weight: bold;
+      color: white;
+    }
+
+    /* Right align for numeric columns */
+    .right-align {
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Composition & Age Targets</h1>
+    <div id="myGrid" class="ag-theme-quartz"></div>
+  </div>
+
+  <script>
+    const gridOptions = {
+      columnDefs: [
+        { headerName: "Seral Stage", field: "seralStage", flex: 2 },
+        { headerName: "Yellow Pine", field: "yellowPine", width: 150, cellClass: 'right-align' },
+        { headerName: "Mixed Conifer", field: "mixedConifer", width: 150, cellClass: 'right-align' },
+        { headerName: "Red Fir", field: "redFir", width: 150, cellClass: 'right-align' }
+      ],
+      rowData: [
+        { seralStage: "Early Development Open\n>5” DBH & <25% Overstory Canopy", yellowPine: "5-15%", mixedConifer: "5-20%", redFir: "3-20%" },
+        { seralStage: "Early Development Closed\n>5” DBH & >60% Overstory Canopy", yellowPine: "0%", mixedConifer: "0%", redFir: "0%" },
+        { seralStage: "Mid Development Open\n5”-19.9” DBH & <40% Overstory Canopy", yellowPine: "8-25%", mixedConifer: "1-15%", redFir: "0-15%" },
+        { seralStage: "Mid Development Closed\n5”-19.9” DBH & >70% Overstory Canopy", yellowPine: "0-10%", mixedConifer: "0-15%", redFir: "12-30%" },
+        { seralStage: "Late Development Open\n5”-19.9” DBH & 20-40% Overstory Canopy", yellowPine: "29-50%", mixedConifer: "6-50%", redFir: "2-15%" },
+        { seralStage: "Late Development Closed\n5”-19.9” DBH & >70% Overstory Canopy", yellowPine: "5-31%", mixedConifer: "7-79%", redFir: "25-70%" }
+      ],
+      defaultColDef: {
+        resizable: true,
+        sortable: true,
+        filter: true,
+        wrapText: true,
+        autoHeight: true
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const gridDiv = document.querySelector('#myGrid');
+      agGrid.createGrid(gridDiv, gridOptions);
+    });
+  </script>
+</body>
+</html>

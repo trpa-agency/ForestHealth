@@ -131,6 +131,34 @@ def raster_to_df(raster_path, band=1):
     df["Cols"] = cols
     return df
 
+def classify_snrrk_tpa(row):
+    veg = row['TRPA_VegType']
+    sd = row['StandDensity']
+    if veg == "Yellow Pine Forest":
+        return "Within Target" if sd < 60 else "Out of Target"
+    # elif veg == "Sierra Mixed Conifer Forest":
+    #     return "In Target" if sd < 55 else "Out of Target"
+    elif veg == "Red Fir Forest":
+        return "Within Target" if sd < 80 else "Out of Target"
+    elif veg == "Subalpine Forest":
+        return "Within Target" if sd < 140 else "Out of Target"
+    else:
+        return "Unknown"
+    
+# 
+def classify_ecobject_tpa(row):
+    veg = row['TRPA_VegType']
+    sd = row['pTree_Count_acre']
+    if veg == "Yellow Pine Forest":
+        return "Within Target" if sd < 60 else "Out of Target"
+    # elif veg == "Sierra Mixed Conifer Forest":
+    #     return "In Target" if sd < 55 else "Out of Target"
+    elif veg == "Red Fir Forest":
+        return "Within Target" if sd < 80 else "Out of Target"
+    elif veg == "Subalpine Forest":
+        return "Within Target" if sd < 140 else "Out of Target"
+    else:
+        return "Unknown"
 
 ## From CR DASHBOARD ##
 

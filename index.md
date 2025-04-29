@@ -9,7 +9,6 @@
 <iframe src="DataVisualizations/StandDensity_Chart_SNRRK.html" width="100%" height="500" frameborder="0"></iframe>
 
 ### 🌳 Forest Composition & Age (<> 60% Canopy Cover, Late Seral >24"DBH)
-<iframe src="DataVisualizations/CompositionAge_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### 📊 Chart - SNRRK
 <iframe src="DataVisualizations/CompositionAge_Chart_SNRRK.html" width="100%" height="500" frameborder="0"></iframe>  

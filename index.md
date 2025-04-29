@@ -11,9 +11,6 @@
 #### 📊 Chart - Ecobject Data Summary
 <iframe src="DataVisualizations/StandDensity_Chart_Ecobject.html" width="100%" height="500" frameborder="0"></iframe>
 
-<!-- #### 🗺️ Map
-<iframe src="DataVisualizations/StandDensity_Map.html" width="100%" height="750" frameborder="0"></iframe>  -->
-
 ### 🌳 Forest Composition & Age
 <iframe src="DataVisualizations/CompositionAge_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
@@ -24,11 +21,6 @@
 <iframe src="DataVisualizations/CompositionAge_Map.html" width="100%" height="750" frameborder="0"></iframe> 
 
 ### Stand Structure
-<!-- #### 📊 Chart
-<iframe src="DataVisualizations/StandStructure_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
-
-#### 🗺️ Map
-<iframe src="DataVisualizations/StandStructure_Map.html" width="100%" height="750" frameborder="0"></iframe>  -->
 
 ### 🔥 Wildfire
 **By Management Zone:**

@@ -145,10 +145,14 @@ def classify_snrrk_tpa(row):
     else:
         return "Unknown"
     
-# 
 def classify_ecobject_tpa(row):
     veg = row['TRPA_VegType']
     sd = row['pTree_Count_acre']
+    
+    # Handle NA values explicitly
+    if pd.isna(veg) or pd.isna(sd):
+        return "Unknown"
+    
     if veg == "Yellow Pine Forest":
         return "Within Target" if sd < 60 else "Out of Target"
     # elif veg == "Sierra Mixed Conifer Forest":

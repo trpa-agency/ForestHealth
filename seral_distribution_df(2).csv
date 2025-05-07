@@ -1,0 +1,16 @@
+Vegetation Type,Seral Stage,Canopy Classification,Target Percent,Current Count,Current Area,Current Area Percent,Acres,Classification
+Jeffrey Pine,Early,Closed,"(5, 15)",3492900.0,3143610000.0,2.12,776801.7490500001,below target
+Jeffrey Pine,Mid,Closed,"(5, 10)",92750400.0,83475360000.0,56.23,20627178.8328,above target
+Jeffrey Pine,Late,Closed,"(25, 30)",68697000.0,61827300000.0,41.65,15277834.966500001,above target
+White Fir-Mixed Conifer,Early,Closed,"(10, 20)",8957700.0,8061930000.0,3.45,1992143.2126500001,below target
+White Fir-Mixed Conifer,Mid,Closed,"(5, 15)",155835000.0,140251500000.0,60.0,34656846.9075,above target
+White Fir-Mixed Conifer,Late,Closed,"(10, 15)",94914000.0,85422600000.0,36.55,21108351.573000003,above target
+Red Fir,Early,Closed,"(10, 20)",1987200.0,1788480000.0,2.19,441942.3504,below target
+Red Fir,Mid,Closed,"(20, 30)",44421300.0,39979170000.0,49.03,9879052.80285,above target
+Red Fir,Late,Closed,"(5, 15)",44199000.0,39779100000.0,48.78,9829614.5055,above target
+Sub Alpine Conifer,Early,Closed,"(15, 25)",634500.0,571050000.0,1.32,141109.31025,below target
+Sub Alpine Conifer,Mid,Closed,"(10, 20)",21650400.0,19485360000.0,44.95,4814929.882800001,above target
+Sub Alpine Conifer,Late,Closed,"(10, 15)",25884000.0,23295600000.0,53.74,5756459.238,above target
+Aspen,Early,Closed,"(10, 20)",18900.0,17010000.0,0.88,4203.25605,below target
+Aspen,Mid,Closed,"(5, 15)",1867500.0,1680750000.0,86.89,415321.72875,above target
+Aspen,Late,Closed,"(10, 20)",262800.0,236520000.0,12.23,58445.274600000004,on target

@@ -2,86 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Composition & Age Targets</title>
-
-  <!-- AG Grid Styles and Script -->
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/dist/ag-grid-community.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-grid.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-theme-quartz.css" rel="stylesheet" />
-
+  <title>Simplified Targets for Coding (Seral Stage Classes)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/ag-grid-community@29.3.3/styles/ag-grid.css"
+  />
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/ag-grid-community@29.3.3/styles/ag-theme-alpine.css"
+  />
   <style>
     html, body {
       height: 100%;
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #myGrid {
-      height: 500px;
-      width: 800px;
     }
     h1 {
       text-align: center;
-      font-size: 24px;
-      margin-top: 20px;
+      margin: 1rem;
     }
-    .container {
-      width: 840px;
-    }
-
-    /* Custom Dark Blue Header */
-    .ag-theme-quartz .ag-header {
-      background-color: #003366;
-      color: white;
-    }
-    .ag-theme-quartz .ag-header-cell-label {
-      font-weight: bold;
-      color: white;
-    }
-
-    /* Right align for numeric columns */
-    .right-align {
-      text-align: right;
+    #myGrid {
+      height: 80vh;
+      width: 100%;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Composition & Age Targets</h1>
-    <div id="myGrid" class="ag-theme-quartz"></div>
-  </div>
+  <h1>Simplified Targets for Coding (Seral Stage Classes)</h1>
+  <div id="myGrid" class="ag-theme-alpine"></div>
 
+  <script src="https://unpkg.com/ag-grid-community@29.3.3/dist/ag-grid-community.min.js"></script>
   <script>
+    const rawData = [
+      { forest: "White Fir", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.19, areaM2: 1987200.0, areaAcres: 491.05 },
+      { forest: "White Fir", stage: "Mid (closed canopy)", target: "5–15%", classification: "above target", areaPercent: 36.54, areaM2: 33106500.0, areaAcres: 8180.79 },
+      { forest: "White Fir", stage: "Mid (open canopy)", target: "10–15%", classification: "on target", areaPercent: 12.48, areaM2: 11305800.0, areaAcres: 2793.72 },
+      { forest: "White Fir", stage: "Late (open canopy)", target: "30–40%", classification: "below target", areaPercent: 19.33, areaM2: 17513100.0, areaAcres: 4327.58 },
+      { forest: "White Fir", stage: "Late (closed canopy)", target: "20–30%", classification: "on target", areaPercent: 29.45, areaM2: 26678700.0, areaAcres: 6592.45 },
+      { forest: "Sub Alpine Conifer", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.67, areaM2: 689400.0, areaAcres: 170.35 },
+      { forest: "Sub Alpine Conifer", stage: "Mid (closed canopy)", target: "10–20%", classification: "above target", areaPercent: 37.39, areaM2: 9643500.0, areaAcres: 2382.96 },
+      { forest: "Sub Alpine Conifer", stage: "Mid (open canopy)", target: "5–15%", classification: "above target", areaPercent: 26.12, areaM2: 6737400.0, areaAcres: 1664.85 },
+      { forest: "Sub Alpine Conifer", stage: "Late (open canopy)", target: "15–25%", classification: "on target", areaPercent: 21.75, areaM2: 5609700.0, areaAcres: 1386.19 },
+      { forest: "Sub Alpine Conifer", stage: "Late (closed canopy)", target: "10–20%", classification: "on target", areaPercent: 12.06, areaM2: 3111300.0, areaAcres: 768.82 },
+      { forest: "Aspen", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.24, areaM2: 83700.0, areaAcres: 20.68 },
+      { forest: "Aspen", stage: "Mid (closed canopy)", target: "5–15%", classification: "above target", areaPercent: 48.93, areaM2: 1828800.0, areaAcres: 451.91 },
+      { forest: "Aspen", stage: "Mid (open canopy)", target: "10–20%", classification: "above target", areaPercent: 20.59, areaM2: 769500.0, areaAcres: 190.15 },
+      { forest: "Aspen", stage: "Late (open canopy)", target: "15–25%", classification: "below target", areaPercent: 9.41, areaM2: 351900.0, areaAcres: 86.96 },
+      { forest: "Aspen", stage: "Late (closed canopy)", target: "25–35%", classification: "below target", areaPercent: 18.83, areaM2: 703800.0, areaAcres: 173.91 }
+    ];
+
+    const rowData = rawData.map((row, i, arr) => {
+      const prev = arr[i - 1];
+      return {
+        ...row,
+        showForest: !prev || prev.forest !== row.forest
+      };
+    });
+
+    const columnDefs = [
+      {
+        headerName: "Forest Type",
+        field: "forest",
+        cellRenderer: (params) => params.data.showForest ? params.value : ''
+      },
+      { headerName: "Seral Stage", field: "stage" },
+      { headerName: "Desired % Range", field: "target" },
+      { headerName: "Classification", field: "classification" },
+      { 
+        headerName: "Current Area %", 
+        field: "areaPercent",
+        valueFormatter: (params) => Math.round(params.value) + '%'
+      },
+      { 
+        headerName: "Area (m²)", 
+        field: "areaM2",
+        valueFormatter: (params) => params.value.toLocaleString()
+      },
+      { 
+        headerName: "Area (acres)", 
+        field: "areaAcres",
+        valueFormatter: (params) => params.value.toLocaleString()
+      }
+    ];
+
     const gridOptions = {
-      columnDefs: [
-        { headerName: "Seral Stage", field: "seralStage", flex: 2 },
-        { headerName: "Yellow Pine", field: "yellowPine", width: 150, cellClass: 'right-align' },
-        { headerName: "Mixed Conifer", field: "mixedConifer", width: 150, cellClass: 'right-align' },
-        { headerName: "Red Fir", field: "redFir", width: 150, cellClass: 'right-align' }
-      ],
-      rowData: [
-        { seralStage: "Early Development Open\n>5” DBH & <25% Overstory Canopy", yellowPine: "5-15%", mixedConifer: "5-20%", redFir: "3-20%" },
-        { seralStage: "Early Development Closed\n>5” DBH & >60% Overstory Canopy", yellowPine: "0%", mixedConifer: "0%", redFir: "0%" },
-        { seralStage: "Mid Development Open\n5”-19.9” DBH & <40% Overstory Canopy", yellowPine: "8-25%", mixedConifer: "1-15%", redFir: "0-15%" },
-        { seralStage: "Mid Development Closed\n5”-19.9” DBH & >70% Overstory Canopy", yellowPine: "0-10%", mixedConifer: "0-15%", redFir: "12-30%" },
-        { seralStage: "Late Development Open\n5”-19.9” DBH & 20-40% Overstory Canopy", yellowPine: "29-50%", mixedConifer: "6-50%", redFir: "2-15%" },
-        { seralStage: "Late Development Closed\n5”-19.9” DBH & >70% Overstory Canopy", yellowPine: "5-31%", mixedConifer: "7-79%", redFir: "25-70%" }
-      ],
+      columnDefs,
+      rowData,
       defaultColDef: {
-        resizable: true,
         sortable: true,
-        filter: true,
-        wrapText: true,
-        autoHeight: true
+        resizable: true,
+        filter: true
       }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      const gridDiv = document.querySelector('#myGrid');
-      agGrid.createGrid(gridDiv, gridOptions);
+      const eGridDiv = document.querySelector('#myGrid');
+      new agGrid.Grid(eGridDiv, gridOptions);
     });
   </script>
 </body>

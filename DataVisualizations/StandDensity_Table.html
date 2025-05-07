@@ -2,80 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Vegetation Type Targets</title>
-
-  <!-- AG Grid Styles and Script -->
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/dist/ag-grid-community.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-grid.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.2.1/styles/ag-theme-quartz.css" rel="stylesheet" />
-
+  <title>Forest Type Mapping and Targets</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-grid.css"
+  />
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-theme-alpine.css"
+  />
   <style>
     html, body {
       height: 100%;
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f8f9fa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #myGrid {
-      height: 200px;
-      width: 400px;
     }
     h1 {
       text-align: center;
-      font-size: 24px;
-      margin-top: 20px;
+      margin: 1rem;
     }
-    .container {
+    #myGrid {
+      height: 85vh;
       width: 100%;
-    }
-
-    /* Custom Dark Blue Header */
-    .ag-theme-quartz .ag-header {
-      background-color: #003366;
-      color: white;
-    }
-    /* Optional: make header text white and bold */
-    .ag-theme-quartz .ag-header-cell-label {
-      font-weight: bold;
-      color: white;
-    }
-        /* Right align for Target column */
-    .right-align {
-      text-align: right;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Stand Denisty Targets</h1>
-    <div id="myGrid" class="ag-theme-quartz"></div>
-  </div>
+  <h1>Forest Type Mapping and Targets</h1>
+  <div id="myGrid" class="ag-theme-alpine"></div>
 
+  <script src="https://unpkg.com/ag-grid-community@28.2.1/dist/ag-grid-community.min.noStyle.js"></script>
   <script>
+    const columnDefs = [
+      { headerName: "Forest Type", field: "forest", flex: 2 },
+      { headerName: "WHRTYPE Codes", field: "codes", flex: 1 },
+      { headerName: "Early Stems", field: "earlyStems", flex: 1 },
+      { headerName: "Mid Stems", field: "midStems", flex: 1 },
+      { headerName: "Late Stems", field: "lateStems", flex: 1 },
+      { headerName: "Early BA", field: "earlyBA", flex: 1 },
+      { headerName: "Mid BA", field: "midBA", flex: 1 },
+      { headerName: "Late BA", field: "lateBA", flex: 1 }
+    ];
+
+    const rowData = [
+      {
+        forest: "Jeffrey Pine",
+        codes: "JPN, EPN, JUN, LPN",
+        earlyStems: 200,
+        midStems: 70,
+        lateStems: 60,
+        earlyBA: 30,
+        midBA: 80,
+        lateBA: 100
+      },
+      {
+        forest: "White Fir-Mixed Conifer",
+        codes: "SMC, WFR",
+        earlyStems: 300,
+        midStems: 100,
+        lateStems: 80,
+        earlyBA: 40,
+        midBA: 150,
+        lateBA: 200
+      },
+      {
+        forest: "Red Fir",
+        codes: "RFR",
+        earlyStems: 300,
+        midStems: 100,
+        lateStems: 80,
+        earlyBA: 50,
+        midBA: 250,
+        lateBA: 350
+      },
+      {
+        forest: "Sub Alpine Conifer",
+        codes: "SCN",
+        earlyStems: 400,
+        midStems: 150,
+        lateStems: 120,
+        earlyBA: 60,
+        midBA: 300,
+        lateBA: 450
+      },
+      {
+        forest: "Aspen",
+        codes: "ASP",
+        earlyStems: 400,
+        midStems: 150,
+        lateStems: 120,
+        earlyBA: 60,
+        midBA: 300,
+        lateBA: 450
+      }
+    ];
+
     const gridOptions = {
-      columnDefs: [
-        { headerName: "Vegetation Type", field: "vegetationType", flex: 1 },
-        { headerName: "Target (trees per acre)", field: "target", flex: 1, cellClass: 'right-align' }
-      ],
-      rowData: [
-        { vegetationType: "Yellow pine Forest", target: "<60" },
-        // { vegetationType: "Sierra Mixed Conifer", target: "<55" },
-        { vegetationType: "Red fir Forest", target: "<80" },
-        { vegetationType: "Subalpine Forest", target: "<140" }
-      ],
+      columnDefs,
+      rowData,
       defaultColDef: {
-        resizable: true,
         sortable: true,
+        resizable: true,
         filter: true
       }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      const gridDiv = document.querySelector('#myGrid');
-      agGrid.createGrid(gridDiv, gridOptions);
+      const eGridDiv = document.querySelector('#myGrid');
+      new agGrid.Grid(eGridDiv, gridOptions);
     });
   </script>
 </body>

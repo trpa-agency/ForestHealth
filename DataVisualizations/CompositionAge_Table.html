@@ -1,89 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Simplified Targets for Coding (Seral Stage Classes)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link 
-    rel="stylesheet" 
-    href="https://unpkg.com/ag-grid-community@29.3.3/styles/ag-grid.css"
-  />
-  <link 
-    rel="stylesheet" 
-    href="https://unpkg.com/ag-grid-community@29.3.3/styles/ag-theme-alpine.css"
-  />
+  <meta charset="UTF-8" />
+  <title>Forest Composition Table</title>
+
+  <!-- AG Grid styles (v31+) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/core.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/theme-alpine.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
   <style>
-    html, body {
+    html, body, #myGrid {
       height: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    h1 {
-      text-align: center;
-      margin: 1rem;
-    }
-    #myGrid {
-      height: 80vh;
       width: 100%;
-      margin-top: 1rem;
+      margin: 0;
+      padding: 0;
     }
   </style>
 </head>
 <body>
-  <h1>Simplified Targets for Coding (Seral Stage Classes)</h1>
   <div id="myGrid" class="ag-theme-alpine"></div>
 
-  <script src="https://unpkg.com/ag-grid-community@29.3.3/dist/ag-grid-community.min.js"></script>
   <script>
     const rawData = [
-      { forest: "White Fir", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.19, areaM2: 1987200.0, areaAcres: 491.05 },
-      { forest: "White Fir", stage: "Mid (closed canopy)", target: "5–15%", classification: "above target", areaPercent: 36.54, areaM2: 33106500.0, areaAcres: 8180.79 },
-      { forest: "White Fir", stage: "Mid (open canopy)", target: "10–15%", classification: "on target", areaPercent: 12.48, areaM2: 11305800.0, areaAcres: 2793.72 },
-      { forest: "White Fir", stage: "Late (open canopy)", target: "30–40%", classification: "below target", areaPercent: 19.33, areaM2: 17513100.0, areaAcres: 4327.58 },
-      { forest: "White Fir", stage: "Late (closed canopy)", target: "20–30%", classification: "on target", areaPercent: 29.45, areaM2: 26678700.0, areaAcres: 6592.45 },
-      { forest: "Sub Alpine Conifer", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.67, areaM2: 689400.0, areaAcres: 170.35 },
-      { forest: "Sub Alpine Conifer", stage: "Mid (closed canopy)", target: "10–20%", classification: "above target", areaPercent: 37.39, areaM2: 9643500.0, areaAcres: 2382.96 },
-      { forest: "Sub Alpine Conifer", stage: "Mid (open canopy)", target: "5–15%", classification: "above target", areaPercent: 26.12, areaM2: 6737400.0, areaAcres: 1664.85 },
-      { forest: "Sub Alpine Conifer", stage: "Late (open canopy)", target: "15–25%", classification: "on target", areaPercent: 21.75, areaM2: 5609700.0, areaAcres: 1386.19 },
-      { forest: "Sub Alpine Conifer", stage: "Late (closed canopy)", target: "10–20%", classification: "on target", areaPercent: 12.06, areaM2: 3111300.0, areaAcres: 768.82 },
-      { forest: "Aspen", stage: "Early", target: "10–20%", classification: "below target", areaPercent: 2.24, areaM2: 83700.0, areaAcres: 20.68 },
-      { forest: "Aspen", stage: "Mid (closed canopy)", target: "5–15%", classification: "above target", areaPercent: 48.93, areaM2: 1828800.0, areaAcres: 451.91 },
-      { forest: "Aspen", stage: "Mid (open canopy)", target: "10–20%", classification: "above target", areaPercent: 20.59, areaM2: 769500.0, areaAcres: 190.15 },
-      { forest: "Aspen", stage: "Late (open canopy)", target: "15–25%", classification: "below target", areaPercent: 9.41, areaM2: 351900.0, areaAcres: 86.96 },
-      { forest: "Aspen", stage: "Late (closed canopy)", target: "25–35%", classification: "below target", areaPercent: 18.83, areaM2: 703800.0, areaAcres: 173.91 }
+      { forest: "Jeffrey Pine", stage: "Early", target: "5–15%", class: "below target", percent: 2.12, acres: 863.0 },
+      { forest: "Jeffrey Pine", stage: "Mid (closed canopy)", target: "5–10%", class: "above target", percent: 28.48, acres: 11609.0 },
+      { forest: "Jeffrey Pine", stage: "Mid (open canopy)", target: "25–30%", class: "on target", percent: 27.75, acres: 11311.0 },
+      { forest: "Jeffrey Pine", stage: "Late (open canopy)", target: "45–50%", class: "below target", percent: 27.28, acres: 11119.0 },
+      { forest: "Jeffrey Pine", stage: "Late (closed canopy)", target: "5–10%", class: "above target", percent: 14.37, acres: 5857.0 },
+
+      { forest: "White Fir", stage: "Early", target: "10–20%", class: "below target", percent: 3.45, acres: 2213.0 },
+      { forest: "White Fir", stage: "Mid (closed canopy)", target: "5–15%", class: "above target", percent: 37.27, acres: 23918.0 },
+      { forest: "White Fir", stage: "Mid (open canopy)", target: "10–15%", class: "above target", percent: 22.73, acres: 14590.0 },
+      { forest: "White Fir", stage: "Late (open canopy)", target: "30–40%", class: "below target", percent: 19.41, acres: 12457.0 },
+      { forest: "White Fir", stage: "Late (closed canopy)", target: "20–30%", class: "below target", percent: 17.14, acres: 10997.0 },
+
+      { forest: "Red Fir", stage: "Early", target: "10–20%", class: "below target", percent: 2.19, acres: 491.0 },
+      { forest: "Red Fir", stage: "Mid (closed canopy)", target: "20–30%", class: "above target", percent: 36.55, acres: 8183.0 },
+      { forest: "Red Fir", stage: "Mid (open canopy)", target: "5–15%", class: "on target", percent: 12.48, acres: 2794.0 },
+      { forest: "Red Fir", stage: "Late (open canopy)", target: "15–25%", class: "on target", percent: 19.33, acres: 4328.0 },
+      { forest: "Red Fir", stage: "Late (closed canopy)", target: "25–35%", class: "on target", percent: 29.45, acres: 6594.0 },
+
+      { forest: "Sub Alpine Conifer", stage: "Early", target: "10–20%", class: "below target", percent: 1.32, acres: 157.0 },
+      { forest: "Sub Alpine Conifer", stage: "Mid (closed canopy)", target: "10–20%", class: "above target", percent: 39.26, acres: 4674.0 },
+      { forest: "Sub Alpine Conifer", stage: "Mid (open canopy)", target: "5–15%", class: "on target", percent: 5.68, acres: 676.0 },
+      { forest: "Sub Alpine Conifer", stage: "Late (open canopy)", target: "15–25%", class: "below target", percent: 6.32, acres: 752.0 },
+      { forest: "Sub Alpine Conifer", stage: "Late (closed canopy)", target: "10–20%", class: "above target", percent: 47.42, acres: 5644.0 },
+
+      { forest: "Aspen", stage: "Early", target: "10–20%", class: "below target", percent: 0.88, acres: 5.0 },
+      { forest: "Aspen", stage: "Mid (closed canopy)", target: "5–15%", class: "above target", percent: 55.57, acres: 295.0 },
+      { forest: "Aspen", stage: "Mid (open canopy)", target: "10–20%", class: "above target", percent: 31.32, acres: 166.0 },
+      { forest: "Aspen", stage: "Late (open canopy)", target: "15–25%", class: "below target", percent: 6.37, acres: 34.0 },
+      { forest: "Aspen", stage: "Late (closed canopy)", target: "25–35%", class: "below target", percent: 5.86, acres: 31.0 }
     ];
 
+    // Add showForest for deduped display
     const rowData = rawData.map((row, i, arr) => {
       const prev = arr[i - 1];
-      return {
-        ...row,
-        showForest: !prev || prev.forest !== row.forest
-      };
+      return { ...row, showForest: !prev || prev.forest !== row.forest };
     });
 
     const columnDefs = [
       {
         headerName: "Forest Type",
         field: "forest",
-        cellRenderer: (params) => params.data.showForest ? params.value : ''
+        cellRenderer: (params) => params.data.showForest ? params.value : '',
       },
       { headerName: "Seral Stage", field: "stage" },
       { headerName: "Desired % Range", field: "target" },
-      { headerName: "Classification", field: "classification" },
-      { 
-        headerName: "Current Area %", 
-        field: "areaPercent",
-        valueFormatter: (params) => Math.round(params.value) + '%'
+      { headerName: "Classification", field: "class" },
+      {
+        headerName: "Current Area %",
+        field: "percent",
+        valueFormatter: (params) => `${params.value.toFixed(2)}%`
       },
-      { 
-        headerName: "Area (m²)", 
-        field: "areaM2",
-        valueFormatter: (params) => params.value.toLocaleString()
-      },
-      { 
-        headerName: "Area (acres)", 
-        field: "areaAcres",
-        valueFormatter: (params) => params.value.toLocaleString()
+      {
+        headerName: "Area (acres)",
+        field: "acres",
+        valueFormatter: (params) => Math.round(params.value).toLocaleString()
       }
     ];
 
@@ -91,15 +85,15 @@
       columnDefs,
       rowData,
       defaultColDef: {
-        sortable: true,
         resizable: true,
-        filter: true
+        sortable: true,
+        filter: true,
       }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const eGridDiv = document.querySelector('#myGrid');
-      new agGrid.Grid(eGridDiv, gridOptions);
+    document.addEventListener("DOMContentLoaded", function () {
+      const gridDiv = document.querySelector("#myGrid");
+      agGrid.createGrid(gridDiv, gridOptions);
     });
   </script>
 </body>

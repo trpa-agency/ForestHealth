@@ -22,37 +22,25 @@
   <div id="myGrid" class="ag-theme-alpine"></div>
 
   <script>
-    const rawData = [
-      { forest: "Jeffrey Pine", stage: "Early", target: "5–15%", class: "below target", percent: 2.12, acres: 863.0 },
-      { forest: "Jeffrey Pine", stage: "Mid (closed canopy)", target: "5–10%", class: "above target", percent: 28.48, acres: 11609.0 },
-      { forest: "Jeffrey Pine", stage: "Mid (open canopy)", target: "25–30%", class: "on target", percent: 27.75, acres: 11311.0 },
-      { forest: "Jeffrey Pine", stage: "Late (open canopy)", target: "45–50%", class: "below target", percent: 27.28, acres: 11119.0 },
-      { forest: "Jeffrey Pine", stage: "Late (closed canopy)", target: "5–10%", class: "above target", percent: 14.37, acres: 5857.0 },
+  const rawData = [
+    { forest: "Jeffrey Pine", stage: "Early", target: "5–15%", class: "Under Represented", percent: 2.12, acres: 863.0 },
+    { forest: "Jeffrey Pine", stage: "Mid (closed canopy)", target: "5–10%", class: "Over Represented", percent: 28.48, acres: 11609.0 },
+    { forest: "Jeffrey Pine", stage: "Mid (open canopy)", target: "25–30%", class: "Within Range", percent: 27.75, acres: 11311.0 },
+    { forest: "Jeffrey Pine", stage: "Late (open canopy)", target: "45–50%", class: "Under Represented", percent: 27.28, acres: 11119.0 },
+    { forest: "Jeffrey Pine", stage: "Late (closed canopy)", target: "5–10%", class: "Over Represented", percent: 14.37, acres: 5857.0 },
 
-      { forest: "White Fir", stage: "Early", target: "10–20%", class: "below target", percent: 3.45, acres: 2213.0 },
-      { forest: "White Fir", stage: "Mid (closed canopy)", target: "5–15%", class: "above target", percent: 37.27, acres: 23918.0 },
-      { forest: "White Fir", stage: "Mid (open canopy)", target: "10–15%", class: "above target", percent: 22.73, acres: 14590.0 },
-      { forest: "White Fir", stage: "Late (open canopy)", target: "30–40%", class: "below target", percent: 19.41, acres: 12457.0 },
-      { forest: "White Fir", stage: "Late (closed canopy)", target: "20–30%", class: "below target", percent: 17.14, acres: 10997.0 },
+    { forest: "White Fir/Sierra Mixed Conifer", stage: "Early", target: "10–20%", class: "Under Represented", percent: 3.45, acres: 2213.0 },
+    { forest: "White Fir/Sierra Mixed Conifer", stage: "Mid (closed canopy)", target: "5–15%", class: "Over Represented", percent: 37.27, acres: 23918.0 },
+    { forest: "White Fir/Sierra Mixed Conifer", stage: "Mid (open canopy)", target: "10–15%", class: "Over Represented", percent: 22.73, acres: 14590.0 },
+    { forest: "White Fir/Sierra Mixed Conifer", stage: "Late (open canopy)", target: "30–40%", class: "Under Represented", percent: 19.41, acres: 12457.0 },
+    { forest: "White Fir/Sierra Mixed Conifer", stage: "Late (closed canopy)", target: "20–30%", class: "Under Represented", percent: 17.14, acres: 10997.0 },
 
-      { forest: "Red Fir", stage: "Early", target: "10–20%", class: "below target", percent: 2.19, acres: 491.0 },
-      { forest: "Red Fir", stage: "Mid (closed canopy)", target: "20–30%", class: "above target", percent: 36.55, acres: 8183.0 },
-      { forest: "Red Fir", stage: "Mid (open canopy)", target: "5–15%", class: "on target", percent: 12.48, acres: 2794.0 },
-      { forest: "Red Fir", stage: "Late (open canopy)", target: "15–25%", class: "on target", percent: 19.33, acres: 4328.0 },
-      { forest: "Red Fir", stage: "Late (closed canopy)", target: "25–35%", class: "on target", percent: 29.45, acres: 6594.0 },
-
-      { forest: "Sub Alpine Conifer", stage: "Early", target: "10–20%", class: "below target", percent: 1.32, acres: 157.0 },
-      { forest: "Sub Alpine Conifer", stage: "Mid (closed canopy)", target: "10–20%", class: "above target", percent: 39.26, acres: 4674.0 },
-      { forest: "Sub Alpine Conifer", stage: "Mid (open canopy)", target: "5–15%", class: "on target", percent: 5.68, acres: 676.0 },
-      { forest: "Sub Alpine Conifer", stage: "Late (open canopy)", target: "15–25%", class: "below target", percent: 6.32, acres: 752.0 },
-      { forest: "Sub Alpine Conifer", stage: "Late (closed canopy)", target: "10–20%", class: "above target", percent: 47.42, acres: 5644.0 },
-
-      { forest: "Aspen", stage: "Early", target: "10–20%", class: "below target", percent: 0.88, acres: 5.0 },
-      { forest: "Aspen", stage: "Mid (closed canopy)", target: "5–15%", class: "above target", percent: 55.57, acres: 295.0 },
-      { forest: "Aspen", stage: "Mid (open canopy)", target: "10–20%", class: "above target", percent: 31.32, acres: 166.0 },
-      { forest: "Aspen", stage: "Late (open canopy)", target: "15–25%", class: "below target", percent: 6.37, acres: 34.0 },
-      { forest: "Aspen", stage: "Late (closed canopy)", target: "25–35%", class: "below target", percent: 5.86, acres: 31.0 }
-    ];
+    { forest: "Red Fir", stage: "Early", target: "10–20%", class: "Under Represented", percent: 2.19, acres: 491.0 },
+    { forest: "Red Fir", stage: "Mid (closed canopy)", target: "20–30%", class: "Over Represented", percent: 36.55, acres: 8183.0 },
+    { forest: "Red Fir", stage: "Mid (open canopy)", target: "5–15%", class: "Within Range", percent: 12.48, acres: 2794.0 },
+    { forest: "Red Fir", stage: "Late (open canopy)", target: "15–25%", class: "Within Range", percent: 19.33, acres: 4328.0 },
+    { forest: "Red Fir", stage: "Late (closed canopy)", target: "25–35%", class: "Within Range", percent: 29.45, acres: 6594.0 },
+   ];
 
     // Add showForest for deduped display
     const rowData = rawData.map((row, i, arr) => {

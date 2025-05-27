@@ -1,6 +1,6 @@
 # Forest Health Threshold Update
 
-This project presents updated forest health thresholds and performance measures for the Lake Tahoe Basin. It supports regional planning and wildfire resilience efforts by providing science-based metrics to assess forest conditions, fire risk, and management effectiveness.
+This project presents updated forest health thresholds and performance measures for the Lake Tahoe Basin. It supports regional forest health planning and wildfire resilience efforts by providing science-based metrics to assess forest conditions, fire risk, and management effectiveness.
 
 ---
 
@@ -9,9 +9,7 @@ This project presents updated forest health thresholds and performance measures 
 The Forest Health Threshold Update builds upon advanced remote sensing datasets, regional resource kits, and fire risk modeling to:
 
 - Define ecological thresholds for forest structure (stand density, seral stage).
-- Evaluate wildfire severity and functional fire processes over the past two decades.
-- Introduce a new Wildland Urban Interface (WUI) wildfire protection standard focused on reducing flame lengths to protect communities in the Defense Zone.
-- Track forest fuels treatment activities as performance measures supporting forest restoration goals.
+- Evaluate wildfire severity and functional fire processes.
 
 ---
 
@@ -20,8 +18,6 @@ The Forest Health Threshold Update builds upon advanced remote sensing datasets,
 - **Stand Density & Basal Area:** Quantify tree crowding and fuel loading to identify overstocked stands that increase wildfire hazard.
 - **Seral Stage Composition:** Assess forest age class distribution to ensure landscape resilience and biodiversity.
 - **Wildfire Severity:** Analyze fire severity patterns spatially and by management zones to inform recovery and management.
-- **WUI Wildfire Protection:** Model flame lengths under extreme fire weather to assess wildfire risk reduction around communities.
-- **Fuel Treatments:** Summarize spatial and temporal trends in thinning, mastication, and prescribed burning.
 
 ---
 

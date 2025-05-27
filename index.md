@@ -2,13 +2,13 @@
 
 ## Proposed Thresholds
 
-This section outlines the proposed new threshold indicators for evaluating forest health in the Lake Tahoe Basin. These indicators reflect current forest conditions and ecological understanding, based on best-available science and regional data. Each proposed metric addresses a key aspect of forest structure or process that supports resilience and ecological function.
+This page outlines the proposed new threshold indicators for assessing forest health in the Lake Tahoe Basin. These indicators are intended to measure how current forest conditions compare to desired ecological standards. Grounded in the best available science and regional data, each indicator represents a key component of forest structure or ecological process that contributes to forest resilience and function. Together, they provide a framework for evaluating progress toward forest health goals.
 
 ---
 
 ### 🌲 Stand Density
 
-The table below presents the proposed threshold for **Stand Density**, reported in **Trees Per Acre (TPA)** and **Basal Area (BA in ft²/acre)**. These values help evaluate forest structure and crowding, which are critical for understanding fire hazard and forest health. Overstocked forests tend to have greater competition for water and nutrients, and higher risk of severe wildfire.
+The table below presents the proposed threshold for **Stand Density**, reported in **Trees Per Acre (TPA)** and **Basal Area (BA in ft²/acre)**. These values help evaluate forest structure and crowding, which are critical for understanding forest health. Overstocked forests tend to have greater competition for water and nutrients, and higher risk of severe wildfire.
 
 <iframe src="DataVisualizations/StandDensity_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
@@ -20,9 +20,9 @@ The chart shows the distribution of tree density and basal area across the Basin
 
 ---
 
-### 🌳 Composition & Seral Stage
+### 🌳 Composition
 
-The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and fire.
+The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and catastrophic fire.
 
 <iframe src="DataVisualizations/CompositionAge_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
@@ -98,7 +98,7 @@ The map shows the spatial extent of past fuel treatments, which can be compared 
 
 ## Data Sources
 
-The forest health metrics presented here rely heavily on spatial datasets compiled and maintained by the California Wildfire Taskforce's Regional Resource Kits project. These datasets include high-resolution vegetation composition, stand structure, and fire severity layers developed through advanced remote sensing and ecological modeling. The Regional Resource Kits provide a comprehensive foundation for assessing forest conditions across the Lake Tahoe Basin and support local restoration and fire resilience planning.
+The forest health metrics presented here rely heavily on spatial datasets compiled and maintained by the California Wildfire Taskforce's Regional Resource Kit project. These datasets include high-resolution vegetation composition, stand structure, and fire severity layers developed through advanced remote sensing and ecological modeling. The Regional Resource Kits provide a comprehensive foundation for assessing forest conditions across the Lake Tahoe Basin and support local restoration and fire resilience planning.
 
 Learn more and access the original data sources here:  
 [Regional Resource Kits - Wildfire Task Force](https://wildfiretaskforce.org/regional-resource-kits-page/)

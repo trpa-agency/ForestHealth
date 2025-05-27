@@ -29,7 +29,7 @@ This project relies on spatial data curated by the California Tahoe Conservancy�
 
 ## How to Use
 
-- View the interactive data visualizations embedded in the [Results page](./index.md) to explore forest health indicators and treatment outcomes.
+- View the interactive data visualizations embedded in the [Results page](https://trpa-agency.github.io/ForestHealth) to explore forest health indicators and treatment outcomes.
 - Use the Jupyter notebooks for analysis and results generation:
   - `ForestHealth_ThresholdUpdate_Analysis.ipynb` — data processing and threshold calculations
   - `ForestHealth_ThresholdUpdate_Results.ipynb` — charts, maps, and summary outputs

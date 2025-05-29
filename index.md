@@ -1,4 +1,13 @@
 # Forest Health Threshold Update
+## 🔎 Navigate This Page
+
+- [Stand Density](#stand-density)
+- [Composition](#composition)
+- [WUI Wildfire Protection](#wui-fire)
+- [Functional Fire](#functional-fire)
+- [Performance Measures](#performance-measures)
+- [Data Sources](#data-sources)
+- [Methods & Results](#methods-results)
 
 ## Proposed Thresholds
 
@@ -6,13 +15,13 @@ This page outlines the proposed new threshold indicators for assessing forest he
 
 ---
 
-## Stand Density
+<h2 id="stand-density">Stand Density</h2>
 
 The table below presents the proposed threshold for **Stand Density**, reported in **Trees Per Acre (TPA)** and **Basal Area (BA in ft²/acre)**. These values help evaluate forest structure and crowding, which are critical for understanding forest health. Overstocked forests tend to have greater competition for water and nutrients, and higher risk of severe wildfire.
 
 <iframe src="DataVisualizations/StandDensity_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
-#### Map
+#### Chart
 
 The chart shows the distribution of tree density and basal area across the Basin. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.
 
@@ -24,9 +33,17 @@ The chart shows the distribution of the assessed stand density targets. Values e
 
 <iframe src="DataVisualizations/StandDensity_Map.html" width="100%" height="500" frameborder="0"></iframe>
 
+#### Questions about the map? 
+   * 
+
+### Proposed Attainment Assessment
+
+**Methods to Make a Threshold Attainment Call**
+
+
 ---
 
-## Composition
+<h2 id="composition">Composition</h2>
 
 The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and catastrophic fire.
 
@@ -114,8 +131,7 @@ Analysis of forest structure across three major forest types shows a consistent 
 | **Total**                 | ~27%           | ~126,000         | Red fir closer to target than others |
 
 ---
-
-## Wildland Urban Interface (WUI) Wildfire Protection
+<h2 id="wui-fire">Wildland Urban Interface (WUI) Wildfire Protection</h2>
 
 The Wildland Urban Interface (WUI) is where homes and communities meet wild, undeveloped lands. In the Lake Tahoe region, nearly half the area falls within the WUI, divided into the **Defense Zone** — the immediate buffer around structures and evacuation routes — and the **Threat Zone**, which surrounds the Defense Zone and focuses on reducing fire starts.
 
@@ -135,7 +151,7 @@ Wildfire risk was modeled using the **FSim Wildfire Risk Simulation Software**, 
 
 ---
 
-## Functional Fire
+<h2 id="functional-fire">Functional Fire</h2>
 
 This indicator assesses **fire severity** . The goal is to evaluate whether wildfire activity has been ecologically beneficial or harmful. Functional fire maintains ecosystem processes and structure, whereas uncharacteristically high-severity fire can degrade habitat and soil productivity.
 
@@ -155,7 +171,7 @@ The map visualizes fire severity spatially, allowing planners to assess patterns
 
 ---
 
-## Performance Measures
+<h2 id="performance-measures">Performance Meassures</h2>
 
 In addition to ecological thresholds, performance measures track **management activities** like fuel reduction. These metrics help determine whether restoration efforts are keeping pace with ecological needs and regional goals.
 
@@ -177,7 +193,7 @@ The map shows the spatial extent of past fuel treatments, which can be compared 
 
 ---
 
-## Data Sources
+<h2 id="data-sources">Data Sources</h2>
 
 The forest health metrics presented here rely heavily on spatial datasets compiled and maintained by the California Wildfire Taskforce's Regional Resource Kit project. These datasets include high-resolution vegetation composition, forest type, stand structure, and fire severity layers developed through advanced remote sensing and ecological modeling. The Regional Resource Kits provide a comprehensive foundation for assessing forest conditions across the Lake Tahoe Basin and support local restoration and fire resilience planning.
 
@@ -186,7 +202,7 @@ Learn more and access the original data sources here:
 
 ---
 
-## 📓 Methods & Results
+<h2 id="methods-results">Methods & Results</h2>
 
 All metrics were derived from high-resolution remote sensing datasets. The methodology emphasizes transparency, repeatability, and alignment with regional forest goals. Thresholds were developed based on literature review and expert input.
 

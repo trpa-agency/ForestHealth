@@ -65,16 +65,16 @@ Sum up the total possible weighted score (if all rows were "Under/Over") and com
 
 To determine how close forest conditions are to targets:
 
-1. **Assign a score** to each row:
+1. **Assign a score** 
    - If the class is "Within Range", the score is 0.
    - If the class is "Under Represented" or "Over Represented", the score is 1.
 
-2. **Weight the score by acres** for each row:
+2. **Weight the score by acres** 
    - Multiply the class score by the number of acres to get the weighted score.
 
 3. **Calculate totals**:
    - Add up all weighted scores to get the total weighted score.
-   - Also calculate the maximum possible score by assuming every row had a score of 2.
+   - Also calculate the maximum possible score by assuming every class had a score of 1.
 
 4. **Normalize**:
    - Compute the attainment ratio using the formula:  

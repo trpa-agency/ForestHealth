@@ -6,7 +6,7 @@ This page outlines the proposed new threshold indicators for assessing forest he
 
 ---
 
-### Stand Density
+## Stand Density
 
 The table below presents the proposed threshold for **Stand Density**, reported in **Trees Per Acre (TPA)** and **Basal Area (BA in ft²/acre)**. These values help evaluate forest structure and crowding, which are critical for understanding forest health. Overstocked forests tend to have greater competition for water and nutrients, and higher risk of severe wildfire.
 
@@ -20,7 +20,7 @@ The chart shows the distribution of tree density and basal area across the Basin
 
 ---
 
-### Composition
+## Composition
 
 The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and catastrophic fire.
 
@@ -111,7 +111,7 @@ Analysis of forest structure across three major forest types shows a consistent 
 
 ---
 
-### Wildland Urban Interface (WUI) Wildfire Protection
+## Wildland Urban Interface (WUI) Wildfire Protection
 
 The Wildland Urban Interface (WUI) is where homes and communities meet wild, undeveloped lands. In the Lake Tahoe region, nearly half the area falls within the WUI, divided into the **Defense Zone** — the immediate buffer around structures and evacuation routes — and the **Threat Zone**, which surrounds the Defense Zone and focuses on reducing fire starts.
 
@@ -131,7 +131,7 @@ Wildfire risk was modeled using the **FSim Wildfire Risk Simulation Software**, 
 
 ---
 
-### Functional Fire
+## Functional Fire
 
 This indicator assesses **fire severity** . The goal is to evaluate whether wildfire activity has been ecologically beneficial or harmful. Functional fire maintains ecosystem processes and structure, whereas uncharacteristically high-severity fire can degrade habitat and soil productivity.
 

@@ -94,7 +94,7 @@ To determine how close forest conditions are to targets:
 
 ### Attainment Call: Somewhat Worse than Target
 
-Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of seral structure is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
+Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of area is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
 
 ---
 

@@ -38,7 +38,7 @@ This project relies on spatial data curated by the California Tahoe Conservancyâ
 
 ## Getting Involved
 
-Contributions and feedback are welcome! This project is part of ongoing collaborative efforts to maintain resilient forests and protect communities in the Lake Tahoe Basin. For questions or to contribute, please contact the California Tahoe Conservancy or open an issue here.
+Contributions and feedback are welcome! This project is part of ongoing collaborative efforts to maintain resilient forests and protect communities in the Lake Tahoe Basin. For questions or to contribute, please contact gis@trpa.gov or open an issue here.
 
 ---
 

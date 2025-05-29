@@ -32,6 +32,69 @@ This chart compares the current forest composition (by age class) with desired r
 
 <iframe src="DataVisualizations/CompositionAge_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
 
+### Proposed Attainment Assessment
+
+**Methods to Make a Threshold Attainment Call**
+
+#### Define scoring for each class
+Assign scores to how far each cell is from target range:
+
+| Class                   | Score |
+|------------------------|-------|
+| Within Range           | 0     |
+| Under/Over Represented | 2     |
+
+#### Weight scores by acres
+This allows you to give more weight to forest types that make up more of the basin.
+
+> **Weighted score = Class score × Acres**
+
+### Sum and normalize
+Sum up the total possible weighted score (if all rows were "Under/Over") and compare to the actual weighted score.
+
+```js
+let totalWeightedScore = 0;
+let maxPossibleScore = 0;
+rawData.forEach(row => {
+  const classScore = row.class === "Within Range" ? 0 : 2;
+  totalWeightedScore += classScore * row.acres;
+  maxPossibleScore += 2 * row.acres; // max score = if all were 2
+});
+
+const attainmentRatio = 1 - (totalWeightedScore / maxPossibleScore);
+
+
+#### Convert ratio to qualitative call
+
+Map `attainmentRatio` to final attainment category:
+
+| Attainment Ratio | Category            |
+|------------------|---------------------|
+| > 0.85           | Considerably Better |
+| 0.70 – 0.85      | Somewhat Better     |
+| 0.50 – 0.70      | On Target           |
+| 0.30 – 0.50      | Somewhat Worse      |
+| < 0.30           | Considerably Worse  |
+
+These thresholds are customizable—just make sure they’re documented in your tech memo.
+
+---
+
+### 🧾 Attainment Call: Somewhat Worse than Target
+
+Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of seral structure is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
+
+---
+
+### ✅ Optional: Visual Summary Table
+
+| Forest Type               | % Within Range | Acres Evaluated | Notes                                |
+|---------------------------|----------------|------------------|--------------------------------------|
+| Jeffrey Pine              | 1/5 (20%)      | ~40,000          | Late open under; mid closed over     |
+| Mixed Conifer / White Fir | 0/5 (0%)       | ~64,000          | Early and late both under            |
+| Red Fir                   | 3/5 (60%)      | ~22,000          | Best performance, still mid over     |
+| **Total**                 | ~27%           | ~126,000         | Red fir closer to target than others |
+
 ---
 
 ### Wildland Urban Interface (WUI) Wildfire Protection

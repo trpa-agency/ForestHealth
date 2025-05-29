@@ -12,11 +12,17 @@ The table below presents the proposed threshold for **Stand Density**, reported 
 
 <iframe src="DataVisualizations/StandDensity_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
-#### Chart
+#### Map
 
 The chart shows the distribution of tree density and basal area across the Basin. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.
 
 <iframe src="DataVisualizations/StandDensity_Chart.html" width="100%" height="500" frameborder="0"></iframe>
+
+#### Map
+
+The chart shows the distribution of the assessed stand density targets. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.
+
+<iframe src="DataVisualizations/StandDensity_Map.html" width="100%" height="500" frameborder="0"></iframe>
 
 ---
 
@@ -92,7 +98,7 @@ To determine how close forest conditions are to targets:
 
 ---
 
-### Attainment Call: Somewhat Worse than Target
+### 2023 Attainment Call: Somewhat Worse than Target
 
 Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of area is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
 

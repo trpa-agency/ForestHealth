@@ -51,7 +51,7 @@ Assign scores to how far each cell is from target range:
 | Class                  | Score |
 |------------------------|-------|
 | Within Range           | 0     |
-| Under/Over Represented | 2     |
+| Under/Over Represented | 1     |
 
 #### Weight scores by acres
 Give more weight to forest types that make up more of the basin.
@@ -65,16 +65,16 @@ Sum up the total possible weighted score (if all rows were "Under/Over") and com
 
 To determine how close forest conditions are to targets:
 
-1. **Assign a score** to each row:
+1. **Assign a score** 
    - If the class is "Within Range", the score is 0.
-   - If the class is "Under Represented" or "Over Represented", the score is 2.
+   - If the class is "Under Represented" or "Over Represented", the score is 1.
 
-2. **Weight the score by acres** for each row:
+2. **Weight the score by acres** 
    - Multiply the class score by the number of acres to get the weighted score.
 
 3. **Calculate totals**:
    - Add up all weighted scores to get the total weighted score.
-   - Also calculate the maximum possible score by assuming every row had a score of 2.
+   - Also calculate the maximum possible score by assuming every class had a score of 1.
 
 4. **Normalize**:
    - Compute the attainment ratio using the formula:  
@@ -90,13 +90,11 @@ To determine how close forest conditions are to targets:
 | 0.30 – 0.50      | Somewhat Worse      |
 | < 0.30           | Considerably Worse  |
 
-These thresholds are customizable—just make sure they’re documented in your tech memo.
-
 ---
 
 ### Attainment Call: Somewhat Worse than Target
 
-Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of seral structure is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
+Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of area is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
 
 ---
 

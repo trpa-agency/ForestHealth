@@ -35,11 +35,9 @@ The chart shows the distribution of the assessed stand density targets. Values e
 
 #### Questions about the map? 
    * 
-
 ### Proposed Attainment Assessment
 
 **Methods to Make a Threshold Attainment Call**
-
 
 ---
 
@@ -68,50 +66,15 @@ This map displays the current forest composition.
 
 **Methods to Make a Threshold Attainment Call**
 
-#### Define scoring for each class
-Assign scores to how far each cell is from target range:
+**Map the attainment ratio to a qualitative category**:
 
-| Class                  | Score |
-|------------------------|-------|
-| Within Range           | 0     |
-| Under/Over Represented | 1     |
-
-#### Weight scores by acres
-Give more weight to forest types that make up more of the basin.
-
-> **Weighted score = Class score × Acres**
-
-### Sum and normalize
-Sum up the total possible weighted score (if all rows were "Under/Over") and compare to the actual weighted score.
-
-#### Convert Ratio to Qualitative Call
-
-To determine how close forest conditions are to targets:
-
-1. **Assign a score** 
-   - If the class is "Within Range", the score is 0.
-   - If the class is "Under Represented" or "Over Represented", the score is 1.
-
-2. **Weight the score by acres** 
-   - Multiply the class score by the number of acres to get the weighted score.
-
-3. **Calculate totals**:
-   - Add up all weighted scores to get the total weighted score.
-   - Also calculate the maximum possible score by assuming every class had a score of 1.
-
-4. **Normalize**:
-   - Compute the attainment ratio using the formula:  
-     `attainment ratio = 1 - (total weighted score / maximum possible score)`
-
-5. **Map the attainment ratio to a qualitative category**:
-
-| Attainment Ratio | Category            |
+| Attainment Class | Category            |
 |------------------|---------------------|
-| > 0.85           | Considerably Better |
-| 0.70 – 0.85      | Somewhat Better     |
-| 0.50 – 0.70      | On Target           |
-| 0.30 – 0.50      | Somewhat Worse      |
-| < 0.30           | Considerably Worse  |
+|                  | Considerably Better |
+|                  | Somewhat Better     |
+|                  | On Target           |
+|                  | Somewhat Worse      |
+|                  | Considerably Worse  |
 
 ---
 
@@ -123,12 +86,12 @@ Analysis of forest structure across three major forest types shows a consistent 
 
 ### Summary Table
 
-| Forest Type               | % Within Range | Acres Evaluated | Notes                                |
+| Forest Type               | % Area within Range | Acres Evaluated | Notes                            |
 |---------------------------|----------------|------------------|--------------------------------------|
-| Jeffrey Pine              | 1/5 (20%)      | ~40,000          | Late open under; mid closed over     |
-| Mixed Conifer / White Fir | 0/5 (0%)       | ~64,000          | Early and late both under            |
-| Red Fir                   | 3/5 (60%)      | ~22,000          | Best performance, still mid over     |
-| **Total**                 | ~27%           | ~126,000         | Red fir closer to target than others |
+| Jeffrey Pine              |                | ~40,000          | Late open under; mid closed over     |
+| Mixed Conifer / White Fir |                | ~64,000          | Early and late both under            |
+| Red Fir                   |                | ~22,000          | Best performance, still mid over     |
+| **Total**                 |                | ~126,000         | Red fir closer to target than others |
 
 ---
 <h2 id="wui-fire">Wildland Urban Interface (WUI) Wildfire Protection</h2>

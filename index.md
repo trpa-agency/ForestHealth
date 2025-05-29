@@ -32,6 +32,15 @@ This chart compares the current forest composition (by age class) with desired r
 
 <iframe src="DataVisualizations/CompositionAge_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
 
+#### Map
+
+This map displays the current forest composition.
+
+<iframe src="DataVisualizations/CompositionAge_Map.html" width="100%" height="500" frameborder="0"></iframe>  
+
+#### Questions about the map? 
+   * Why is the Angora Fire not classified as Early Seral?
+
 ### Proposed Attainment Assessment
 
 **Methods to Make a Threshold Attainment Call**
@@ -39,13 +48,13 @@ This chart compares the current forest composition (by age class) with desired r
 #### Define scoring for each class
 Assign scores to how far each cell is from target range:
 
-| Class                   | Score |
+| Class                  | Score |
 |------------------------|-------|
 | Within Range           | 0     |
 | Under/Over Represented | 2     |
 
 #### Weight scores by acres
-This allows you to give more weight to forest types that make up more of the basin.
+Give more weight to forest types that make up more of the basin.
 
 > **Weighted score = Class score × Acres**
 

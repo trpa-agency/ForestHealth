@@ -52,21 +52,26 @@ This allows you to give more weight to forest types that make up more of the bas
 ### Sum and normalize
 Sum up the total possible weighted score (if all rows were "Under/Over") and compare to the actual weighted score.
 
-```js
-let totalWeightedScore = 0;
-let maxPossibleScore = 0;
-rawData.forEach(row => {
-  const classScore = row.class === "Within Range" ? 0 : 2;
-  totalWeightedScore += classScore * row.acres;
-  maxPossibleScore += 2 * row.acres; // max score = if all were 2
-});
+#### Convert Ratio to Qualitative Call
 
-const attainmentRatio = 1 - (totalWeightedScore / maxPossibleScore);
+To determine how close forest conditions are to targets:
 
+1. **Assign a score** to each row:
+   - If the class is "Within Range", the score is 0.
+   - If the class is "Under Represented" or "Over Represented", the score is 2.
 
-#### Convert ratio to qualitative call
+2. **Weight the score by acres** for each row:
+   - Multiply the class score by the number of acres to get the weighted score.
 
-Map `attainmentRatio` to final attainment category:
+3. **Calculate totals**:
+   - Add up all weighted scores to get the total weighted score.
+   - Also calculate the maximum possible score by assuming every row had a score of 2.
+
+4. **Normalize**:
+   - Compute the attainment ratio using the formula:  
+     `attainment ratio = 1 - (total weighted score / maximum possible score)`
+
+5. **Map the attainment ratio to a qualitative category**:
 
 | Attainment Ratio | Category            |
 |------------------|---------------------|
@@ -80,13 +85,13 @@ These thresholds are customizable—just make sure they’re documented in your 
 
 ---
 
-### 🧾 Attainment Call: Somewhat Worse than Target
+### Attainment Call: Somewhat Worse than Target
 
 Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of seral structure is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
 
 ---
 
-### ✅ Optional: Visual Summary Table
+### Summary Table
 
 | Forest Type               | % Within Range | Acres Evaluated | Notes                                |
 |---------------------------|----------------|------------------|--------------------------------------|

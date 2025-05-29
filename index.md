@@ -51,7 +51,7 @@ Assign scores to how far each cell is from target range:
 | Class                  | Score |
 |------------------------|-------|
 | Within Range           | 0     |
-| Under/Over Represented | 2     |
+| Under/Over Represented | 1     |
 
 #### Weight scores by acres
 Give more weight to forest types that make up more of the basin.
@@ -67,7 +67,7 @@ To determine how close forest conditions are to targets:
 
 1. **Assign a score** to each row:
    - If the class is "Within Range", the score is 0.
-   - If the class is "Under Represented" or "Over Represented", the score is 2.
+   - If the class is "Under Represented" or "Over Represented", the score is 1.
 
 2. **Weight the score by acres** for each row:
    - Multiply the class score by the number of acres to get the weighted score.
@@ -89,8 +89,6 @@ To determine how close forest conditions are to targets:
 | 0.50 – 0.70      | On Target           |
 | 0.30 – 0.50      | Somewhat Worse      |
 | < 0.30           | Considerably Worse  |
-
-These thresholds are customizable—just make sure they’re documented in your tech memo.
 
 ---
 

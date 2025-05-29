@@ -45,7 +45,7 @@ Assign scores to how far each cell is from target range:
 | Under/Over Represented | 2     |
 
 #### Weight scores by acres
-This allows you to give more weight to forest types that make up more of the basin.
+Give more weight to forest types that make up more of the basin.
 
 > **Weighted score = Class score × Acres**
 

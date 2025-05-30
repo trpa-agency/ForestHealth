@@ -34,7 +34,7 @@ The chart shows the distribution of the assessed stand density targets. Values e
 <iframe src="DataVisualizations/StandDensity_Map.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### Questions about the map? 
-   * 
+   * ?
 ### Proposed Attainment Assessment
 
 **Methods to Make a Threshold Attainment Call**

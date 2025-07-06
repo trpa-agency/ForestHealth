@@ -23,7 +23,7 @@ The Forest Health Threshold Update builds upon advanced remote sensing datasets,
 
 ## Data Sources
 
-This project relies on spatial data curated by the California Tahoe Conservancy’s Regional Resource Kits and integrates wildfire risk modeling outputs from FSim simulation software. These data products enable detailed, basin-wide assessments critical for informed forest management and fire resilience planning.
+This project relies on spatial data curated by the California Wildfire Taskforce's Regional Resource Kit. These data products enable detailed, basin-wide assessments critical for informed forest management and fire resilience planning.
 
 ---
 

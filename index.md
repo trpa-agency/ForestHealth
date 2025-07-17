@@ -27,6 +27,8 @@ The chart shows the distribution of tree density and basal area across the Basin
 
 <iframe src="DataVisualizations/StandDensity_Chart_SNRRK.html" width="100%" height="500" frameborder="0"></iframe>
 
+<iframe src="DataVisualizations/StandDensity_Chart_PercentTarget.html" width="100%" height="500" frameborder="0"></iframe>
+
 #### Map
 
 The chart shows the distribution of the assessed stand density targets. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.

@@ -27,7 +27,7 @@ The chart shows the distribution of tree density and basal area across the Basin
 
 <iframe src="DataVisualizations/StandDensity_Chart_SNRRK.html" width="100%" height="500" frameborder="0"></iframe>
 
-<iframe src="DataVisualizations/StandDensity_Chart_PercentTarget.html" width="100%" height="500" frameborder="0"></iframe>
+<iframe src="DataVisualizations/StandDensity_Chart_ForestType_PercentTarget.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### Map
 

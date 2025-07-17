@@ -47,6 +47,8 @@ The chart shows the distribution of the assessed stand density targets. Values e
 
 The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and catastrophic fire.
 
+<iframe src="DataVisualizations/CompositionAge_Table_Updated.html" width="100%" height="700" frameborder="0"></iframe>
+
 <iframe src="DataVisualizations/CompositionAge_Table.html" width="100%" height="700" frameborder="0"></iframe>
 
 #### Chart

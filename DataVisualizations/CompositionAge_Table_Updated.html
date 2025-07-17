@@ -1,78 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Forest Seral Stage AG Grid</title>
-    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css"
-    />
-    <style>
-      html,
-      body,
-      #myGrid {
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+<head>
+  <meta charset="UTF-8" />
+  <title>Forest Composition Table</title>
+
+  <!-- AG Grid styles (v31+) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/core.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/theme-alpine.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+  <style>
+    html, body, #myGrid {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="myGrid" class="ag-theme-alpine"></div>
+
+  <script>
+    const rawData = [
+      { "Forest Type": "Jeffrey Pine", "Seral Stage": "Early", "Desired % Range": "5–15%", "Classification": "Underrepresented", "Current Area %": 2.12, "Area (acres)": 863.11, "Total Area of Type (acres)": 40757.64, "Acres from Target": 1174.77 },
+      { "Forest Type": "Jeffrey Pine", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "5–10%", "Classification": "Overrepresented", "Current Area %": 28.48, "Area (acres)": 11608.57, "Total Area of Type (acres)": 40757.64, "Acres from Target": -7532.8 },
+      { "Forest Type": "Jeffrey Pine", "Seral Stage": "Mid (open canopy)", "Desired % Range": "25–30%", "Classification": "Within", "Current Area %": 27.75, "Area (acres)": 11310.56, "Total Area of Type (acres)": 40757.64, "Acres from Target": 0.0 },
+      { "Forest Type": "Jeffrey Pine", "Seral Stage": "Late (open canopy)", "Desired % Range": "40–50%", "Classification": "Underrepresented", "Current Area %": 27.28, "Area (acres)": 11118.85, "Total Area of Type (acres)": 40757.64, "Acres from Target": 5184.2 },
+      { "Forest Type": "Jeffrey Pine", "Seral Stage": "Late (closed canopy)", "Desired % Range": "5–10%", "Classification": "Overrepresented", "Current Area %": 14.37, "Area (acres)": 5856.55, "Total Area of Type (acres)": 40757.64, "Acres from Target": -1780.78 },
+      { "Forest Type": "White Fir", "Seral Stage": "Early", "Desired % Range": "10–20%", "Classification": "Underrepresented", "Current Area %": 3.45, "Area (acres)": 2213.5, "Total Area of Type (acres)": 64174.92, "Acres from Target": 4204.0 },
+      { "Forest Type": "White Fir", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "5–15%", "Classification": "Overrepresented", "Current Area %": 37.27, "Area (acres)": 23917.9, "Total Area of Type (acres)": 64174.92, "Acres from Target": -14291.66 },
+      { "Forest Type": "White Fir", "Seral Stage": "Mid (open canopy)", "Desired % Range": "15–20%", "Classification": "Overrepresented", "Current Area %": 22.73, "Area (acres)": 14589.77, "Total Area of Type (acres)": 64174.92, "Acres from Target": -1754.78 },
+      { "Forest Type": "White Fir", "Seral Stage": "Late (open canopy)", "Desired % Range": "25–35%", "Classification": "Underrepresented", "Current Area %": 19.41, "Area (acres)": 12456.78, "Total Area of Type (acres)": 64174.92, "Acres from Target": 3586.95 },
+      { "Forest Type": "White Fir", "Seral Stage": "Late (closed canopy)", "Desired % Range": "15–25%", "Classification": "Within", "Current Area %": 17.14, "Area (acres)": 10996.98, "Total Area of Type (acres)": 64174.92, "Acres from Target": 0.0 },
+      { "Forest Type": "Red Fir", "Seral Stage": "Early", "Desired % Range": "10–20%", "Classification": "Underrepresented", "Current Area %": 2.19, "Area (acres)": 491.05, "Total Area of Type (acres)": 22389.6, "Acres from Target": 1747.91 },
+      { "Forest Type": "Red Fir", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "15–25%", "Classification": "Overrepresented", "Current Area %": 36.55, "Area (acres)": 8183.02, "Total Area of Type (acres)": 22389.6, "Acres from Target": -2585.62 },
+      { "Forest Type": "Red Fir", "Seral Stage": "Mid (open canopy)", "Desired % Range": "15–25%", "Classification": "Underrepresented", "Current Area %": 12.48, "Area (acres)": 2793.72, "Total Area of Type (acres)": 22389.6, "Acres from Target": 564.72 },
+      { "Forest Type": "Red Fir", "Seral Stage": "Late (open canopy)", "Desired % Range": "30–40%", "Classification": "Underrepresented", "Current Area %": 19.33, "Area (acres)": 4327.58, "Total Area of Type (acres)": 22389.6, "Acres from Target": 2389.3 },
+      { "Forest Type": "Red Fir", "Seral Stage": "Late (closed canopy)", "Desired % Range": "20–30%", "Classification": "Within", "Current Area %": 29.45, "Area (acres)": 6594.23, "Total Area of Type (acres)": 22389.6, "Acres from Target": 0.0 }
+    ];
+
+    // Determine which rows should show the forest name (de-duplicate display)
+    const rowData = rawData.map((row, i, arr) => {
+      const showForest = i === 0 || row["Forest Type"] !== arr[i - 1]["Forest Type"];
+      return { ...row, showForest };
+    });
+
+    const columnDefs = [
+      {
+        headerName: "Forest Type",
+        field: "Forest Type",
+        cellRenderer: (params) => params.data.showForest ? params.value : ''
+      },
+      { headerName: "Seral Stage", field: "Seral Stage" },
+      { headerName: "Desired % Range", field: "Desired % Range" },
+      { headerName: "Classification", field: "Classification" },
+      {
+        headerName: "Current Area %",
+        field: "Current Area %",
+        valueFormatter: (params) => `${params.value.toFixed(2)}%`
+      },
+      {
+        headerName: "Area (acres)",
+        field: "Area (acres)",
+        valueFormatter: (params) => Math.round(params.value).toLocaleString()
+      },
+      {
+        headerName: "Total Forest Area (acres)",
+        field: "Total Area of Type (acres)",
+        valueFormatter: (params) => Math.round(params.value).toLocaleString()
+      },
+      {
+        headerName: "Acres From Target",
+        field: "Acres from Target",
+        valueFormatter: (params) => {
+          const val = Math.round(params.value);
+          return `${val > 0 ? '+' : ''}${val.toLocaleString()}`;
+        }
       }
-    </style>
-  </head>
-  <body>
-    <div id="myGrid" class="ag-theme-alpine"></div>
+    ];
 
-    <script>
-      const columnDefs = [
-        { field: "Forest Type", filter: true },
-        { field: "Seral Stage", filter: true },
-        { field: "Desired % Range" },
-        { field: "Classification" },
-        { field: "Current Area %", type: "numericColumn", valueFormatter: d => d.value.toFixed(2) + "%" },
-        { field: "Area (m²)", type: "numericColumn", valueFormatter: d => Number(d.value).toLocaleString() },
-        { field: "Area (acres)", type: "numericColumn", valueFormatter: d => d.value.toFixed(2) },
-        { field: "Total Area of Type (acres)", type: "numericColumn", valueFormatter: d => d.value.toFixed(2) },
-        { field: "Acres from Target", type: "numericColumn", valueFormatter: d => d.value.toFixed(2) }
-      ];
+    const gridOptions = {
+      columnDefs,
+      rowData,
+      defaultColDef: {
+        resizable: true,
+        sortable: true,
+        filter: true
+      }
+    };
 
-      const rowData = [
-        { "Forest Type": "Jeffrey Pine", "Seral Stage": "Early", "Desired % Range": "5–15%", "Classification": "Underrepresented", "Current Area %": 2.12, "Area (m²)": 3492900.0, "Area (acres)": 863.11, "Total Area of Type (acres)": 40757.64, "Acres from Target": 1174.77 },
-        { "Forest Type": "Jeffrey Pine", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "5–10%", "Classification": "Overrepresented", "Current Area %": 28.48, "Area (m²)": 46978200.0, "Area (acres)": 11608.57, "Total Area of Type (acres)": 40757.64, "Acres from Target": -7532.8 },
-        { "Forest Type": "Jeffrey Pine", "Seral Stage": "Mid (open canopy)", "Desired % Range": "25–30%", "Classification": "Within", "Current Area %": 27.75, "Area (m²)": 45772200.0, "Area (acres)": 11310.56, "Total Area of Type (acres)": 40757.64, "Acres from Target": 0.0 },
-        { "Forest Type": "Jeffrey Pine", "Seral Stage": "Late (open canopy)", "Desired % Range": "40–50%", "Classification": "Underrepresented", "Current Area %": 27.28, "Area (m²)": 44996400.0, "Area (acres)": 11118.85, "Total Area of Type (acres)": 40757.64, "Acres from Target": 5184.2 },
-        { "Forest Type": "Jeffrey Pine", "Seral Stage": "Late (closed canopy)", "Desired % Range": "5–10%", "Classification": "Overrepresented", "Current Area %": 14.37, "Area (m²)": 23700600.0, "Area (acres)": 5856.55, "Total Area of Type (acres)": 40757.64, "Acres from Target": -1780.78 },
-        { "Forest Type": "White Fir", "Seral Stage": "Early", "Desired % Range": "10–20%", "Classification": "Underrepresented", "Current Area %": 3.45, "Area (m²)": 8957700.0, "Area (acres)": 2213.5, "Total Area of Type (acres)": 64174.92, "Acres from Target": 4204.0 },
-        { "Forest Type": "White Fir", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "5–15%", "Classification": "Overrepresented", "Current Area %": 37.27, "Area (m²)": 96792300.0, "Area (acres)": 23917.9, "Total Area of Type (acres)": 64174.92, "Acres from Target": -14291.66 },
-        { "Forest Type": "White Fir", "Seral Stage": "Mid (open canopy)", "Desired % Range": "15–20%", "Classification": "Overrepresented", "Current Area %": 22.73, "Area (m²)": 59042700.0, "Area (acres)": 14589.77, "Total Area of Type (acres)": 64174.92, "Acres from Target": -1754.78 },
-        { "Forest Type": "White Fir", "Seral Stage": "Late (open canopy)", "Desired % Range": "25–35%", "Classification": "Underrepresented", "Current Area %": 19.41, "Area (m²)": 50410800.0, "Area (acres)": 12456.78, "Total Area of Type (acres)": 64174.92, "Acres from Target": 3586.95 },
-        { "Forest Type": "White Fir", "Seral Stage": "Late (closed canopy)", "Desired % Range": "15–25%", "Classification": "Within", "Current Area %": 17.14, "Area (m²)": 44503200.0, "Area (acres)": 10996.98, "Total Area of Type (acres)": 64174.92, "Acres from Target": 0.0 },
-        { "Forest Type": "Red Fir", "Seral Stage": "Early", "Desired % Range": "10–20%", "Classification": "Underrepresented", "Current Area %": 2.19, "Area (m²)": 1987200.0, "Area (acres)": 491.05, "Total Area of Type (acres)": 22389.6, "Acres from Target": 1747.91 },
-        { "Forest Type": "Red Fir", "Seral Stage": "Mid (closed canopy)", "Desired % Range": "15–25%", "Classification": "Overrepresented", "Current Area %": 36.55, "Area (m²)": 33115500.0, "Area (acres)": 8183.02, "Total Area of Type (acres)": 22389.6, "Acres from Target": -2585.62 },
-        { "Forest Type": "Red Fir", "Seral Stage": "Mid (open canopy)", "Desired % Range": "15–25%", "Classification": "Underrepresented", "Current Area %": 12.48, "Area (m²)": 11305800.0, "Area (acres)": 2793.72, "Total Area of Type (acres)": 22389.6, "Acres from Target": 564.72 },
-        { "Forest Type": "Red Fir", "Seral Stage": "Late (open canopy)", "Desired % Range": "30–40%", "Classification": "Underrepresented", "Current Area %": 19.33, "Area (m²)": 17513100.0, "Area (acres)": 4327.58, "Total Area of Type (acres)": 22389.6, "Acres from Target": 2389.3 },
-        { "Forest Type": "Red Fir", "Seral Stage": "Late (closed canopy)", "Desired % Range": "20–30%", "Classification": "Within", "Current Area %": 29.45, "Area (m²)": 26685900.0, "Area (acres)": 6594.23, "Total Area of Type (acres)": 22389.6, "Acres from Target": 0.0 }
-      ];
-
-      const gridOptions = {
-        columnDefs,
-        rowData,
-        defaultColDef: {
-          sortable: true,
-          resizable: true,
-        },
-        pagination: true,
-        paginationAutoPageSize: true,
-      };
-
-      document.addEventListener("DOMContentLoaded", function () {
-        const gridDiv = document.querySelector("#myGrid");
-        new agGrid.Grid(gridDiv, gridOptions);
-      });
-    </script>
-  </body>
+    document.addEventListener("DOMContentLoaded", function () {
+      const gridDiv = document.querySelector("#myGrid");
+      agGrid.createGrid(gridDiv, gridOptions);
+    });
+  </script>
+</body>
 </html>

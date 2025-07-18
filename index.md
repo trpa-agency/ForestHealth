@@ -1,5 +1,5 @@
 # Forest Health Threshold Update
-## 🔎 Navigate This Page
+## Navigate This Page
 
 - [Stand Density](#stand-density)
 - [Composition](#composition)

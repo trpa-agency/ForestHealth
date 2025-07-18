@@ -24,7 +24,7 @@
   <script>
     const columnDefs = [
       { headerName: "Forest Type", field: "forestType", pinned: "left" },
-      { headerName: "Logging (Thin Canopy)", field: "logging", type: 'numericColumn', valueFormatter: currencyFormatter },
+      { headerName: "Move Canopy from Closed to Open", field: "logging", type: 'numericColumn', valueFormatter: currencyFormatter },
       { headerName: "Move to Early Seral", field: "earlySeral", type: 'numericColumn', valueFormatter: currencyFormatter },
       { headerName: "Grow into Late Seral", field: "lateSeral", type: 'numericColumn', valueFormatter: currencyFormatter },
       { headerName: "Total Acres Needed", field: "total", type: 'numericColumn', valueFormatter: currencyFormatter },
@@ -62,7 +62,7 @@
     ];
 
     function currencyFormatter(params) {
-      return params.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return params.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
     const gridOptions = {

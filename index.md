@@ -1,5 +1,5 @@
 # Forest Health Threshold Update
-## 🔎 Navigate This Page
+## Navigate This Page
 
 - [Stand Density](#stand-density)
 - [Composition](#composition)
@@ -51,9 +51,9 @@ The seral stage metric describes the distribution of forest age classes. A resil
 
 <iframe src="DataVisualizations/CompositionAge_Table_Updated.html" width="100%" height="700" frameborder="0"></iframe>
 
----
+**Actions Needed**
 
-<iframe src="DataVisualizations/CompositionAge_Table.html" width="100%" height="700" frameborder="0"></iframe>
+<iframe src="DataVisualizations/Composition_Action_Table.htmll" width="100%" height="700" frameborder="0"></iframe>
 
 #### Chart
 

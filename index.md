@@ -53,7 +53,7 @@ The seral stage metric describes the distribution of forest age classes. A resil
 
 **Actions Needed**
 
-<iframe src="DataVisualizations/Composition_Action_Table.htmll" width="100%" height="700" frameborder="0"></iframe>
+<iframe src="DataVisualizations/Composition_Action_Table.html" width="100%" height="700" frameborder="0"></iframe>
 
 #### Chart
 

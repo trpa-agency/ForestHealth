@@ -69,6 +69,24 @@ def extract_by_mask_to_tahoe_extent(in_raster, output_name):
     )
     out_raster.save(output_name)
 
+def clip_out_urban(in_raster, output_name):
+    # make feature layer for urban areas
+    urban_areas = arcpy.MakeFeatureLayer_management(
+        "F:\\GIS\\DB_CONNECT\\Vector.sde\\sde.SDE.Planning\\sde.SDE.RegionalLandUse",
+        "urban_areas_layer"
+    )
+    
+    # clip the raster using the urban areas feature layer
+    """Clip out urban areas from the raster."""
+    arcpy.management.Clip(
+        in_raster,
+        "#",
+        output_name,
+        "F:\\GIS\\DB_CONNECT\\Vector.sde\\sde.SDE.Planning\\sde.SDE.RegionalLandUse",
+        "#",
+        "NONE",
+        "NO_MAINTAIN_EXTENT"
+        )
 
 # fucntion to add attribute table. add acres, and add category
 def add_acres_category(raster, lookup_dict):

@@ -1,26 +1,16 @@
-Forest Type,Seral Stage,Desired % Range,Classification,Current Area %,Area (m²),Area (acres)
-Jeffrey Pine,Early,5–15%,below target,2.12,3492900.0,863.0
-Jeffrey Pine,Mid (closed canopy),5–10%,above target,28.48,46978200.0,11609.0
-Jeffrey Pine,Mid (open canopy),25–30%,on target,27.75,45772200.0,11311.0
-Jeffrey Pine,Late (open canopy),45–50%,below target,27.28,44996400.0,11119.0
-Jeffrey Pine,Late (closed canopy),5–10%,above target,14.37,23700600.0,5857.0
-White Fir,Early,10–20%,below target,3.45,8957700.0,2213.0
-White Fir,Mid (closed canopy),5–15%,above target,37.27,96792300.0,23918.0
-White Fir,Mid (open canopy),10–15%,above target,22.73,59042700.0,14590.0
-White Fir,Late (open canopy),30–40%,below target,19.41,50410800.0,12457.0
-White Fir,Late (closed canopy),20–30%,below target,17.14,44503200.0,10997.0
-Red Fir,Early,10–20%,below target,2.19,1987200.0,491.0
-Red Fir,Mid (closed canopy),20–30%,above target,36.55,33115500.0,8183.0
-Red Fir,Mid (open canopy),5–15%,on target,12.48,11305800.0,2794.0
-Red Fir,Late (open canopy),15–25%,on target,19.33,17513100.0,4328.0
-Red Fir,Late (closed canopy),25–35%,on target,29.45,26685900.0,6594.0
-Sub Alpine Conifer,Early,10–20%,below target,1.32,634500.0,157.0
-Sub Alpine Conifer,Mid (closed canopy),10–20%,above target,39.26,18913500.0,4674.0
-Sub Alpine Conifer,Mid (open canopy),5–15%,on target,5.68,2736900.0,676.0
-Sub Alpine Conifer,Late (open canopy),15–25%,below target,6.32,3043800.0,752.0
-Sub Alpine Conifer,Late (closed canopy),10–20%,above target,47.42,22840200.0,5644.0
-Aspen,Early,10–20%,below target,0.88,18900.0,5.0
-Aspen,Mid (closed canopy),5–15%,above target,55.57,1194300.0,295.0
-Aspen,Mid (open canopy),10–20%,above target,31.32,673200.0,166.0
-Aspen,Late (open canopy),15–25%,below target,6.37,136800.0,34.0
-Aspen,Late (closed canopy),25–35%,below target,5.86,126000.0,31.0
+Forest Type,Seral Stage,Desired % Range,Classification,Current Area %,Area (m²),Area (acres),Total Area of Type (acres),Acres from Target
+Jeffrey Pine,Early,5–15%,Underrepresented,2.77,3223800.0,796.62,28783.45,642.55
+Jeffrey Pine,Mid (closed canopy),5–10%,Overrepresented,30.53,35561700.0,8787.49,28783.45,-5909.14
+Jeffrey Pine,Mid (open canopy),25–30%,Within,27.7,32262300.0,7972.19,28783.45,0.0
+Jeffrey Pine,Late (open canopy),40–50%,Underrepresented,25.89,30151800.0,7450.67,28783.45,4062.71
+Jeffrey Pine,Late (closed canopy),5–10%,Overrepresented,13.12,15282900.0,3776.49,28783.45,-898.14
+White Fir,Early,10–20%,Underrepresented,3.66,8927100.0,2205.93,60276.12,3821.68
+White Fir,Mid (closed canopy),5–15%,Overrepresented,37.09,90465300.0,22354.46,60276.12,-13313.04
+White Fir,Mid (open canopy),15–20%,Overrepresented,22.38,54602100.0,13492.47,60276.12,-1437.25
+White Fir,Late (open canopy),25–35%,Underrepresented,19.63,47888100.0,11833.41,60276.12,3235.62
+White Fir,Late (closed canopy),15–25%,Within,17.24,42046200.0,10389.84,60276.12,0.0
+Red Fir,Early,10–20%,Underrepresented,2.2,1987200.0,491.05,22364.92,1745.44
+Red Fir,Mid (closed canopy),15–25%,Overrepresented,36.52,33056100.0,8168.34,22364.92,-2577.11
+Red Fir,Mid (open canopy),15–25%,Underrepresented,12.48,11299500.0,2792.17,22364.92,562.57
+Red Fir,Late (open canopy),30–40%,Underrepresented,19.34,17506800.0,4326.02,22364.92,2383.45
+Red Fir,Late (closed canopy),20–30%,Within,29.45,26658000.0,6587.34,22364.92,0.0

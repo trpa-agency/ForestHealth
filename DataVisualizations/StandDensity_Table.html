@@ -30,8 +30,14 @@
 </head>
 <body>
   <!-- <h1>Forest Type Mapping and Targets</h1> -->
-  <div id="myGrid" class="ag-theme-alpine"></div>
 
+  <div id="myGrid" class="ag-theme-alpine"></div>
+  <div class="button-description-container">
+      <!-- Download CSV button -->
+      <div>
+        <button onclick="onBtnExport()" class="button-blue">Download Table</button>
+      </div>
+    </div>
   <script src="https://unpkg.com/ag-grid-community@28.2.1/dist/ag-grid-community.min.noStyle.js"></script>
   <script>
     const columnDefs = [
@@ -87,11 +93,17 @@
         filter: true
       }
     };
-
+    function onBtnExport() {
+      gridOptions.api.exportDataAsCsv({
+        fileName: 'Forest_Type_Mapping_and_Targets.csv'
+        
+      });
+    }
     document.addEventListener('DOMContentLoaded', () => {
       const eGridDiv = document.querySelector('#myGrid');
       new agGrid.Grid(eGridDiv, gridOptions);
     });
   </script>
+
 </body>
 </html>

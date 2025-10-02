@@ -4,27 +4,57 @@
   <meta charset="UTF-8">
   <title>Forest Type Mapping and Targets</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link 
-    rel="stylesheet" 
-    href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-grid.css"
-  />
-  <link 
-    rel="stylesheet" 
-    href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-theme-alpine.css"
-  />
+
+  <!-- AG Grid -->
+  <link rel="stylesheet" href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-grid.css" />
+  <link rel="stylesheet" href="https://unpkg.com/ag-grid-community@28.2.1/styles/ag-theme-alpine.css" />
+
   <style>
     html, body {
       height: 100%;
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: "Calder", Arial, sans-serif;
+      color: #0b1f41; /* Pantone 282 C navy */
+      background: #f7fafc;
     }
-    h1 {
-      text-align: center;
-      margin: 1rem;
-    }
+
     #myGrid {
       height: 85vh;
       width: 100%;
+    }
+
+    /* Branded Alpine overrides */
+    .ag-theme-alpine {
+      --ag-font-family: "Calder", Arial, sans-serif;
+      --ag-font-size: 14px;
+      --ag-header-height: 44px;
+      --ag-row-height: 44px;
+
+      --ag-foreground-color: #0b1f41;
+      --ag-background-color: #ffffff;
+      --ag-border-color: #e2e8f0;
+
+      --ag-header-background-color: #0b1f41;   /* navy */
+      --ag-header-foreground-color: #ffffff;   /* white text */
+      --ag-header-column-separator-color: rgba(255,255,255,0.25);
+
+      --ag-selected-row-background-color: #e6f4ea; /* light green tint */
+      --ag-row-hover-color: #eaf4fb;               /* light blue tint */
+      --ag-odd-row-background-color: #f7fbff;      /* subtle stripe */
+
+      --ag-accent-color: #007dc3;   /* blue */
+    }
+
+    .ag-theme-alpine .ag-header-cell-label {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* Right-align numeric columns */
+    .ag-theme-alpine .ag-cell[data-col-id$="Stems"],
+    .ag-theme-alpine .ag-cell[data-col-id$="BA"] {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
@@ -42,13 +72,13 @@
   <script>
     const columnDefs = [
       { headerName: "Forest Type", field: "forest", flex: 2 },
-      { headerName: "WHRTYPE Codes", field: "codes", flex: 1 },
-      { headerName: "Early Stems", field: "earlyStems", flex: 1 },
-      { headerName: "Mid Stems", field: "midStems", flex: 1 },
-      { headerName: "Late Stems", field: "lateStems", flex: 1 },
-      { headerName: "Early BA", field: "earlyBA", flex: 1 },
-      { headerName: "Mid BA", field: "midBA", flex: 1 },
-      { headerName: "Late BA", field: "lateBA", flex: 1 }
+      // { headerName: "", field: "codes", flex: 1 },
+      { headerName: "Early Seral Trees Per Acre", field: "earlyStems", flex: 1 },
+      { headerName: "Mid Seral Trees Per Acre", field: "midStems", flex: 1 },
+      { headerName: "Late Seral Trees Per Acre", field: "lateStems", flex: 1 },
+      { headerName: "Early Seral Basal Area", field: "earlyBA", flex: 1 },
+      { headerName: "Mid Seral Basal Area", field: "midBA", flex: 1 },
+      { headerName: "Late Seral Basal Area", field: "lateBA", flex: 1 }
     ];
 
     const rowData = [
@@ -89,8 +119,8 @@
       rowData,
       defaultColDef: {
         sortable: true,
-        resizable: true,
-        filter: true
+        resizable: true
+        // filter removed
       }
     };
     function onBtnExport() {

@@ -20,7 +20,9 @@
 </head>
 <body>
   <div id="myGrid" class="ag-theme-alpine"></div>
-
+  <div id="controls">
+    <button onclick="onBtnExport()">Download CSV</button>
+  </div>
   <script>
     const rawData = [
       { "Forest Type": "Jeffrey Pine", "Seral Stage": "Early", "Desired % Range": "5–15%", "Classification": "Underrepresented", "Current Area %": 2.12, "Area (acres)": 863.11, "Total Area of Type (acres)": 40757.64, "Acres from Target": 1174.77 },
@@ -89,6 +91,12 @@
         filter: true
       }
     };
+    // Export CSV with custom filename
+    function onBtnExport() {
+      gridOptions.api.exportDataAsCsv({
+        fileName: 'composition_age_targets.csv'
+      });
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
       const gridDiv = document.querySelector("#myGrid");

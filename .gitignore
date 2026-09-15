@@ -4,3 +4,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
+# Secrets
+.env
+
+# Editor / tooling noise
+debug.log
+
+# Large regenerable outputs (not referenced by index.md or any StoryMap)
+DataVisualizations/CompositionAge_Chart_Ecobject.html

@@ -149,49 +149,20 @@ def raster_to_df(raster_path, band=1):
     df["Cols"] = cols
     return df
 
-def classify_snrrk_tpa(row):
-    veg = row['TRPA_VegType']
-    sd = row['StandDensity']
-    if veg == "Yellow Pine Forest":
-        return "Within Target" if sd < 60 else "Out of Target"
-    # elif veg == "Sierra Mixed Conifer Forest":
-    #     return "In Target" if sd < 55 else "Out of Target"
-    elif veg == "Red Fir Forest":
-        return "Within Target" if sd < 80 else "Out of Target"
-    elif veg == "Subalpine Forest":
-        return "Within Target" if sd < 140 else "Out of Target"
-    else:
-        return "Unknown"
-    
-def classify_ecobject_tpa(row):
-    veg = row['TRPA_VegType']
-    sd = row['pTree_Count_acre']
-    
-    # Handle NA values explicitly
-    if pd.isna(veg) or pd.isna(sd):
-        return "Unknown"
-    
-    if veg == "Yellow Pine Forest":
-        return "Within Target" if sd < 60 else "Out of Target"
-    # elif veg == "Sierra Mixed Conifer Forest":
-    #     return "In Target" if sd < 55 else "Out of Target"
-    elif veg == "Red Fir Forest":
-        return "Within Target" if sd < 80 else "Out of Target"
-    elif veg == "Subalpine Forest":
-        return "Within Target" if sd < 140 else "Out of Target"
-    else:
-        return "Unknown"
-
 ## From CR DASHBOARD ##
 
 # Gets spatially enabled dataframe from TRPA server
 def get_fs_data_spatial(service_url):
+    from arcgis.features import FeatureLayer
+
     feature_layer = FeatureLayer(service_url)
     query_result = feature_layer.query().sdf
     return query_result
 
 # Gets data from the TRPA server
 def get_fs_data(service_url):
+    from arcgis.features import FeatureLayer
+
     feature_layer = FeatureLayer(service_url)
     query_result = feature_layer.query()
     # Convert the query result to a list of dictionaries
@@ -342,126 +313,3 @@ def plot_forest_fuel(df):
         ),
     )
 
-
-def get_old_growth_forest():
-    data = get_fs_data(
-        "https://maps.trpa.org/server/rest/services/Vegetation_Late_Seral/FeatureServer/0"
-    )
-    # df = data.groupby(["SeralStage","SpatialVar"]).agg({"Acres": "sum"}).reset_index()
-    df = data[["SeralStage", "SpatialVar", "TRPA_VegType", "Acres"]]
-    return df
-
-
-def plot_old_growth_forest(df):
-    seral = df.groupby("SeralStage").agg({"Acres": "sum"}).reset_index()
-    stackedbar(
-        seral,
-        path_html="html/2.1.b_OldGrowthForest_SeralStage.html",
-        div_id="2.1.b_OldGrowthForest_SeralStage",
-        x="SeralStage",
-        y="Acres",
-        facet=None,
-        color=None,
-        color_sequence=["#208385"],
-        orders=None,
-        y_title="Acres",
-        x_title="Seral Stage",
-        custom_data=["SeralStage"],
-        hovertemplate="<br>".join(["<b>%{y:,.0f}</b> acres of", "<i>%{customdata[0]}</i> forest"])
-        + "<extra></extra>",
-        hovermode="x unified",
-        orientation=None,
-        format=",.0f",
-    )
-    structure = df.groupby("SpatialVar").agg({"Acres": "sum"}).reset_index()
-    stackedbar(
-        structure,
-        path_html="html/2.1.b_OldGrowthForest_Structure.html",
-        div_id="2.1.b_OldGrowthForest_Structure",
-        x="SpatialVar",
-        y="Acres",
-        facet=None,
-        color=None,
-        color_sequence=["#208385"],
-        orders=None,
-        y_title="Acres",
-        x_title="Structure",
-        custom_data=["SpatialVar"],
-        hovertemplate="<br>".join(
-            ["<b>%{y:,.0f}</b> acres of", "<i>%{customdata[0]}</i> old growth forest"]
-        )
-        + "<extra></extra>",
-        hovermode="x unified",
-        orientation=None,
-        format=",.0f",
-    )
-    species = df.groupby("TRPA_VegType").agg({"Acres": "sum"}).reset_index()
-    stackedbar(
-        species,
-        path_html="html/2.1.b_OldGrowthForest_Species.html",
-        div_id="2.1.b_OldGrowthForest_Species",
-        x="TRPA_VegType",
-        y="Acres",
-        facet=None,
-        color=None,
-        color_sequence=["#208385"],
-        orders=None,
-        y_title="Acres",
-        x_title="Vegetation Type",
-        custom_data=["TRPA_VegType"],
-        hovertemplate="<br>".join(
-            ["<b>%{y:,.0f}</b> acres of", "<i>%{customdata[0]}</i> old growth forest"]
-        )
-        + "<extra></extra>",
-        hovermode="x unified",
-        orientation=None,
-        format=",.0f",
-    )
-
-def get_probability_of_high_severity_fire():
-    highseverity = get_fs_data_spatial(
-        "https://maps.trpa.org/server/rest/services/LTinfo_Climate_Resilience_Dashboard/MapServer/129"
-    )
-    df = highseverity.groupby(["Name", "gridcode"])["Acres"].sum().reset_index()
-    df["Probability"] = np.where(
-        df["gridcode"] == 1, "High Severity Fire", "Low to Moderate Severity Fire"
-    )
-
-    # standardize values to "Wilderness"
-    df.loc[
-        df["Name"].isin(
-            ["Desolation Wilderness", "Mt. Rose Wilderness", "Granite Chief Wilderness"]
-        )
-    ] = "Wilderness"
-
-    total = df.groupby("Name")["Acres"].sum().reset_index()
-
-    df = df.merge(total, on="Name")
-    df["Share"] = df["Acres_x"] / df["Acres_y"]
-    df = df.rename(
-        columns={"Name": "Forest Management Zone", "Acres_x": "Acres", "Acres_y": "Total"}
-    )
-    return df
-
-def plot_probability_of_high_severity_fire(df):
-    stackedbar(
-        df,
-        path_html="html/2.1.c_Probability_of_High_Severity_Fire.html",
-        div_id="2.1.c_Probability_of_High_Severity_Fire",
-        x="Forest Management Zone",
-        y="Share",
-        facet=None,
-        color="Probability",
-        color_sequence=["#208385", "#FCB42C"],
-        orders=None,
-        y_title="",
-        x_title="Forest Management Zone",
-        custom_data=["Probability"],
-        hovertemplate="<br>".join(
-            ["<b>%{y:.0%}</b> of the forested area is", "likely to burn as <i>%{customdata[0]}</i>"]
-        )
-        + "<extra></extra>",
-        hovermode="x unified",
-        orientation=None,
-        format=".0%",
-    )

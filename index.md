@@ -1,29 +1,133 @@
-# Forest Health Threshold Update
+# Forest Health Threshold Standards Update
+
 ## Navigate This Page
 
+- [Seral Stage and Canopy Cover](#seral-stage)
 - [Stand Density](#stand-density)
-- [Composition](#composition)
-- [WUI Wildfire Protection](#wui-fire)
-- [Functional Fire](#functional-fire)
+- [WUI Defense Zone Fire Dynamics](#wui-fire)
+- [Landscape Fire Dynamics](#landscape-fire)
+- [Subalpine Conifer](#subalpine-conifer)
 - [Performance Measures](#performance-measures)
 - [Data Sources](#data-sources)
-- [Methods & Results](#methods-results)
+- [Methods and Results](#methods-results)
 
-## Proposed Thresholds
+## Proposed Threshold Standards
 
-This page outlines the proposed new threshold indicators for assessing forest health in the Lake Tahoe Basin. These indicators are intended to measure how current forest conditions compare to desired ecological standards. Grounded in the best available science and regional data, each indicator represents a key component of forest structure or ecological process that contributes to forest resilience and function. Together, they provide a framework for evaluating progress toward forest health goals.
+This page presents the proposed threshold standards for assessing forest health in the Lake
+Tahoe Basin. Each standard measures how current forest conditions compare to desired
+ecological conditions. Grounded in the best available science and regional data, each one
+represents a key component of forest structure or ecological process that contributes to
+forest resilience and function.
+
+Five standards are proposed under the Vegetation Preservation threshold category. Four of
+the five are currently out of attainment.
+
+| Standard | Target | Current condition | Status |
+|---|---|---|---|
+| Seral Stage and Canopy Cover | At least 75 percent of forested area within desired ranges | 61 percent (70,836 of 115,396 acres) | Somewhat Worse than Target |
+| Stand Density | At least 50 percent of forested area within density ranges | 28 percent (32,311 of 115,396 acres) | Considerably Worse than Target |
+| WUI Defense Zone Fire Dynamics | Surface fire predicted across at least 90 percent of the zone | 62 percent (28,045 of 44,920 acres) | Considerably Worse than Target |
+| Landscape Fire Dynamics | High-severity patches of 200 acres or more on less than five percent of the assessed area | 8.9 percent (14,176 of 157,843 acres) | Considerably Worse than Target |
+| Subalpine Conifer | Protection from degradation | Approximately 13,350 acres, protections in place | Implemented |
+
+Figures on this page are drawn from the Forest Health Threshold Standards report, which is
+the authoritative source. The assessment reflects a 2023 data vintage covering disturbance
+through 2022, so recent treatments are not reflected.
+
+> **Note on the seral stage visualizations below.** The seral stage tables and charts on
+> this page were generated from an earlier analysis run and are being regenerated. They use
+> a larger assessed area than the report, 127,322 acres rather than 115,396, and they carry
+> a canopy class labeling error in which the open and closed canopy classes are transposed
+> for the mid and late seral stages. Cite the report figures in the table above, not the
+> embedded tables, until this notice is removed.
+
+---
+
+<h2 id="seral-stage">Seral Stage and Canopy Cover</h2>
+
+**Proposed standard:** Achieve and maintain at least 75 percent of the forested area in the
+Tahoe Basin within the desired ranges for dominant seral stage and canopy cover.
+
+Seral stage describes the developmental phase of a forest, from young regeneration through
+mature, large trees. Canopy cover measures the share of the forest floor shaded by tree
+crowns. A resilient landscape contains a mix of early-, mid-, and late-seral forests, along
+with a balance of open and closed canopies. This diversity supports biodiversity,
+regeneration, and adaptation to disturbance. Uniformly aging forests, or dominance by a
+single stage, reduce resilience and increase vulnerability to pests and severe fire.
+
+### How the classes are defined
+
+- Seral stage follows Quadratic Mean Diameter breaks: early is zero to five inches, mid is
+  five to 25 inches, and late is greater than 25 inches.
+- Canopy cover is the vertical projection of tree crowns, not canopy closure.
+- The open versus closed cutoff is 40 percent canopy cover for Jeffrey pine and 50 percent
+  for Sierra mixed conifer and red fir.
+
+### Desired ranges
+
+| Forest type | Early | Mid open | Mid closed | Late open | Late closed |
+|---|---|---|---|---|---|
+| Jeffrey pine | 5–15% | 25–30% | 5–10% | 40–50% | 5–10% |
+| Sierra mixed conifer | 10–20% | 15–20% | 5–15% | 25–35% | 15–25% |
+| Red fir | 10–20% | 15–25% | 15–25% | 30–40% | 20–30% |
+
+<iframe src="DataVisualizations/CompositionAge_Table_Updated.html" width="100%" height="700" frameborder="0"></iframe>
+
+**Actions needed**
+
+<iframe src="DataVisualizations/Composition_Action_Table.html" width="100%" height="700" frameborder="0"></iframe>
+
+#### Chart
+
+This chart compares current forest composition by age class with desired reference
+conditions. It helps identify where recruitment of younger forests or retention of older
+stands is lacking.
+
+<iframe src="DataVisualizations/CompositionAge_Chart.html" width="100%" height="500" frameborder="0"></iframe>
+
+#### Map
+
+This map displays the current forest composition.
+
+<iframe src="DataVisualizations/CompositionAge_Map.html" width="100%" height="500" frameborder="0"></iframe>
+
+### 2023 attainment call: Somewhat Worse than Target
+
+Analysis across the three major forest types shows a consistent underrepresentation of early
+and late open seral stages, with mid-seral stages overrepresented. Weighted across the
+basin, 61 percent of the assessed area falls within desired ranges, against a target of 75
+percent. Reaching attainment requires a minimum of 15,711 additional acres to transition
+into their desired developmental stages.
 
 ---
 
 <h2 id="stand-density">Stand Density</h2>
 
-The table below presents the proposed threshold for **Stand Density**, reported in **Trees Per Acre (TPA)** and **Basal Area (BA in ft²/acre)**. These values help evaluate forest structure and crowding, which are critical for understanding forest health. Overstocked forests tend to have greater competition for water and nutrients, and higher risk of severe wildfire.
+**Proposed standard:** Achieve and maintain at least 50 percent of the forested area in the
+Tahoe Basin within the structural ranges below.
+
+Stand density measures how many trees grow within a given area, reported as trees per acre,
+and the average size of those trees, reported as basal area in square feet per acre. After a
+century of fire suppression, Tahoe's forests are far denser than they were historically,
+which creates heavy fuel loads and leaves trees stressed and more vulnerable to drought,
+insects, and disease.
+
+These values are maximums. A stand is in attainment at or below the target and is considered
+overstocked above it.
+
+| Forest type | Early TPA | Early BA | Mid TPA | Mid BA | Late TPA | Late BA |
+|---|---|---|---|---|---|---|
+| Jeffrey pine | 200 | 30 | 70 | 80 | 55 | 100 |
+| Sierra mixed conifer | 300 | 40 | 90 | 130 | 75 | 180 |
+| Red fir | 300 | 50 | 100 | 175 | 80 | 250 |
 
 <iframe src="DataVisualizations/StandDensity_Table.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### Chart
 
-The chart shows the distribution of tree density and basal area across the Basin. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.
+These charts show the distribution of tree density and basal area across the basin. Values
+exceeding the proposed targets indicate areas where mechanical thinning, prescribed fire, or
+other treatments may be necessary.
 
 <iframe src="DataVisualizations/StandDensity_Chart_SNRRK.html" width="100%" height="500" frameborder="0"></iframe>
 
@@ -31,156 +135,204 @@ The chart shows the distribution of tree density and basal area across the Basin
 
 #### Map
 
-The chart shows the distribution of the assessed stand density targets. Values exceeding the proposed thresholds suggest areas where mechanical thinning, prescribed fire, or other treatments may be necessary to reduce fire risk and promote resilience.
-
 <iframe src="DataVisualizations/StandDensity_Map.html" width="100%" height="500" frameborder="0"></iframe>
 
-#### Questions about the map? 
-   * ?
-### Proposed Attainment Assessment
+### 2023 attainment call: Considerably Worse than Target
 
-**Methods to Make a Threshold Attainment Call**
-
----
-
-<h2 id="composition">Composition</h2>
-
-The seral stage metric describes the distribution of forest age classes. A resilient landscape contains a mix of early-, mid-, and late-seral forests, supporting biodiversity, regeneration, and adaptation to disturbance. Uniformly aging forests or dominance by a single stage can reduce ecological resilience and increase vulnerability to pests and catastrophic fire.
+Of the assessed forest, 72 percent (83,085 of 115,396 acres) exceeds the proposed density
+targets and is considered overstocked. Only 32,311 acres currently meet the targets. To
+reach the 50 percent attainment goal, at least 57,698 acres must meet the density targets,
+so the basin has achieved 56 percent of the acreage required.
 
 ---
 
-<iframe src="DataVisualizations/CompositionAge_Table_Updated.html" width="100%" height="700" frameborder="0"></iframe>
+<h2 id="wui-fire">Wildland Urban Interface Defense Zone Fire Dynamics</h2>
 
-**Actions Needed**
+**Proposed standard:** Manage forest and fuel conditions so that surface fire is the
+predicted fire behavior in at least 90 percent of the wildland-urban interface defense zone
+under 90th percentile fire weather conditions.
 
-<iframe src="DataVisualizations/Composition_Action_Table.html" width="100%" height="700" frameborder="0"></iframe>
+The Wildland Urban Interface is where homes and communities meet wild, undeveloped lands.
+Nearly half of the Lake Tahoe region falls within the WUI, divided into the Defense Zone,
+the immediate buffer around structures and evacuation routes, and the Threat Zone, which
+surrounds it. The Defense Zone extends approximately 0.25 miles from community edges.
+
+The standard is expressed operationally as flame lengths of four feet or less. Below four
+feet, crews can engage a fire directly using hand tools; above it, suppression generally
+requires heavy equipment or aerial support. In the Tahoe Basin, 90th percentile fire weather
+is defined as days with 85-degree temperatures, five percent relative humidity, and
+25-mile-per-hour winds.
+
+Although not part of the standard itself, management should also ensure that areas exceeding
+four-foot flame lengths are well distributed, under one acre in patch size, and not within
+100 feet of structures or critical infrastructure.
+
+### 2023 attainment call: Considerably Worse than Target
+
+Modeling indicates that 62 percent of the wildland area within the Defense Zone (28,045 of
+44,920 acres) is predicted to burn as surface fire, against a target of 90 percent (40,428
+acres). High hazard fire behavior, which exceeds the limits of manual suppression, is
+predicted for 26 percent (11,848 acres) of the zone.
+
+---
+
+<h2 id="landscape-fire">Landscape Fire Dynamics</h2>
+
+**Proposed standard:** Limit the area of modeled high-severity fire patches of 200 acres or
+greater to less than five percent of the landscape outside of urban areas and designated
+wilderness, under 90th percentile fire weather conditions.
+
+Outside the Defense Zone, the management goal shifts from community wildfire protection to
+ecological integrity and pyrodiversity. High-severity fire patches, where more than 95
+percent of the basal area is killed, are of particular concern when they become large,
+because they eliminate seed sources and can permanently convert forest stands to shrub
+fields. Natural regeneration typically fails when the distance to a live seed tree exceeds
+approximately 120 meters. By allowing patches up to 200 acres, the standard acknowledges
+that some high-severity fire supports habitat diversity while setting a ceiling to prevent
+landscape-scale ecological degradation.
 
 #### Chart
 
-This chart compares the current forest composition (by age class) with desired reference conditions. It helps identify where recruitment of younger forests or retention of older stands may be lacking.
+This chart shows the proportion of burned area by severity category within each management
+zone.
 
-<iframe src="DataVisualizations/CompositionAge_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Chart.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### Map
 
-This map displays the current forest composition.
+The map visualizes fire severity spatially, allowing planners to assess patterns and
+identify areas where ecological fire may have been lost or maintained.
 
-<iframe src="DataVisualizations/CompositionAge_Map.html" width="100%" height="500" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FireSeverityByManagementZone_Map.html" width="100%" height="750" frameborder="0"></iframe>
 
-#### Questions about the map? 
-   * Why is the Angora Fire not classified as Early Seral?
+### 2023 attainment call: Considerably Worse than Target
 
-### Proposed Attainment Assessment
+Currently 8.9 percent of the assessed area (14,176 of 157,843 acres) is at risk of
+high-severity fire patches exceeding 200 acres, against a goal of five percent or less
+(7,892 acres). The area at risk exceeds the goal by 6,284 acres, so meeting the standard
+requires reducing the current high-severity hazard footprint by approximately 44 percent.
 
-**Methods to Make a Threshold Attainment Call**
-
-**Map the attainment ratio to a qualitative category**:
-
-| Attainment Class | Category            |
-|------------------|---------------------|
-|                  | Considerably Better |
-|                  | Somewhat Better     |
-|                  | On Target           |
-|                  | Somewhat Worse      |
-|                  | Considerably Worse  |
+High-severity hazard is concentrated in lower-elevation canyons on the West Shore and on the
+west- and south-facing slopes of the South Shore. The 2021 Caldor Fire validated this
+modeling: roughly 5,000 acres burned in large, high-severity patches that closely aligned
+with predicted hazard outputs.
 
 ---
 
-### 2023 Attainment Call: Somewhat Worse than Target
+<h2 id="subalpine-conifer">Subalpine Conifer</h2>
 
-Analysis of forest structure across three major forest types shows a consistent underrepresentation of early and late open seral stages. Overrepresented mid-closed canopy stages dominate, especially in Jeffrey Pine and Mixed Conifer types. Weighted across the basin, only ~55% of area is within desired conditions, resulting in a **“Somewhat Worse than Target”** call.
+**Proposed standard:** Subalpine conifer communities shall be protected from degradation to
+maintain their ecological integrity, species composition, natural forest structure, and
+long-term resilience. Projects and activities within these communities may include
+restoration or management practices that support their continued health and persistence.
 
----
+The subalpine zone occupies the high elevations of the basin, generally above 8,500 feet,
+and is characterized by hardy, slow-growing species such as whitebark pine, mountain
+hemlock, and mountain mahogany. Unlike lower-elevation forests, these communities were
+rarely logged and historically experienced infrequent fire, so they remain largely within
+their natural range of variation and do not require the broad-scale density reduction
+mandated elsewhere.
 
-### Summary Table
+This standard establishes a non-degradation policy while still permitting targeted
+restoration. Whitebark pine is now federally listed as Threatened, and the standard adds
+comparable protection within the TRPA threshold system while supporting restoration such as
+seed collection and planting of rust-resistant seedlings.
 
-| Forest Type               | % Area within Range | Acres Evaluated | Notes                            |
-|---------------------------|----------------|------------------|--------------------------------------|
-| Jeffrey Pine              |                | ~40,000          | Late open under; mid closed over     |
-| Mixed Conifer / White Fir |                | ~64,000          | Early and late both under            |
-| Red Fir                   |                | ~22,000          | Best performance, still mid over     |
-| **Total**                 |                | ~126,000         | Red fir closer to target than others |
+### 2023 attainment call: Implemented
 
----
-<h2 id="wui-fire">Wildland Urban Interface (WUI) Wildfire Protection</h2>
+The region is in attainment with this non-degradation standard. Regulations and land
+management plans are in place to protect the ecological integrity of subalpine conifer
+communities, which occupy approximately 13,350 acres of the basin.
 
-The Wildland Urban Interface (WUI) is where homes and communities meet wild, undeveloped lands. In the Lake Tahoe region, nearly half the area falls within the WUI, divided into the **Defense Zone** — the immediate buffer around structures and evacuation routes — and the **Threat Zone**, which surrounds the Defense Zone and focuses on reducing fire starts.
-
-Effective wildfire protection aims to reduce flame lengths during extreme fire weather to **4 feet or less** within the Defense Zone, allowing firefighters to suppress fires before they threaten structures.
-
-#### Proposed Standard
-
-- Predicted flame lengths under 90th percentile fire weather conditions shall be **less than 4 feet across 90% of the WUI Defense Zone**.
-- Evaluation should ensure that areas exceeding 4-foot flame lengths are:
-  - Well distributed,
-  - Patch size under 1 acre,
-  - Not within 100 feet of structures or critical infrastructure.
-
-#### Current Condition
-
-Wildfire risk was modeled using the **FSim Wildfire Risk Simulation Software**, which integrates current fuels, topography, historic weather, and fire occurrence to predict fire likelihood and intensity. These data help assess wildfire vulnerability and guide targeted fuel reduction in priority areas.
+> This standard is assessed through existing regulation rather than a spatial model. No
+> analysis for it is committed in this repository.
 
 ---
 
-<h2 id="functional-fire">Functional Fire</h2>
+<h2 id="performance-measures">Performance Measures</h2>
 
-This indicator assesses **fire severity** . The goal is to evaluate whether wildfire activity has been ecologically beneficial or harmful. Functional fire maintains ecosystem processes and structure, whereas uncharacteristically high-severity fire can degrade habitat and soil productivity.
+In addition to the ecological standards, performance measures track management activities
+such as fuel reduction. These metrics help determine whether restoration efforts are keeping
+pace with ecological needs and regional goals.
 
-**By Management Zone:**
+### Forest fuels treatments
 
 #### Chart
 
-This chart shows the proportion of burned area by severity category (low, moderate, high) within each zone. These summaries support region-specific assessments of fire impacts and recovery needs.
+This chart summarizes annual forest fuels treatment activity over time, including thinning,
+mastication, and prescribed burning. Understanding these trends informs whether management
+is occurring at sufficient pace and scale.
 
-<iframe src="DataVisualizations/FireSeverityByManagementZone_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
-
-#### Map
-
-The map visualizes fire severity spatially, allowing planners to assess patterns and identify areas where ecological fire may have been lost or maintained.
-
-<iframe src="DataVisualizations/FireSeverityByManagementZone_Map.html" width="100%" height="750" frameborder="0"></iframe>  
-
----
-
-<h2 id="performance-measures">Performance Meassures</h2>
-
-In addition to ecological thresholds, performance measures track **management activities** like fuel reduction. These metrics help determine whether restoration efforts are keeping pace with ecological needs and regional goals.
-
----
-
-### Forest Fuels Treatments
-
-#### Chart
-
-The chart summarizes annual forest fuels treatment activity over time, including thinning, mastication, and prescribed burning. Understanding these trends informs whether management is occurring at sufficient pace and scale.
-
-<iframe src="DataVisualizations/FuelTreatment_Chart.html" width="100%" height="500" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FuelTreatment_Chart.html" width="100%" height="500" frameborder="0"></iframe>
 
 #### Map
 
-The map shows the spatial extent of past fuel treatments, which can be compared with fire severity and stand density data to assess treatment effectiveness.
+The map shows the spatial extent of past fuel treatments, which can be compared with fire
+severity and stand density data to assess treatment effectiveness.
 
-<iframe src="DataVisualizations/FuelTreatment_Map.html" width="100%" height="750" frameborder="0"></iframe>  
+<iframe src="DataVisualizations/FuelTreatment_Map.html" width="100%" height="750" frameborder="0"></iframe>
 
 ---
 
 <h2 id="data-sources">Data Sources</h2>
 
-The forest health metrics presented here rely heavily on spatial datasets compiled and maintained by the California Wildfire Taskforce's Regional Resource Kit project. These datasets include high-resolution vegetation composition, forest type, stand structure, and fire severity layers developed through advanced remote sensing and ecological modeling. The Regional Resource Kits provide a comprehensive foundation for assessing forest conditions across the Lake Tahoe Basin and support local restoration and fire resilience planning.
+The forest health metrics presented here rely on spatial datasets compiled and maintained by
+the California Wildfire and Forest Resilience Task Force through the Sierra Nevada Regional
+Resource Kit. The kit uses the F3 framework, which integrates Forest Inventory and Analysis
+plot data, Forest Vegetation Simulator projections, and FastEMAP remote sensing to estimate
+current forest structure and composition. Fire hazard was modeled using Pyrologix, LLC and
+its Wildfire Exposure Simulation Tool.
 
-Learn more and access the original data sources here:  
+Forest types are defined using the California Wildlife Habitat Relationships system and
+crosswalked to TRPA vegetation types:
+
+| TRPA vegetation type | WHR types | Acres |
+|---|---|---|
+| Sierran Mixed Conifer | Sierran Mixed Conifer, Lodgepole Pine, White Fir | 70,909 |
+| Red Fir | Red Fir | 23,037 |
+| Jeffrey Pine | Jeffrey Pine, Eastside Pine, Juniper | 21,450 |
+| **Total** | | **115,396** |
+
+Assessed extents differ by standard. The forest structure standards cover 115,396 acres of
+conifer forest, excluding designated wilderness, urban land use, and non-conifer types such
+as montane chaparral, meadows, and water bodies. The WUI Defense Zone standard covers 44,920
+acres, the wildland portion of the zone outside urban land use. The Landscape Fire Dynamics
+standard covers 157,843 acres across all vegetation types and management zones, excluding
+urban areas, designated wilderness, and water.
+
+These data and methods are the best available for landscape-scale assessment, but they are
+predictive models designed for planning purposes rather than stand-specific insight.
+
+Learn more and access the original data sources here:
 [Regional Resource Kits - Wildfire Task Force](https://wildfiretaskforce.org/regional-resource-kits-page/)
 
 ---
 
-<h2 id="methods-results">Methods & Results</h2>
+<h2 id="methods-results">Methods and Results</h2>
 
-All metrics were derived from high-resolution remote sensing datasets. The methodology emphasizes transparency, repeatability, and alignment with regional forest goals. Thresholds were developed based on literature review and expert input.
+All metrics were derived from high-resolution remote sensing datasets. The methodology
+emphasizes transparency, repeatability, and alignment with regional forest goals. Thresholds
+were developed based on literature review and expert input, in partnership with the Tahoe
+Fire and Fuels Team and with peer review by the Tahoe Science Advisory Council.
 
-- 📘 **Analysis Notebook:**  
-  [ForestHealth_ThresholdUpdate_Analysis.ipynb](https://github.com/trpa-agency/ForestHealth/blob/main/ForestHealth_ThreholdUpdate_Anlaysis.ipynb)  
-  Contains the logic, thresholds, and data processing steps used to generate stand density, seral stage, and fire severity metrics.
+- **Analysis notebook:**
+  [ForestHealth_ThreholdUpdate_Analysis.ipynb](https://github.com/trpa-agency/ForestHealth/blob/main/ForestHealth_ThreholdUpdate_Analysis.ipynb)
+  Contains the logic, thresholds, and data processing steps used to generate the stand
+  density, seral stage, and fire severity metrics.
 
-- 📗 **Results Notebook:**  
-  [ForestHealth_ThresholdUpdate_Results.ipynb](https://github.com/trpa-agency/ForestHealth/blob/main/ForestHealth_ThresholdUpdate_Results.ipynb)  
-  Creates the summary charts, maps, and tables featured in this results page.
+- **Results notebook:**
+  [ForestHealth_ThresholdUpdate_Results.ipynb](https://github.com/trpa-agency/ForestHealth/blob/main/ForestHealth_ThresholdUpdate_Results.ipynb)
+  Creates the summary charts, maps, and tables featured on this page.
+
+- **Full report:**
+  [Forest Health Threshold Standards](https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc)
+
+### Known limitations
+
+Two of the five standards are not yet reproducible from this repository. The WUI Defense
+Zone results exist in the project geodatabase but are not produced by any committed code or
+stored in `output/`, and the fire severity summary values are written to a network path
+outside the repository. The seral stage visualizations are being regenerated to correct a
+canopy class labeling error and to align the assessed area with the report. Progress on
+these items is tracked in
+[thresholds/_INDEX.md](https://github.com/trpa-agency/ForestHealth/blob/main/thresholds/_INDEX.md).

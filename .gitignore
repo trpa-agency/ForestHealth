@@ -13,3 +13,6 @@ debug.log
 
 # Large regenerable outputs (not referenced by index.md or any StoryMap)
 DataVisualizations/CompositionAge_Chart_Ecobject.html
+
+# Local preview config
+.claude/

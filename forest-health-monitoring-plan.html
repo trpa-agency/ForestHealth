@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forest Health Monitoring Plan</title>
+<meta name="description" content="TRPA Forest Health Threshold Monitoring Plan, September 2026. The field plot network that lets the Basin report VP9 and VP10 from measured data.">
+<link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+:root{
+  --navy:#0B1F41; --blue:#007DC3; --green:#6EBE44; --green-d:#3E7A22; --orange:#F16022;
+  --mist:#F2F4F7; --navy-t:#E6E8EC; --blue-t:#E0F0FA; --green-t:#E8F5E0; --grey:#5A6472;
+  --white:#FFFFFF; --card-dark:#1A3860; --card-dark-line:#35598C; --text-dim:#C6CEDA;
+  --bg:#FFFFFF; --fg:#0B1F41; --card:#F2F4F7; --card-line:#F2F4F7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1F41; --fg:#F2F4F7; --card:#142B52; --card-line:#25457A; --mist:#142B52; --navy-t:#1E3A66; --blue-t:#12365B; --green-t:#15361D; --grey:#B9C2CF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1F41; --fg:#F2F4F7; --card:#142B52; --card-line:#25457A; --mist:#142B52; --navy-t:#1E3A66; --blue-t:#12365B; --green-t:#15361D; --grey:#B9C2CF;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;font-size:16px;line-height:1.5}
+h1,h2,h3{font-family:'Lexend Deca','Open Sans',sans-serif;font-weight:700;line-height:1.15;margin:0}
+.kicker{font-family:'Open Sans',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:.6rem}
+.slide{min-height:100vh;padding:clamp(24px,5vw,64px) clamp(16px,6vw,96px);display:flex;flex-direction:column;justify-content:center;scroll-snap-align:start;border-bottom:1px solid var(--navy-t)}
+.slide.dark{background:var(--navy);color:#fff}
+.slide.dark .kicker{color:var(--green)}
+.slide.dark .card{background:var(--card-dark);border:1px solid var(--card-dark-line)}
+.slide.dark .card p{color:var(--text-dim)}
+.slide h1{font-size:clamp(2rem,5vw,3.4rem);max-width:22ch}
+.slide h2{font-size:clamp(1.5rem,3.2vw,2.2rem);max-width:30ch;margin-bottom:1.4rem}
+.lede{font-size:clamp(1rem,1.4vw,1.15rem);max-width:70ch;color:var(--grey)}
+.slide.dark .lede{color:#B9C2CF}
+main{scroll-snap-type:y proximity}
+.grid{display:grid;gap:1.1rem}
+.g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+@media (max-width:900px){.g3,.g4,.g2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--card-line);border-radius:12px;padding:1.3rem 1.4rem;box-shadow:0 2px 10px rgba(11,31,65,.06)}
+.card.blue{background:var(--blue-t)} .card.green{background:var(--green-t)} .card.navy{background:var(--navy-t)}
+.stat{font-family:'Lexend Deca',sans-serif;font-size:clamp(2.2rem,4.5vw,3.2rem);font-weight:700;line-height:1;margin-bottom:.5rem}
+.stat.orange{color:var(--orange)} .stat.blue{color:var(--blue)} .stat.green{color:var(--green-d)} .stat.navy{color:var(--navy)}
+.slide.dark .stat.navy{color:#fff}
+.card h3{font-size:1.05rem;margin-bottom:.4rem}
+.card p{margin:0;font-size:.95rem;color:var(--grey)}
+.note{margin-top:1.4rem;font-size:1.02rem;max-width:80ch}
+.foot{margin-top:auto;padding-top:1.4rem;font-size:.78rem;font-style:italic;color:var(--grey)}
+.row{display:flex;gap:1rem;align-items:flex-start}
+.dot{flex:0 0 2.6rem;width:2.6rem;height:2.6rem;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.05rem}
+.dot.g{background:var(--green)} .dot.b{background:var(--blue)} .dot.o{background:var(--orange)}
+.tier{display:grid;grid-template-columns:2.6rem 1fr auto;gap:1rem;align-items:start}
+.tier .tag{font-weight:700;font-size:.9rem;white-space:nowrap}
+.tag.g{color:var(--green-d)} .tag.b{color:var(--blue)} .tag.o{color:var(--orange)}
+.chart{width:100%;height:clamp(260px,38vh,380px)}
+.rings{display:grid;grid-template-columns:minmax(220px,1fr) 1.2fr;gap:2rem;align-items:center}
+@media (max-width:900px){.rings{grid-template-columns:1fr}}
+.legend div{display:grid;grid-template-columns:1rem 1fr auto;gap:.6rem .8rem;align-items:baseline;padding:.55rem 0;border-bottom:1px solid var(--navy-t)}
+.legend .sw{width:.9rem;height:.9rem;border-radius:50%;align-self:center}
+.legend b{font-size:1rem} .legend span{font-size:.85rem;color:var(--grey);grid-column:2}
+.legend em{font-style:normal;font-weight:700}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:.6rem;position:relative;margin:1.5rem 0 1rem}
+@media (max-width:900px){.timeline{grid-template-columns:repeat(2,1fr)}}
+.timeline::before{content:"";position:absolute;left:4%;right:4%;top:2.05rem;height:3px;background:var(--navy-t)}
+.ms{text-align:center;position:relative}
+.ms .d{font-family:'Lexend Deca',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:.9rem}
+.ms .m{width:1.1rem;height:1.1rem;border-radius:50%;margin:0 auto .7rem;border:3px solid var(--bg)}
+.ms p{font-size:.85rem;margin:0;color:var(--grey)}
+.chip{display:inline-block;padding:.35rem .8rem;border-radius:6px;color:#fff;font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem}
+nav.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:5}
+nav.dots a{width:9px;height:9px;border-radius:50%;background:var(--navy-t);display:block;border:1px solid var(--grey)}
+nav.dots a.on{background:var(--blue);border-color:var(--blue)}
+@media (max-width:900px){nav.dots{display:none}}
+.hint{position:fixed;left:16px;bottom:12px;font-size:.72rem;color:var(--grey);z-index:5}
+</style>
+</head>
+<body>
+<nav class="dots" id="dots"></nav>
+<div class="hint">Arrow keys or scroll</div>
+<main id="main">
+
+<section class="slide dark" id="s1">
+  <div class="kicker">Lake Tahoe EIP &nbsp;|&nbsp; Forest Health</div>
+  <h1>Forest Health Threshold Monitoring Plan</h1>
+  <p class="lede" style="margin-top:1.2rem">Building the field plot network that lets the Basin report its forest structure thresholds from measured data instead of modeled estimates.</p>
+  <p style="margin-top:2.5rem;color:var(--green);font-weight:700">September 2026</p>
+</section>
+
+<section class="slide" id="s2">
+  <div class="kicker">The problem</div>
+  <h2>We are grading the forest on data we have never checked</h2>
+  <div class="grid g3">
+    <div class="card"><div class="stat orange">30</div><p>field plots behind the adopted 2023 baseline</p></div>
+    <div class="card"><div class="stat orange">0</div><p>of those plots on the Nevada side of the Basin</p></div>
+    <div class="card"><div class="stat blue">115,396</div><p>acres assessed from those plots</p></div>
+  </div>
+  <p class="note">The structure layers behind the thresholds are imputed from a Sierra-wide reference pool, so the Basin is not literally painted from thirty plots. <strong>But imputation accuracy is local.</strong> With no plots measured in Nevada, nothing exists on that side of the lake to tell us when a match is wrong.</p>
+  <p class="foot">Confirmed with Pat Manley, USFS PSW Region 5 Ecology Lab, September 19, 2026.</p>
+</section>
+
+<section class="slide" id="s3">
+  <div class="kicker">What we have to report</div>
+  <h2>Both forest structure thresholds are out of attainment</h2>
+  <div class="grid" style="grid-template-columns:1.6fr 1fr">
+    <div class="card" style="padding:.6rem"><div id="chartGap" class="chart"></div></div>
+    <div class="card blue">
+      <h3>Where the gaps are</h3>
+      <p><strong>VP10, Stand Density.</strong> 28 percent of the forest meets its target against a 50 percent standard. The shortfall is about 25,400 acres.</p>
+      <p style="margin-top:.9rem"><strong>VP9, Seral Stage and Canopy Cover.</strong> Roughly 37 percent of evaluated forest sits outside its desired range. Mid closed canopy is overrepresented everywhere, early seral is scarce everywhere.</p>
+    </div>
+  </div>
+  <p class="foot">Source: ForestHealth threshold analysis, output/stand_density_forest_type_attainment_new.csv. Confidence is rated moderate on status and low on trend.</p>
+</section>
+
+<section class="slide" id="s4">
+  <div class="kicker">The network</div>
+  <h2>Three hundred plots, assembled rather than purchased</h2>
+  <div class="grid g4">
+    <div class="card"><div class="stat blue">50 to 85</div><h3>New plots</h3><p>Bought under the RFP at firm unit rates</p></div>
+    <div class="card"><div class="stat green">up to 100</div><h3>MSIM conversions</h3><p>Existing monumented sites, repositioned by a TRPA crew</p></div>
+    <div class="card"><div class="stat orange">~60</div><h3>LTW plots</h3><p>Forest Service LiDAR validation plots, about ten years old</p></div>
+    <div class="card"><div class="stat navy">balance</div><h3>Burn and CSE plots</h3><p>Safford burn plots and adoptable pre-treatment plots</p></div>
+  </div>
+  <div class="card navy" style="margin-top:1.1rem"><p style="color:var(--fg);font-size:1.02rem"><strong>Three hundred is an assembly target, not a purchase.</strong> The funding buys the new plots. Everything else is already installed and is brought in by fixing what is wrong with it, which for the hundred MSIM sites is the coordinates rather than the measurements.</p></div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="kicker">The design</div>
+  <h2>Half the sample answers a question the other half cannot</h2>
+  <div class="grid g2">
+    <div class="card"><div class="row"><div class="dot g">1</div><div><div class="kicker" style="color:var(--green-d);margin-bottom:.2rem">Half 1</div><h3>Spatially balanced, not stratified</h3></div></div>
+      <p style="margin-top:.9rem">Sites spread evenly across the whole forested frame with no pre-stratification. This keeps the population definition intact as forest gains and loses ground between measurement cycles, which is what lets us report trend honestly in ten years. It is what the national inventory does, and it answers the objection our partners have raised twice.</p></div>
+    <div class="card"><div class="row"><div class="dot b">2</div><div><div class="kicker" style="margin-bottom:.2rem">Half 2</div><h3>Weighted toward where we are blind</h3></div></div>
+      <p style="margin-top:.9rem">Sites selected with unequal probability, weighted toward the structural classes carrying the most reporting uncertainty and toward aspen, riparian, and LiDAR reference types. Weighted rather than hand-picked, so every site keeps an inclusion probability and can still enter an estimate.</p></div>
+  </div>
+  <p class="note"><strong>One ranked site list, produced with the same method our partners already use, serves both this network and the biodiversity threshold now in development.</strong></p>
+  <p class="foot">Recommended by Pat Manley, September 19, 2026. Resolves the proportional versus tail-weighted question open since August 31.</p>
+</section>
+
+<section class="slide" id="s6">
+  <div class="kicker">The plot</div>
+  <h2>One plot center, four nested circles</h2>
+  <div class="rings">
+    <svg viewBox="0 0 400 400" role="img" aria-label="Four concentric sampling circles" style="width:100%;max-width:420px;margin:0 auto;display:block">
+      <circle cx="200" cy="200" r="190" fill="var(--navy-t)" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="200" cy="200" r="131" fill="var(--blue-t)" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="200" cy="200" r="72" fill="#D6EBC4" stroke="var(--bg)" stroke-width="2"/>
+      <circle cx="200" cy="200" r="17" fill="var(--orange)" stroke="var(--bg)" stroke-width="2"/>
+    </svg>
+    <div class="legend">
+      <div><span class="sw" style="background:var(--navy)"></span><b>56.4 m macroplot</b><em style="color:var(--navy)">2.47 ac</em><span>Trees 24 in and larger</span></div>
+      <div><span class="sw" style="background:var(--blue)"></span><b>58.9 ft primary plot</b><em style="color:var(--blue)">0.25 ac</em><span>All trees 4.0 in and larger</span></div>
+      <div><span class="sw" style="background:var(--green-d)"></span><b>24.0 ft subplot</b><em style="color:var(--green-d)">1/24 ac</em><span>Understory cover and fuels footprint</span></div>
+      <div><span class="sw" style="background:var(--orange)"></span><b>6.8 ft microplot</b><em style="color:var(--orange)">1/300 ac</em><span>Saplings and seedlings</span></div>
+    </div>
+  </div>
+  <p class="note">The quarter acre is exactly the national inventory macroplot radius and a standard stand exam size, and the 56.4 metre ring is the one the existing Basin sites already use. Adopted sites nest inside our design instead of needing a crosswalk.</p>
+</section>
+
+<section class="slide" id="s7">
+  <div class="kicker">The protocol</div>
+  <h2>What gets measured, and what it costs</h2>
+  <div class="grid" style="gap:.9rem">
+    <div class="card tier"><div class="dot g">1</div><div><h3>Threshold metrics</h3><p>Every tree: species, diameter, height, crown base, crown ratio, crown width, damage, decay. Plus a hundred-point canopy cover reading and site data.</p></div><div class="tag g">Every plot, base rate</div></div>
+    <div class="card tier"><div class="dot b">2</div><div><h3>Surface and ground fuels</h3><p>Four transects from plot center. Coarse and fine woody debris, duff and litter depth, and percent of each piece charred by fire.</p></div><div class="tag b">Every plot, base rate</div></div>
+    <div class="card tier"><div class="dot o">3</div><div><h3>Understory composition</h3><p>Cover by growth habit and height layer, and species at three percent cover or more. Remote sensing cannot deliver this at all.</p></div><div class="tag o">Subset, priced separately</div></div>
+  </div>
+  <p class="note">Pricing the understory separately lets us set the trade between how many plots we get and how much we learn at each one, at the moment we sign the contract rather than now.</p>
+</section>
+
+<section class="slide" id="s8">
+  <div class="kicker">Why the plot got bigger</div>
+  <h2>Small plots cannot validate remote sensing</h2>
+  <div class="grid" style="grid-template-columns:1.6fr 1fr">
+    <div class="card" style="padding:.6rem"><div id="chartSize" class="chart"></div></div>
+    <div class="card blue"><h3>Two things break a small plot</h3>
+      <p><strong>Position error.</strong> Shift a small plot four metres and it captures an almost entirely different set of LiDAR returns. Our plot keeps 86 percent of its footprint under the same shift.</p>
+      <p style="margin-top:.9rem"><strong>Crown overhang.</strong> The field rule counts a tree by where its trunk is. The LiDAR sees where its crown is. That mismatch halves every time the radius doubles.</p></div>
+  </div>
+  <p class="foot">Yang et al. 2023, Remote Sensing 15(14):3509. The 0.10 ha value is interpolated. Chirici et al. 2024 recommend against plots under 300 square metres for inventory of any kind.</p>
+</section>
+
+<section class="slide" id="s9">
+  <div class="kicker">The problem nobody had specified</div>
+  <h2>The canopy cover number is two different numbers</h2>
+  <div class="grid g2">
+    <div class="card green"><h3>What the standard means</h3><p>Draw the outline around a crown and everything inside it is cover, gaps included. This is how the threshold and the national inventory both define it.</p></div>
+    <div class="card blue"><h3>What the LiDAR measures</h3><p>A pulse that falls through a gap between branches is not a hit. The model sees through the crown that the standard treats as solid.</p></div>
+  </div>
+  <div class="card navy" style="margin-top:1.1rem"><p style="color:var(--fg);font-size:1.02rem"><strong>Attainment turns on this.</strong> VP9 splits open from closed at 50 percent cover, and 40 percent in Jeffrey pine. Field cover is systematically higher than modeled cover, and the gap is widest in the open-crowned types, which are exactly the types furthest from target. <strong>So our crews record both readings at all one hundred points on every plot. The difference stops being an unknown and becomes a number we publish.</strong></p></div>
+  <p class="foot">Ma et al. 2019 identify definitional differences as the dominant cause of disagreement between LiDAR cover products in the Sierra Nevada.</p>
+</section>
+
+<section class="slide" id="s10">
+  <div class="kicker">The money</div>
+  <h2>What the funding actually buys</h2>
+  <div class="grid" style="grid-template-columns:1.6fr 1fr">
+    <div class="card" style="padding:.6rem"><div id="chartMoney" class="chart"></div></div>
+    <div class="card"><h3>Where the money is not going</h3>
+      <p>The sampling design, the field protocol, and the data collection app are all built in house. None of them are purchased.</p>
+      <p style="margin-top:.9rem"><strong>That is the whole reason the funding reaches this many plots. The earlier version of this contract would have spent a large share of it buying a design.</strong></p></div>
+  </div>
+  <p class="foot">Assumes fixed-price mobilization and handoff tasks come off the top. Real per-plot costs are being pulled from comparable Forest Service contracts.</p>
+</section>
+
+<section class="slide" id="s11">
+  <div class="kicker">Roles</div>
+  <h2>Who does what</h2>
+  <div class="grid g3">
+    <div class="card"><span class="chip" style="background:var(--green)">TRPA</span><p>Sampling design, field protocol, Survey123 app, plot navigation packets, monumentation materials, land access coordination, and the survey-grade repositioning of the existing sites.</p></div>
+    <div class="card"><span class="chip" style="background:var(--blue)">Contractor</span><p>Installs, monuments, positions, and measures the new plots at firm unit rates, performs blind remeasurement on a subset, and delivers relocation documentation any agency can work from.</p></div>
+    <div class="card"><span class="chip" style="background:var(--orange)">Partners</span><p>Forest Service provides the existing site network, the ranked site list, and protocol review. Nobody advising on the design is bidding on the work.</p></div>
+  </div>
+  <p class="note">Doing the design in house is also what makes the network transferable. TRPA owns the protocol and the app from day one, so there is no handoff to negotiate at the end of a contract.</p>
+</section>
+
+<section class="slide" id="s12">
+  <div class="kicker">Timeline</div>
+  <h2>The schedule has no slack in it</h2>
+  <div class="timeline">
+    <div class="ms"><div class="d" style="color:var(--green-d)">Oct 16</div><div class="m" style="background:var(--green)"></div><p>Design and protocol freeze</p></div>
+    <div class="ms"><div class="d" style="color:var(--blue)">Nov 2</div><div class="m" style="background:var(--blue)"></div><p>RFP posts</p></div>
+    <div class="ms"><div class="d" style="color:var(--blue)">Dec 16</div><div class="m" style="background:var(--blue)"></div><p>Award, before the holidays</p></div>
+    <div class="ms"><div class="d" style="color:var(--blue)">Jan 4</div><div class="m" style="background:var(--blue)"></div><p>Work commences</p></div>
+    <div class="ms"><div class="d" style="color:var(--orange)">Summer</div><div class="m" style="background:var(--orange)"></div><p>2027 field season</p></div>
+    <div class="ms"><div class="d" style="color:var(--orange)">Sep 19</div><div class="m" style="background:var(--orange)"></div><p>Funds expire, 2027</p></div>
+  </div>
+  <div class="card navy"><p style="color:var(--fg);font-size:1.02rem"><strong>Award has to land before Christmas.</strong> December and January are when field contractors hire their crews for the following summer. An award in late January means bidding against everyone else for people who are already committed, and a 2027 season that starts short-handed. Every week the RFP slips past mid-November puts that at risk.</p></div>
+</section>
+
+<section class="slide dark" id="s13">
+  <div class="kicker">What we need</div>
+  <h2>Three things that can still break this</h2>
+  <div class="grid" style="gap:.9rem">
+    <div class="card row"><div class="dot g">1</div><div><h3>The existing site data</h3><p>We need the list of the hundred sites and their measurements by the end of September. How many new plots we buy depends on how many of those we can use, and the cost form cannot be written until we know.</p></div></div>
+    <div class="card row"><div class="dot b">2</div><div><h3>Field crew funding</h3><p>The repositioning work is about twelve weeks for two people. It is not something the team can absorb, and one person alone is not an option. We need to know what vehicle the funds can support before the end of October.</p></div></div>
+    <div class="card row"><div class="dot o">3</div><div><h3>Routing on time</h3><p>The package goes into approvals on October 19. It has to clear by October 30 for a November 2 posting, and that date is what protects the award before Christmas.</p></div></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  const NAVY="#0B1F41",BLUE="#007DC3",GREEN="#6EBE44",ORANGE="#F16022",GREY="#5A6472";
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme!=='light';
+  const fg = dark ? "#F2F4F7" : NAVY, grid = dark ? "#1E3A66" : "#E6E8EC";
+  const base = {font:{family:"Open Sans, system-ui, sans-serif",color:fg,size:13},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",
+    margin:{l:44,r:16,t:44,b:56},showlegend:false,
+    xaxis:{tickfont:{color:fg},showgrid:false,zeroline:false},
+    yaxis:{tickfont:{color:GREY},gridcolor:grid,zeroline:false}};
+  const cfg={displayModeBar:false,responsive:true};
+
+  Plotly.newPlot("chartGap",[{type:"bar",x:["Jeffrey pine","Sierran mixed conifer","Red fir"],y:[7,28,56],
+    marker:{color:[ORANGE,BLUE,GREEN]},text:["7%","28%","56%"],textposition:"outside",textfont:{color:fg,size:13},hovertemplate:"%{x}: %{y}%<extra></extra>"}],
+    Object.assign({},base,{title:{text:"Stand density attainment against a 50 percent standard",font:{size:14,color:fg},x:0.02},
+      yaxis:Object.assign({},base.yaxis,{range:[0,70],ticksuffix:"%"}),
+      shapes:[{type:"line",x0:-0.5,x1:2.5,y0:50,y1:50,line:{color:ORANGE,width:1.5,dash:"dot"}}],
+      annotations:[{x:-0.45,y:50,xanchor:"left",yanchor:"bottom",text:"50 percent standard",showarrow:false,font:{size:11,color:ORANGE}}]}),cfg);
+
+  Plotly.newPlot("chartSize",[{type:"bar",x:["0.04 ha<br>(subplot scale)","0.10 ha<br>(our plot)","0.25 ha","1.0 ha"],y:[18.2,12.5,10.9,10.1],
+    marker:{color:[ORANGE,GREEN,BLUE,NAVY]},text:["18","13","11","10"],textposition:"outside",textfont:{color:fg,size:13},hovertemplate:"%{x}: %{y} Mg/ha<extra></extra>"}],
+    Object.assign({},base,{title:{text:"Uncertainty in LiDAR biomass estimates by plot size, Mg per hectare",font:{size:14,color:fg},x:0.02},
+      yaxis:Object.assign({},base.yaxis,{range:[0,22]})}),cfg);
+
+  Plotly.newPlot("chartMoney",[{type:"bar",x:["$1,000","$2,000","$3,000","$5,000"],y:[163,82,54,33],
+    marker:{color:[GREEN,BLUE,BLUE,ORANGE]},text:["163","82","54","33"],textposition:"outside",textfont:{color:fg,size:13},hovertemplate:"%{x} per plot: %{y} plots<extra></extra>"}],
+    Object.assign({},base,{title:{text:"New plots purchased, by per-plot unit rate",font:{size:14,color:fg},x:0.02},
+      yaxis:Object.assign({},base.yaxis,{range:[0,190]})}),cfg);
+
+  // dot nav and keyboard
+  const slides=[...document.querySelectorAll(".slide")], dots=document.getElementById("dots");
+  slides.forEach((s,i)=>{const a=document.createElement("a");a.href="#"+s.id;a.title="Slide "+(i+1);dots.appendChild(a);});
+  const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const i=slides.indexOf(e.target);[...dots.children].forEach((d,j)=>d.classList.toggle("on",j===i));}})},{threshold:.55});
+  slides.forEach(s=>io.observe(s));
+  document.addEventListener("keydown",e=>{
+    const cur=slides.findIndex(s=>{const r=s.getBoundingClientRect();return r.top<=innerHeight*.5&&r.bottom>innerHeight*.5;});
+    let n=cur;
+    if(["ArrowDown","ArrowRight","PageDown"," "].includes(e.key))n=Math.min(slides.length-1,cur+1);
+    else if(["ArrowUp","ArrowLeft","PageUp"].includes(e.key))n=Math.max(0,cur-1);
+    else return;
+    e.preventDefault();slides[n].scrollIntoView({behavior:"smooth",block:"start"});
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forest Health Monitoring</title>
+  <meta name="description" content="Status of the five Forest Health threshold standards for the Lake Tahoe Basin: seral stage and canopy cover, stand density, wildland urban interface defense zone fire dynamics, landscape fire dynamics, and subalpine conifer. Built for embedding in the Lake Tahoe Info Monitoring Dashboard." />
+  <link rel="icon" href="assets/forest-health-logo.png" type="image/png" />
+
+  <!--
+    Forest Health Monitoring page, Tahoe Regional Planning Agency.
+    Standalone single-file page served from GitHub Pages and embedded in
+    https://monitoring.laketahoeinfo.org/ via iframe.
+
+    Views (query parameter `page`):
+      ?page=all               every standard (default)
+      ?page=forest-structure  Seral Stage & Canopy Cover, Stand Density
+      ?page=fire-dynamics     WUI Defense Zone, Landscape Fire Dynamics
+      ?page=sensitive-plants  Subalpine Conifer
+    The fuels treatment performance measure renders in every view.
+
+    Numbers come from the Forest Health Threshold Standards report (Box), which
+    is the authoritative source. The DATA block below is the only place values
+    live. Items flagged `preliminary: true` are from an earlier analysis run and
+    are labeled as such on the page; clear the flag after the rerun.
+  -->
+
+  <!-- Calcite Design System -->
+  <!-- Calcite version must match the build bundled in the ArcGIS SDK release below (4.31 pairs with
+       Calcite 2.13); a mismatch leaves the SDK's Expand/Legend popover unpositioned. js.arcgis.com serves
+       up to 3.3.0; 4.x and 5.x paths return 404 (checked Sept. 17, 2026). -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css" />
+
+  <!-- Plotly.js and AG Grid must load BEFORE the ArcGIS SDK. Both are UMD bundles: once the
+       ArcGIS AMD loader defines `define.amd`, they register as AMD modules instead of setting
+       window.Plotly / window.agGrid. -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+  <!-- ArcGIS Maps SDK for JavaScript -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.31/"></script>
+
+  <!-- Lexend Deca: EIP primary typeface, also the LT Info Monitoring Dashboard body font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* EIP brand */
+      --eip-blue:   #007DC3;
+      --eip-green:  #6EBE44;
+      --eip-orange: #F16022;
+      --eip-navy:   #0B1F41;
+      --eip-blue-light:   #E0F0FA;
+      --eip-green-light:  #E8F5E0;
+      --eip-orange-light: #FDE8DC;
+
+      /* LT Info Monitoring Dashboard host accents, sampled from the live site */
+      --lti-green:  #789440;
+      --lti-text:   #212529;
+      --lti-panel:  #EFEFEF;
+
+      /* Status palette. Always paired with an icon and a label, never color alone. */
+      --status-cw:   #9C3E27;   /* Considerably Worse Than Target */
+      --status-sw:   #F16022;   /* Somewhat Worse Than Target */
+      --status-ok:   #4A6118;   /* At or Better Than Target, Implemented */
+      --status-na:   #6B7280;   /* Insufficient Data */
+
+      --ink:        #0B1F41;
+      --ink-2:      #3D4A5C;
+      --ink-muted:  #6B7280;
+      --line:       #DDE3EA;
+      --surface:    #FFFFFF;
+      --surface-2:  #F6F8FA;
+      --radius:     8px;
+      --shadow:     0 1px 3px rgba(11, 31, 65, 0.08);
+      --font:       'Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --gutter:     16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--surface);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--eip-blue); }
+    a:hover { color: var(--eip-navy); }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+    }
+
+    h1, h2, h3, h4 { font-weight: 700; line-height: 1.25; margin: 0; color: var(--ink); }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.05rem; }
+    h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+
+    p { margin: 0 0 0.75rem; }
+    .muted { color: var(--ink-muted); }
+    .small { font-size: 0.85rem; }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap;
+    }
+
+    /* Header */
+    .page-header {
+      border-bottom: 3px solid var(--lti-green);
+      background: var(--surface);
+    }
+    .page-header .wrap {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding-top: 0.9rem;
+      padding-bottom: 0.9rem;
+      flex-wrap: wrap;
+    }
+    .page-header img { height: 48px; width: auto; }
+    .page-header .title-block { flex: 1 1 260px; min-width: 0; }
+    .page-header .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--lti-green);
+    }
+    .page-header .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Section nav */
+    .section-nav {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 0 0.25rem;
+    }
+    .section-nav a {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--ink-2);
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .section-nav a:hover { border-color: var(--eip-blue); color: var(--eip-blue); }
+
+    /* Intro */
+    .intro { padding: 1rem 0 0.5rem; max-width: 860px; }
+    .intro p { font-size: 1rem; color: var(--ink-2); }
+
+    /* Status cards */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.75rem;
+      padding: 0.75rem 0 1.25rem;
+    }
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--card-accent, var(--eip-blue));
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .status-card:hover { border-color: var(--eip-blue); }
+    .status-card .name { font-weight: 600; font-size: 0.95rem; line-height: 1.3; }
+    .status-card .value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+    .status-card .value small { font-size: 0.8rem; font-weight: 500; color: var(--ink-muted); }
+    .status-card .bar {
+      position: relative;
+      height: 6px;
+      background: var(--line);
+      border-radius: 3px;
+      overflow: visible;
+      margin-top: 0.25rem;
+    }
+    .status-card .bar .fill { height: 100%; border-radius: 3px; background: var(--card-accent); }
+    .status-card .bar .tick {
+      position: absolute; top: -4px; width: 2px; height: 14px; background: var(--ink);
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1;
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--badge-bg, var(--status-na));
+      white-space: nowrap;
+    }
+    .badge calcite-icon { --calcite-icon-color: #fff; }
+
+    /* Sections */
+    .standard {
+      padding: 1.5rem 0 1rem;
+      border-top: 1px solid var(--line);
+      scroll-margin-top: 12px;
+    }
+    .standard-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+    .standard-head .category { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lti-green); }
+    .standard-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+    @media (min-width: 900px) {
+      .standard-body { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+      .standard-body .span-2 { grid-column: 1 / -1; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.1rem;
+      min-width: 0;
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+    .card-head h3 { flex: 1 1 auto; }
+    .card .caption { font-size: 0.82rem; color: var(--ink-muted); margin: 0.5rem 0 0; }
+    .card .source { font-size: 0.78rem; color: var(--ink-muted); margin: 0.35rem 0 0; }
+
+    .standard-text p { color: var(--ink-2); }
+    .standard-text .standard-language {
+      border-left: 4px solid var(--lti-green);
+      background: var(--surface-2);
+      padding: 0.65rem 0.9rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 0.5rem 0 0.9rem;
+      font-size: 0.92rem;
+    }
+
+    /* Stat tiles */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.6rem;
+      margin: 0.25rem 0 0.9rem;
+    }
+    .tile {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.75rem;
+    }
+    .tile .v { font-size: 1.35rem; font-weight: 700; line-height: 1.15; }
+    .tile .l { font-size: 0.75rem; color: var(--ink-muted); margin-top: 0.15rem; }
+
+    .plot { width: 100%; min-height: 300px; }
+    .grid-wrap { width: 100%; }
+    .hidden { display: none !important; }
+
+    .map-view {
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--surface-2);
+      position: relative;
+    }
+    .map-view .map-placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-muted); font-size: 0.85rem;
+    }
+
+    .key-points { margin: 0.25rem 0 0; padding-left: 1.1rem; }
+    .key-points li { margin-bottom: 0.4rem; color: var(--ink-2); font-size: 0.92rem; }
+
+    table.ranges {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.85rem;
+      margin: 0.5rem 0;
+    }
+    table.ranges th, table.ranges td { border-bottom: 1px solid var(--line); padding: 0.35rem 0.5rem; text-align: right; }
+    table.ranges th:first-child, table.ranges td:first-child { text-align: left; }
+    table.ranges th { font-weight: 600; background: var(--surface-2); }
+
+    /* Footer */
+    .page-footer {
+      margin-top: 1.5rem;
+      padding: 1.25rem 0 1.5rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+    }
+    .page-footer .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+    calcite-notice { margin: 0.5rem 0 0.75rem; }
+
+    /* AG Grid theme tweaks */
+    .ag-theme-quartz {
+      --ag-font-family: var(--font);
+      --ag-font-size: 13px;
+      --ag-header-background-color: var(--surface-2);
+      --ag-border-color: var(--line);
+      --ag-row-border-color: var(--line);
+      --ag-header-foreground-color: var(--ink);
+      --ag-foreground-color: var(--ink);
+    }
+
+    @media (max-width: 599px) {
+      html, body { font-size: 14px; }
+      .page-header img { height: 40px; }
+      .status-card .value { font-size: 1.5rem; }
+      .map-view { height: 340px; }
+    }
+    @media print {
+      .section-nav, .page-header .actions, calcite-segmented-control { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="wrap">
+      <img src="assets/forest-health-logo.png" alt="Lake Tahoe Forest Health, a program of the Environmental Improvement Program" />
+      <div class="title-block">
+        <div class="eyebrow">Vegetation Preservation · Threshold Standards</div>
+        <h1 id="page-title">Forest Health Monitoring</h1>
+        <div class="muted small" id="page-subtitle">2023 assessment of the Lake Tahoe Basin, reflecting disturbance through 2022</div>
+      </div>
+      <div class="actions">
+        <calcite-button href="https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc" target="_blank" rel="noopener noreferrer" appearance="outline" scale="s" icon-start="file-pdf">Full report</calcite-button>
+        <calcite-button href="https://storymaps.arcgis.com/collections/d89adce0aa9047efb018e49a6f8eff87" target="_blank" rel="noopener noreferrer" appearance="outline" scale="s" icon-start="book">StoryMap</calcite-button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="section-nav" id="section-nav" aria-label="Jump to a standard"></nav>
+
+    <div class="intro" id="intro"></div>
+
+    <section aria-labelledby="status-heading">
+      <h2 id="status-heading" class="visually-hidden">Status summary</h2>
+      <div class="status-grid" id="status-grid"></div>
+    </section>
+
+    <section class="card" id="overview-card" aria-labelledby="overview-heading">
+      <div class="card-head">
+        <h3 id="overview-heading">Progress toward each standard</h3>
+        <calcite-segmented-control scale="s" data-toggle="overview">
+          <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+          <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+        </calcite-segmented-control>
+      </div>
+      <div class="plot" id="overview-plot" data-view="chart"></div>
+      <div class="grid-wrap hidden" id="overview-grid" data-view="table"></div>
+      <p class="caption">Each bar is the share of the assessed area that currently meets the standard. The black tick is the target. For Landscape Fire Dynamics the standard is a ceiling, so the bar shows the share at risk and the tick is the maximum allowed. Subalpine Conifer is a non-degradation standard and has no percentage.</p>
+      <p class="source">Source: TRPA, Forest Health Threshold Standards report, 2023 assessment.</p>
+    </section>
+
+    <div id="standards"></div>
+
+    <footer class="page-footer">
+      <div><strong>Data sources.</strong> Forest structure and fire hazard layers from the Sierra Nevada Regional Resource Kit (California Wildfire and Forest Resilience Task Force, 2024), F3 framework at 30-meter resolution. Fire hazard modeled by Pyrologix with the Wildfire Exposure Simulation Tool under 90th-percentile fire weather. Forest types from the California Wildlife Habitat Relationships system. Fuels treatment accomplishments from the EIP Project Tracker. These are landscape-scale planning models, not stand-level measurements.</div>
+      <div class="links">
+        <a href="https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc" target="_blank" rel="noopener noreferrer">Forest Health Threshold Standards report</a>
+        <a href="https://storymaps.arcgis.com/collections/d89adce0aa9047efb018e49a6f8eff87" target="_blank" rel="noopener noreferrer">StoryMap collection</a>
+        <a href="https://thresholds.laketahoeinfo.org/" target="_blank" rel="noopener noreferrer">Threshold Dashboard</a>
+        <a href="https://eip.laketahoeinfo.org/" target="_blank" rel="noopener noreferrer">EIP Project Tracker</a>
+        <a href="https://github.com/trpa-agency/ForestHealth" target="_blank" rel="noopener noreferrer">Analysis repository</a>
+      </div>
+      <div style="margin-top: 0.5rem;">Tahoe Regional Planning Agency. Developed with the Tahoe Fire and Fuels Team and peer reviewed by the Tahoe Science Advisory Council.</div>
+    </footer>
+  </main>
+
+  <script>
+    'use strict';
+
+    /* ───────────────────────── DATA ───────────────────────── */
+    const STATUS = {
+      cw: { label: 'Considerably Worse Than Target', color: '#9C3E27', icon: 'exclamation-mark-triangle' },
+      sw: { label: 'Somewhat Worse Than Target',     color: '#F16022', icon: 'exclamation-mark-circle' },
+      ok: { label: 'Implemented',                    color: '#4A6118', icon: 'check-circle' },
+      na: { label: 'Insufficient Data',              color: '#6B7280', icon: 'question' },
+    };
+
+    const FONT = 'Lexend Deca, system-ui, sans-serif';
+    const INK = '#0B1F41';
+    const RANGE_BAND = 'rgba(11, 31, 65, 0.16)';
+    const WITHIN = '#007DC3';      // within desired range
+    const OUTSIDE = '#F16022';     // outside desired range
+    const STAGE_COLORS = { Early: '#B5A64C', Mid: '#4A6118', Late: '#007DC3' };
+    const HAZARD_COLORS = { surface: '#007DC3', moderate: '#E8A33D', high: '#9C3E27' };
+    const ZONE_COLORS = { 'Defense Zone': '#007DC3', 'Threat Zone': '#F16022', 'General Forest': '#4A6118', 'Urban Core': '#B5A64C' };
+
+    const FOREST_TYPES = ['Jeffrey Pine', 'Sierran Mixed Conifer', 'Red Fir'];
+    const SERAL_CLASSES = ['Early', 'Mid open', 'Mid closed', 'Late open', 'Late closed'];
+
+    const DATA = {
+      vintage: '2023 assessment, reflecting disturbance through 2022',
+      report: 'TRPA, Forest Health Threshold Standards report',
+
+      standards: [
+        {
+          id: 'seral-stage',
+          group: 'forest-structure',
+          category: 'Forest Structure',
+          name: 'Seral Stage & Canopy Cover',
+          short: 'Seral Stage',
+          status: 'sw',
+          higherIsBetter: true,
+          assessed: 115396, meeting: 70836, target: 86547,
+          targetPct: 75, currentPct: 61,
+          gapAcres: 15711,
+          unitNote: 'of forested area within desired ranges',
+          standardText: 'Achieve and maintain at least 75 percent of the forested area in the Tahoe Basin within the desired ranges for dominant seral stage and canopy cover.',
+          overview: 'Seral stage describes the developmental phase of a forest, from young regeneration through mature, large trees. Canopy cover is the share of the ground shaded by tree crowns. A resilient landscape holds a mix of early, mid, and late seral forest with both open and closed canopies. Analysis across the three major forest types shows early and late open stands are underrepresented and mid seral stands are overrepresented.',
+          keyPoints: [
+            'Weighted across the Basin, 61 percent of the assessed area (70,836 of 115,396 acres) is within the desired ranges, against a target of 75 percent.',
+            'Reaching attainment requires at least 15,711 additional acres to move into their desired developmental stage.',
+            'Seral stage follows quadratic mean diameter breaks: early is zero to five inches, mid is five to 25 inches, and late is greater than 25 inches.',
+            'Open versus closed canopy is split at 40 percent canopy cover for Jeffrey pine and 50 percent for Sierran mixed conifer and red fir.',
+          ],
+          preliminary: true,
+          preliminaryNote: 'The class-level chart below comes from an earlier analysis run that used a larger assessed area (127,322 acres) and is being regenerated. Cite the headline figures, which are from the published report.',
+          chartTitle: 'Current share of each forest type in each class, against the desired range',
+          chartCaption: 'Bars show the current percent of each forest type in each seral stage and canopy class. The gray band is the desired range. Blue bars are within their range; orange bars are outside it.',
+          ranges: {
+            'Jeffrey Pine':          { 'Early': [5, 15],  'Mid open': [25, 30], 'Mid closed': [5, 10],  'Late open': [40, 50], 'Late closed': [5, 10] },
+            'Sierran Mixed Conifer': { 'Early': [10, 20], 'Mid open': [15, 20], 'Mid closed': [5, 15],  'Late open': [25, 35], 'Late closed': [15, 25] },
+            'Red Fir':               { 'Early': [10, 20], 'Mid open': [15, 25], 'Mid closed': [15, 25], 'Late open': [30, 40], 'Late closed': [20, 30] },
+          },
+          // From output/seral_stage_with_classification.csv. PRELIMINARY: see note above.
+          current: {
+            'Jeffrey Pine':          { 'Early': 2.77, 'Mid open': 27.70, 'Mid closed': 30.53, 'Late open': 25.89, 'Late closed': 13.12 },
+            'Sierran Mixed Conifer': { 'Early': 3.66, 'Mid open': 22.38, 'Mid closed': 37.09, 'Late open': 19.63, 'Late closed': 17.24 },
+            'Red Fir':               { 'Early': 2.20, 'Mid open': 12.48, 'Mid closed': 36.52, 'Late open': 19.34, 'Late closed': 29.45 },
+          },
+          map: { id: '07d6ccd3c6f94425be295b9a6db043aa', title: 'Seral stage and canopy cover class', caption: 'Each 30-meter cell is assigned one of the five seral stage and canopy cover classes.' },
+        },
+        {
+          id: 'stand-density',
+          group: 'forest-structure',
+          category: 'Forest Structure',
+          name: 'Stand Density',
+          short: 'Stand Density',
+          status: 'cw',
+          higherIsBetter: true,
+          assessed: 115396, meeting: 32311, target: 57698,
+          targetPct: 50, currentPct: 28,
+          gapAcres: 25387,
+          unitNote: 'of forested area within density ranges',
+          standardText: 'Achieve and maintain at least 50 percent of the forested area in the Tahoe Basin within the trees per acre and basal area ranges set for each forest type and seral stage.',
+          overview: 'Stand density measures how many trees grow within a given area, reported as trees per acre, and the average size of those trees, reported as basal area in square feet per acre. After a century of fire suppression, Tahoe forests are far denser than they were historically, which creates heavy fuel loads and leaves trees stressed and more vulnerable to drought, insects, and disease. The targets are maximums: a stand is in attainment at or below its target and overstocked above it.',
+          keyPoints: [
+            '72 percent of the assessed forest (83,085 of 115,396 acres) exceeds the density targets and is considered overstocked. Only 32,311 acres meet them.',
+            'To reach the 50 percent goal, at least 57,698 acres must meet the targets, so the Basin has achieved 56 percent of the acreage required.',
+            'Early seral stands meet their targets almost everywhere but are scarce. Mid and late seral stands carry nearly all of the shortfall.',
+            'Jeffrey pine mid and late seral stands are the weakest stratum, at four and five percent attainment.',
+          ],
+          preliminary: false,
+          chartTitle: 'Share of each forest type meeting its density target, by seral stage',
+          chartCaption: 'Targets differ by forest type and seral stage, so each bar compares a stratum against its own reference condition. The 50 percent target applies to the Basin as a whole, not to any single bar.',
+          densityTargets: [
+            { type: 'Jeffrey Pine',          stage: 'Early', tpa: 200, ba: 30 },
+            { type: 'Jeffrey Pine',          stage: 'Mid',   tpa: 70,  ba: 80 },
+            { type: 'Jeffrey Pine',          stage: 'Late',  tpa: 55,  ba: 100 },
+            { type: 'Sierran Mixed Conifer', stage: 'Early', tpa: 300, ba: 40 },
+            { type: 'Sierran Mixed Conifer', stage: 'Mid',   tpa: 90,  ba: 130 },
+            { type: 'Sierran Mixed Conifer', stage: 'Late',  tpa: 75,  ba: 180 },
+            { type: 'Red Fir',               stage: 'Early', tpa: 300, ba: 50 },
+            { type: 'Red Fir',               stage: 'Mid',   tpa: 100, ba: 175 },
+            { type: 'Red Fir',               stage: 'Late',  tpa: 80,  ba: 250 },
+          ],
+          // From output/stand_density_forest_type_attainment_new.csv (111,424-acre run; basin-wide call is from the report).
+          density: [
+            { type: 'Jeffrey Pine',          stage: 'Early', acres: 796.62,   meeting: 788.83,  pct: 99.02 },
+            { type: 'Jeffrey Pine',          stage: 'Mid',   acres: 16759.65, meeting: 654.06,  pct: 3.90 },
+            { type: 'Jeffrey Pine',          stage: 'Late',  acres: 11227.14, meeting: 596.68,  pct: 5.31 },
+            { type: 'Sierran Mixed Conifer', stage: 'Early', acres: 2205.93,  meeting: 2205.49, pct: 99.98 },
+            { type: 'Sierran Mixed Conifer', stage: 'Mid',   acres: 35846.88, meeting: 6426.53, pct: 17.93 },
+            { type: 'Sierran Mixed Conifer', stage: 'Late',  acres: 22223.22, meeting: 8541.28, pct: 38.43 },
+            { type: 'Red Fir',               stage: 'Early', acres: 491.05,   meeting: 484.60,  pct: 98.69 },
+            { type: 'Red Fir',               stage: 'Mid',   acres: 10960.49, meeting: 4746.34, pct: 43.30 },
+            { type: 'Red Fir',               stage: 'Late',  acres: 10913.34, meeting: 7359.70, pct: 67.44 },
+          ],
+          map: { id: '24fc43584a354f789f283df388bf723d', title: 'Stand density attainment', caption: 'Each 30-meter cell is classified as meeting or exceeding both the trees per acre and basal area target for its forest type and seral stage.' },
+        },
+        {
+          id: 'wui-defense-zone',
+          group: 'fire-dynamics',
+          category: 'Fire Dynamics',
+          name: 'WUI Defense Zone Fire Dynamics',
+          short: 'WUI Defense Zone',
+          status: 'cw',
+          higherIsBetter: true,
+          assessed: 44920, meeting: 28045, target: 40428,
+          targetPct: 90, currentPct: 62,
+          gapAcres: 12383,
+          unitNote: 'of the Defense Zone predicted to burn as surface fire',
+          standardText: 'Manage forest and fuel conditions so that surface fire is the predicted fire behavior in at least 90 percent of the wildland urban interface defense zone under 90th percentile fire weather conditions.',
+          overview: 'The wildland urban interface (WUI) is where homes and communities meet undeveloped land. The Defense Zone is the buffer of roughly a quarter mile around structures and evacuation routes where firefighters must be able to work safely. The standard is expressed operationally as flame lengths of four feet or less, the limit for direct attack by hand crews. Ninetieth percentile fire weather in the Basin means 85-degree temperatures, five percent relative humidity, and 25-mile-per-hour winds.',
+          keyPoints: [
+            'Modeling predicts surface fire on 62 percent of the wildland area within the Defense Zone (28,045 of 44,920 acres), against a target of 90 percent (40,428 acres).',
+            'High hazard fire behavior, which exceeds the limits of manual suppression, is predicted on 26 percent of the zone (11,848 acres).',
+            'The assessed extent is the wildland portion of the Defense Zone outside urban land use.',
+            'Management should also keep areas exceeding four-foot flame lengths well distributed, under one acre in patch size, and more than 100 feet from structures and critical infrastructure.',
+          ],
+          preliminary: false,
+          chartTitle: 'Predicted fire behavior in the WUI Defense Zone',
+          chartCaption: 'Acres of the Defense Zone by predicted fire behavior under 90th percentile fire weather. The black line marks the 90 percent surface fire target. Moderate hazard is the assessed area not classed as surface fire or high hazard.',
+          hazard: [
+            { key: 'surface',  label: 'Surface fire',    acres: 28045 },
+            { key: 'moderate', label: 'Moderate hazard', acres: 5027 },
+            { key: 'high',     label: 'High hazard',     acres: 11848 },
+          ],
+          map: null,
+        },
+        {
+          id: 'landscape-fire',
+          group: 'fire-dynamics',
+          category: 'Fire Dynamics',
+          name: 'Landscape Fire Dynamics',
+          short: 'Landscape Fire',
+          status: 'cw',
+          higherIsBetter: false,
+          assessed: 157843, meeting: 14176, target: 7892,
+          targetPct: 5, currentPct: 8.9,
+          gapAcres: 6284,
+          unitNote: 'of the landscape at risk of large high-severity patches',
+          standardText: 'Limit the area of modeled high-severity fire patches of 200 acres or greater to less than five percent of the landscape outside of urban areas and designated wilderness, under 90th percentile fire weather conditions.',
+          overview: 'Outside the Defense Zone the goal shifts from community protection to ecological integrity. High-severity patches, where more than 95 percent of basal area is killed, become a concern when they are large, because they eliminate seed sources and can convert forest to shrub fields. Natural regeneration typically fails when the distance to a live seed tree exceeds about 120 meters. Allowing patches up to 200 acres acknowledges that some high-severity fire supports habitat diversity while setting a ceiling on landscape-scale degradation.',
+          keyPoints: [
+            '8.9 percent of the assessed area (14,176 of 157,843 acres) is at risk of high-severity patches of 200 acres or more, against a ceiling of five percent (7,892 acres).',
+            'The area at risk exceeds the ceiling by 6,284 acres, so meeting the standard requires reducing the high-severity hazard footprint by about 44 percent.',
+            'High-severity hazard is concentrated in lower-elevation canyons on the West Shore and on west- and south-facing slopes of the South Shore.',
+            'The 2021 Caldor Fire burned roughly 5,000 acres in large high-severity patches that closely matched the modeled hazard.',
+          ],
+          preliminary: false,
+          chartTitle: 'Area at risk of large high-severity patches, against the ceiling',
+          chartCaption: 'Acres at risk of high-severity fire in patches of 200 acres or more, compared with the maximum the standard allows across the 157,843-acre assessed landscape.',
+          map: { id: '35dc3ddb4ff546d2a169f6fdeb945320', title: 'Modeled fire severity by management zone', caption: 'Dominant modeled fire severity class with management zone boundaries. This map shows severity probability, which is context for the standard rather than the 200-acre patch metric itself.' },
+        },
+        {
+          id: 'subalpine-conifer',
+          group: 'sensitive-plants',
+          category: 'Sensitive Plants',
+          name: 'Subalpine Conifer',
+          short: 'Subalpine Conifer',
+          status: 'ok',
+          higherIsBetter: null,
+          assessed: 13350, meeting: null, target: null,
+          targetPct: null, currentPct: null,
+          gapAcres: null,
+          unitNote: 'acres of subalpine conifer with protections in place',
+          standardText: 'Subalpine conifer communities shall be protected from degradation to maintain their ecological integrity, species composition, natural forest structure, and long-term resilience. Projects and activities within these communities may include restoration or management practices that support their continued health and persistence.',
+          overview: 'The subalpine zone occupies the high elevations of the Basin, generally above 8,500 feet, and is characterized by hardy, slow-growing species such as whitebark pine, mountain hemlock, and mountain mahogany. These communities were rarely logged and historically experienced infrequent fire, so they remain largely within their natural range of variation and do not need the broad-scale density reduction required elsewhere.',
+          keyPoints: [
+            'The Region is in attainment with this non-degradation standard. Regulations and land management plans protect roughly 13,350 acres of subalpine conifer.',
+            'Whitebark pine is federally listed as threatened. The standard adds comparable protection within the TRPA threshold system while allowing restoration such as seed collection and planting of rust-resistant seedlings.',
+            'This standard is assessed through existing regulation rather than a spatial model.',
+          ],
+          preliminary: false,
+          map: null,
+        },
+      ],
+
+      // Performance measure: fuels treatment acres by treatment zone, EIP Project Tracker.
+      // Snapshot retrieved Apr. 23, 2025 from the LT Info EIP accomplishments web service.
+      fuels: {
+        retrieved: 'Apr. 23, 2025',
+        years: ['2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024'],
+        zones: {
+          'Defense Zone':   { '2008': 9, '2009': 2804.1, '2010': 1239.46, '2011': 648.4, '2012': 3956.54, '2013': 1102.56, '2014': 1601.72, '2015': 1893.92, '2016': 2874.25, '2017': 1552.28, '2018': 1484.26, '2019': 3154.63, '2020': 2432.6, '2021': 989.97, '2022': 1564.548, '2023': 910.47, '2024': 3197.92 },
+          'Threat Zone':    { '2017': 37, '2018': 150, '2019': 596, '2020': 1, '2021': 43.2, '2022': 340, '2023': 131.74, '2024': 885.5 },
+          'General Forest': { '2008': 10, '2009': 3, '2010': 2.5, '2012': 2, '2018': 120, '2019': 120, '2023': 8, '2024': 15 },
+          'Urban Core':     { '2011': 30, '2012': 70.75, '2013': 20, '2014': 89, '2015': 11.4, '2016': 5.04, '2017': 3.9, '2018': 23.1, '2019': 11, '2020': 31.5, '2021': 43, '2022': 21, '2023': 110, '2024': 122 },
+        },
+        map: { id: '0303bdff0aa04b628f8a60a8c72c53a1', title: 'Fuels treatment footprint', caption: 'Spatial extent of reported fuels treatments, which can be compared with fire severity and stand density to assess treatment effectiveness.' },
+      },
+    };
+
+    const PAGES = {
+      'all':              { title: 'Forest Health Monitoring', groups: ['forest-structure', 'fire-dynamics', 'sensitive-plants'],
+                            intro: 'Five threshold standards describe the forest conditions the Lake Tahoe Basin is working toward under the Vegetation Preservation threshold category. Each standard compares current conditions, modeled from 2023 regional data, with a desired ecological condition. Four of the five are currently out of attainment.' },
+      'forest-structure': { title: 'Forest Structure Monitoring', groups: ['forest-structure'],
+                            intro: 'Two threshold standards describe the structure the Basin is working toward across 115,396 acres of conifer forest outside wilderness and urban areas: the mix of seral stages and canopy cover, and stand density. Both are currently out of attainment.' },
+      'fire-dynamics':    { title: 'Fire Dynamics Monitoring', groups: ['fire-dynamics'],
+                            intro: 'Two threshold standards describe how fire is predicted to behave under severe weather: one for the wildland urban interface defense zone around communities, and one for the wider landscape. Both are currently out of attainment.' },
+      'sensitive-plants': { title: 'Subalpine Conifer Monitoring', groups: ['sensitive-plants'],
+                            intro: 'The subalpine conifer standard protects the highest forested ground in the Basin from degradation. It is assessed through existing regulation rather than a spatial model and is currently in attainment.' },
+    };
+
+    /* ───────────────────────── HELPERS ───────────────────────── */
+    const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+    const pct = (n, d = 0) => (n === null || n === undefined) ? '—' : `${fmt(n, d)}%`;
+    const el = (tag, attrs = {}, html = '') => {
+      const e = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === 'class') e.className = v;
+        else if (k === 'style') e.setAttribute('style', v);
+        else if (k.startsWith('data-') || k.startsWith('aria-')) e.setAttribute(k, v);
+        else e[k] = v;
+      }
+      if (html) e.innerHTML = html;
+      return e;
+    };
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    const BASE_LAYOUT = {
+      font: { family: FONT, color: INK, size: 13 },
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      margin: { t: 16, r: 16, b: 44, l: 60 },
+      xaxis: { gridcolor: '#E6EAF0', zerolinecolor: '#C9D1DB', linecolor: '#C9D1DB' },
+      yaxis: { gridcolor: '#E6EAF0', zerolinecolor: '#C9D1DB', linecolor: '#C9D1DB' },
+      hoverlabel: { font: { family: FONT }, bgcolor: '#FFFFFF', bordercolor: '#C9D1DB' },
+      bargap: 0.3,
+      legend: { orientation: 'h', y: -0.18, x: 0, font: { size: 12 } },
+    };
+    const PLOT_CONFIG = { responsive: true, displayModeBar: false, displaylogo: false };
+
+    // Table specs are registered as charts are built and materialized on first "Table" toggle.
+    const gridSpecs = {};
+    function registerGrid(containerId, options, exportName) { gridSpecs[containerId] = { options, exportName, api: null }; }
+
+    function badge(statusKey, { compact = false } = {}) {
+      const s = STATUS[statusKey];
+      return `<span class="badge" style="--badge-bg:${s.color}"><calcite-icon icon="${s.icon}" scale="s" aria-hidden="true"></calcite-icon>${compact ? s.label.replace(' Than Target', '') : s.label}</span>`;
+    }
+
+    /* ───────────────────────── PAGE ───────────────────────── */
+    const params = new URLSearchParams(location.search);
+    const pageKey = PAGES[params.get('page')] ? params.get('page') : 'all';
+    const page = PAGES[pageKey];
+    const shown = DATA.standards.filter(s => page.groups.includes(s.group));
+
+    document.title = `${page.title} · TRPA`;
+    document.getElementById('page-title').textContent = page.title;
+    document.getElementById('intro').innerHTML = `<p>${esc(page.intro)}</p>`;
+
+    // Section nav
+    const nav = document.getElementById('section-nav');
+    for (const s of shown) nav.append(el('a', { href: `#${s.id}` }, esc(s.short)));
+    nav.append(el('a', { href: '#fuels-treatment' }, 'Fuels Treatments'));
+
+    // Status cards
+    const grid = document.getElementById('status-grid');
+    for (const s of shown) {
+      const st = STATUS[s.status];
+      const isQuant = s.currentPct !== null;
+      let valueHtml, barHtml = '';
+      if (isQuant) {
+        valueHtml = `${pct(s.currentPct, s.currentPct % 1 ? 1 : 0)} <small>target ${s.higherIsBetter ? '≥' : '<'} ${pct(s.targetPct)}</small>`;
+        const fill = Math.min(100, s.currentPct);
+        barHtml = `<div class="bar" role="img" aria-label="${esc(pct(s.currentPct, 1))} against a target of ${esc(pct(s.targetPct))}"><div class="fill" style="width:${fill}%"></div><div class="tick" style="left:${s.targetPct}%"></div></div>`;
+      } else {
+        valueHtml = `${fmt(s.assessed)} <small>acres</small>`;
+      }
+      grid.append(el('a', { href: `#${s.id}`, class: 'status-card', style: `--card-accent:${st.color}` },
+        `<div class="name">${esc(s.name)}</div>
+         <div class="value">${valueHtml}</div>
+         <div class="small muted">${esc(s.unitNote)}</div>
+         ${barHtml}
+         <div>${badge(s.status, { compact: true })}</div>`));
+    }
+
+    /* ───────────────────────── OVERVIEW CHART ───────────────────────── */
+    const quant = shown.filter(s => s.currentPct !== null);
+    const overviewCard = document.getElementById('overview-card');
+    if (quant.length === 0) {
+      overviewCard.classList.add('hidden');
+    } else {
+      const names = quant.map(s => s.name);
+      const bar = {
+        type: 'bar', orientation: 'h',
+        y: names, x: quant.map(s => s.currentPct),
+        marker: { color: quant.map(s => STATUS[s.status].color), line: { width: 0 } },
+        width: 0.5,
+        text: quant.map(s => pct(s.currentPct, s.currentPct % 1 ? 1 : 0)),
+        textposition: 'outside', textfont: { color: INK, size: 12 },
+        cliponaxis: false,
+        customdata: quant.map(s => [STATUS[s.status].label, s.higherIsBetter ? 'target' : 'maximum', pct(s.targetPct)]),
+        hovertemplate: '<b>%{y}</b><br>Current: %{x:.1f}%<br>%{customdata[1]}: %{customdata[2]}<br>%{customdata[0]}<extra></extra>',
+        showlegend: false,
+      };
+      const ticks = {
+        type: 'scatter', mode: 'markers',
+        y: names, x: quant.map(s => s.targetPct),
+        marker: { symbol: 'line-ns', size: 26, color: INK, line: { width: 3, color: INK } },
+        hovertemplate: '%{y}<br>Target: %{x}%<extra></extra>',
+        name: 'Target', showlegend: true,
+      };
+      const layout = {
+        ...BASE_LAYOUT,
+        margin: { t: 8, r: 48, b: 40, l: 10 },
+        height: 70 + quant.length * 56,
+        xaxis: { ...BASE_LAYOUT.xaxis, range: [0, 100], ticksuffix: '%', dtick: 25, title: { text: 'Share of assessed area', font: { size: 12 } } },
+        yaxis: { ...BASE_LAYOUT.yaxis, automargin: true, autorange: 'reversed', showgrid: false, tickfont: { size: 12 } },
+        legend: { orientation: 'h', y: -0.35, x: 0 },
+        showlegend: true,
+      };
+      Plotly.newPlot('overview-plot', [bar, ticks], layout, PLOT_CONFIG);
+
+      registerGrid('overview-grid', {
+        columnDefs: [
+          { field: 'name', headerName: 'Standard', flex: 2, minWidth: 200 },
+          { field: 'currentPct', headerName: 'Current (%)', type: 'num', valueFormatter: p => fmt(p.value, 1) },
+          { field: 'targetPct', headerName: 'Target (%)', type: 'num', valueFormatter: p => (p.data.higherIsBetter ? '≥ ' : '< ') + fmt(p.value) },
+          { field: 'meeting', headerName: 'Acres current', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'target', headerName: 'Acres at target', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'assessed', headerName: 'Acres assessed', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'status', headerName: 'Status', flex: 2, minWidth: 200, valueFormatter: p => STATUS[p.value].label },
+        ],
+        rowData: quant,
+      }, 'forest-health-status');
+    }
+
+    /* ───────────────────────── STANDARD SECTIONS ───────────────────────── */
+    const host = document.getElementById('standards');
+
+    function chartCard(id, title, caption, source, { withTable = true } = {}) {
+      return `
+        <div class="card" id="${id}-chart-card">
+          <div class="card-head">
+            <h3>${esc(title)}</h3>
+            ${withTable ? `
+            <calcite-segmented-control scale="s" data-toggle="${id}">
+              <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+            </calcite-segmented-control>` : ''}
+          </div>
+          <div class="plot" id="${id}-plot" data-view="chart"></div>
+          <div class="grid-wrap hidden" id="${id}-grid" data-view="table"></div>
+          <p class="caption">${esc(caption)}</p>
+          <p class="source">${esc(source)}</p>
+        </div>`;
+    }
+
+    function mapCard(id, map) {
+      if (!map) return '';
+      return `
+        <div class="card span-2">
+          <div class="card-head"><h3>${esc(map.title)}</h3>
+            <calcite-button href="https://www.arcgis.com/home/webmap/viewer.html?webmap=${map.id}" target="_blank" rel="noopener noreferrer" appearance="transparent" scale="s" icon-end="launch">Open web map</calcite-button>
+          </div>
+          <div class="map-view" id="${id}-map" data-webmap="${map.id}" role="region" aria-label="${esc(map.title)} map">
+            <div class="map-placeholder"><calcite-loader inline label="Loading map"></calcite-loader>&nbsp;Loading map</div>
+          </div>
+          <p class="caption">${esc(map.caption)} The summary above and the data table provide the same information without the map.</p>
+          <p class="source">Source: TRPA web map on ArcGIS Online.</p>
+        </div>`;
+    }
+
+    for (const s of shown) {
+      const st = STATUS[s.status];
+      const isQuant = s.currentPct !== null;
+      const tiles = isQuant ? `
+        <div class="tiles">
+          <div class="tile"><div class="v">${pct(s.currentPct, s.currentPct % 1 ? 1 : 0)}</div><div class="l">Current</div></div>
+          <div class="tile"><div class="v">${s.higherIsBetter ? '≥' : '<'} ${pct(s.targetPct)}</div><div class="l">${s.higherIsBetter ? 'Target' : 'Maximum allowed'}</div></div>
+          <div class="tile"><div class="v">${fmt(s.meeting)}</div><div class="l">Acres ${s.higherIsBetter ? 'meeting' : 'at risk'}</div></div>
+          <div class="tile"><div class="v">${fmt(s.gapAcres)}</div><div class="l">Acres ${s.higherIsBetter ? 'short of target' : 'over the ceiling'}</div></div>
+        </div>` : `
+        <div class="tiles">
+          <div class="tile"><div class="v">${fmt(s.assessed)}</div><div class="l">Acres protected</div></div>
+          <div class="tile"><div class="v">Yes</div><div class="l">Protections in place</div></div>
+        </div>`;
+
+      const prelim = s.preliminary ? `
+        <calcite-notice icon="exclamation-mark-triangle" kind="warning" scale="s" open>
+          <div slot="title">Preliminary detail</div>
+          <div slot="message">${esc(s.preliminaryNote)}</div>
+        </calcite-notice>` : '';
+
+      let chart = '';
+      if (s.id === 'seral-stage') chart = chartCard(s.id, s.chartTitle, s.chartCaption, `Source: ${DATA.report}; class distribution from the TRPA analysis notebook. ${DATA.vintage}.`);
+      else if (s.id === 'stand-density') chart = chartCard(s.id, s.chartTitle, s.chartCaption, `Source: ${DATA.report}; strata from the TRPA analysis notebook. ${DATA.vintage}.`);
+      else if (s.id === 'wui-defense-zone') chart = chartCard(s.id, s.chartTitle, s.chartCaption, `Source: ${DATA.report}. ${DATA.vintage}.`);
+      else if (s.id === 'landscape-fire') chart = chartCard(s.id, s.chartTitle, s.chartCaption, `Source: ${DATA.report}. ${DATA.vintage}.`);
+
+      const ranges = s.id === 'seral-stage' ? `
+        <h4>Desired ranges by forest type</h4>
+        <table class="ranges"><thead><tr><th>Forest type</th>${SERAL_CLASSES.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>${FOREST_TYPES.map(t => `<tr><td>${t}</td>${SERAL_CLASSES.map(c => `<td>${s.ranges[t][c][0]}–${s.ranges[t][c][1]}%</td>`).join('')}</tr>`).join('')}</tbody></table>`
+        : s.id === 'stand-density' ? `
+        <h4>Density targets (maximums)</h4>
+        <table class="ranges"><thead><tr><th>Forest type</th><th>Stage</th><th>Trees / acre</th><th>Basal area (ft²/acre)</th></tr></thead>
+        <tbody>${s.densityTargets.map(r => `<tr><td>${r.type}</td><td style="text-align:left">${r.stage}</td><td>${r.tpa}</td><td>${r.ba}</td></tr>`).join('')}</tbody></table>` : '';
+
+      host.append(el('section', { id: s.id, class: 'standard', 'aria-labelledby': `${s.id}-h` }, `
+        <div class="standard-head">
+          <div>
+            <div class="category">${esc(s.category)}</div>
+            <h2 id="${s.id}-h">${esc(s.name)}</h2>
+          </div>
+          ${badge(s.status)}
+        </div>
+        <div class="standard-body">
+          <div class="standard-text">
+            ${tiles}
+            <div class="standard-language"><strong>Standard.</strong> ${esc(s.standardText)}</div>
+            <p>${esc(s.overview)}</p>
+            <calcite-accordion scale="s" selection-mode="multiple">
+              <calcite-accordion-item heading="Key points" icon-start="list-bullet">
+                <ul class="key-points">${s.keyPoints.map(k => `<li>${esc(k)}</li>`).join('')}</ul>
+              </calcite-accordion-item>
+              ${ranges ? `<calcite-accordion-item heading="${s.id === 'seral-stage' ? 'Desired ranges' : 'Density targets'}" icon-start="table">${ranges}</calcite-accordion-item>` : ''}
+            </calcite-accordion>
+          </div>
+          <div>
+            ${prelim}
+            ${chart}
+          </div>
+          ${mapCard(s.id, s.map)}
+        </div>`));
+    }
+
+    // Fuels treatment performance measure (every view)
+    host.append(el('section', { id: 'fuels-treatment', class: 'standard', 'aria-labelledby': 'fuels-h' }, `
+      <div class="standard-head">
+        <div>
+          <div class="category">Performance measure</div>
+          <h2 id="fuels-h">Forest Fuels Treatments</h2>
+        </div>
+      </div>
+      <div class="standard-body">
+        <div class="standard-text">
+          <p>In addition to the ecological standards, performance measures track management activity. Fuels reduction treatments, including thinning, mastication, and prescribed burning, are reported by partner agencies to the EIP Project Tracker by treatment zone. The pace and location of treatment show whether restoration is keeping up with ecological need, and treated areas can be compared against the stand density and fire severity maps above.</p>
+          <calcite-accordion scale="s" selection-mode="multiple">
+            <calcite-accordion-item heading="Treatment zones" icon-start="list-bullet">
+              <ul class="key-points">
+                <li><strong>Defense Zone.</strong> The buffer of roughly a quarter mile around communities and evacuation routes.</li>
+                <li><strong>Threat Zone.</strong> The wildland surrounding the Defense Zone, where the goal is to keep fires from building intensity.</li>
+                <li><strong>General Forest.</strong> Wildland outside the WUI.</li>
+                <li><strong>Urban Core.</strong> Developed land within communities.</li>
+              </ul>
+            </calcite-accordion-item>
+          </calcite-accordion>
+        </div>
+        <div>${chartCard('fuels', 'Acres treated per year by treatment zone', 'Reported fuels treatment accomplishments by year. Years with no reported treatment in a zone show no bar for that zone.', `Source: EIP Project Tracker, forest fuels treatment accomplishments by treatment zone, retrieved ${DATA.fuels.retrieved}.`)}</div>
+        ${mapCard('fuels', DATA.fuels.map)}
+      </div>`));
+
+    /* ───────────────────────── CHARTS ───────────────────────── */
+    const byId = id => shown.find(s => s.id === id);
+
+    // Seral stage: one subplot per forest type; range band + current bar
+    (function seral() {
+      const s = byId('seral-stage'); if (!s) return;
+      const traces = [];
+      const n = FOREST_TYPES.length;
+      const rows = [];
+      FOREST_TYPES.forEach((t, i) => {
+        const ax = i === 0 ? '' : String(i + 1);
+        SERAL_CLASSES.forEach(c => {
+          const [lo, hi] = s.ranges[t][c];
+          const cur = s.current[t][c];
+          const within = cur >= lo && cur <= hi;
+          rows.push({ type: t, cls: c, current: cur, lo, hi, state: within ? 'Within range' : (cur < lo ? 'Below range' : 'Above range') });
+          traces.push({
+            type: 'scatter', mode: 'lines', x: [lo, hi], y: [c, c],
+            line: { color: RANGE_BAND, width: 16 },
+            xaxis: 'x' + ax, yaxis: 'y' + ax,
+            hovertemplate: `${t} · ${c}<br>Desired: ${lo}–${hi}%<extra></extra>`,
+            showlegend: false,
+          });
+        });
+        const cur = SERAL_CLASSES.map(c => s.current[t][c]);
+        const colors = SERAL_CLASSES.map(c => { const [lo, hi] = s.ranges[t][c]; const v = s.current[t][c]; return v >= lo && v <= hi ? WITHIN : OUTSIDE; });
+        traces.push({
+          type: 'bar', orientation: 'h', x: cur, y: SERAL_CLASSES,
+          marker: { color: colors, line: { width: 0 } }, width: 0.42,
+          text: cur.map(v => `${v.toFixed(0)}%`), textposition: 'outside', textfont: { size: 11, color: INK }, cliponaxis: false,
+          customdata: SERAL_CLASSES.map(c => [t, s.ranges[t][c][0], s.ranges[t][c][1]]),
+          hovertemplate: '<b>%{customdata[0]}</b> · %{y}<br>Current: %{x:.1f}%<br>Desired: %{customdata[1]}–%{customdata[2]}%<extra></extra>',
+          xaxis: 'x' + ax, yaxis: 'y' + ax, showlegend: false,
+        });
+      });
+      // legend proxies
+      traces.push({ type: 'bar', x: [null], y: [null], name: 'Within range', marker: { color: WITHIN }, showlegend: true, hoverinfo: 'skip' });
+      traces.push({ type: 'bar', x: [null], y: [null], name: 'Outside range', marker: { color: OUTSIDE }, showlegend: true, hoverinfo: 'skip' });
+      traces.push({ type: 'scatter', mode: 'lines', x: [null], y: [null], name: 'Desired range', line: { color: RANGE_BAND, width: 12 }, showlegend: true, hoverinfo: 'skip' });
+
+      const layout = { ...BASE_LAYOUT, height: 360, margin: { t: 28, r: 20, b: 60, l: 84 }, showlegend: true, legend: { orientation: 'h', y: -0.22, x: 0 }, annotations: [] };
+      const gap = 0.04, w = (1 - gap * (n - 1)) / n;
+      FOREST_TYPES.forEach((t, i) => {
+        const ax = i === 0 ? '' : String(i + 1);
+        const x0 = i * (w + gap), x1 = x0 + w;
+        layout['xaxis' + ax] = { ...BASE_LAYOUT.xaxis, domain: [x0, x1], range: [0, 55], ticksuffix: '%', dtick: 25, anchor: 'y' + ax, tickfont: { size: 11 } };
+        layout['yaxis' + ax] = { ...BASE_LAYOUT.yaxis, anchor: 'x' + ax, autorange: 'reversed', showgrid: false, showticklabels: i === 0, tickfont: { size: 11 }, categoryorder: 'array', categoryarray: SERAL_CLASSES };
+        layout.annotations.push({ text: `<b>${t}</b>`, x: (x0 + x1) / 2, y: 1.06, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 12 } });
+      });
+      Plotly.newPlot('seral-stage-plot', traces, layout, PLOT_CONFIG);
+
+      registerGrid('seral-stage-grid', {
+        columnDefs: [
+          { field: 'type', headerName: 'Forest type', flex: 1.4, minWidth: 170 },
+          { field: 'cls', headerName: 'Class', flex: 1, minWidth: 110 },
+          { field: 'current', headerName: 'Current (%)', type: 'num', valueFormatter: p => fmt(p.value, 1) },
+          { field: 'lo', headerName: 'Desired min (%)', type: 'num' },
+          { field: 'hi', headerName: 'Desired max (%)', type: 'num' },
+          { field: 'state', headerName: 'State', flex: 1, minWidth: 120 },
+        ],
+        rowData: rows,
+      }, 'seral-stage-canopy-cover');
+    })();
+
+    // Stand density: grouped bars by forest type, color = seral stage
+    (function density() {
+      const s = byId('stand-density'); if (!s) return;
+      const stages = ['Early', 'Mid', 'Late'];
+      const traces = stages.map(stage => {
+        const rows = FOREST_TYPES.map(t => s.density.find(r => r.type === t && r.stage === stage));
+        return {
+          type: 'bar', name: stage,
+          x: FOREST_TYPES, y: rows.map(r => r.pct),
+          marker: { color: STAGE_COLORS[stage], line: { width: 0 } },
+          text: rows.map(r => `${r.pct.toFixed(0)}%`), textposition: 'outside', textfont: { size: 11, color: INK }, cliponaxis: false,
+          customdata: rows.map(r => [r.meeting, r.acres]),
+          hovertemplate: `<b>%{x}</b> · ${stage} seral<br>%{y:.1f}% meeting target<br>%{customdata[0]:,.0f} of %{customdata[1]:,.0f} acres<extra></extra>`,
+        };
+      });
+      const layout = { ...BASE_LAYOUT, height: 340, barmode: 'group', bargap: 0.28, bargroupgap: 0.08, margin: { t: 16, r: 16, b: 60, l: 52 },
+        yaxis: { ...BASE_LAYOUT.yaxis, range: [0, 110], ticksuffix: '%', dtick: 25, title: { text: 'Share meeting target', font: { size: 12 } } },
+        xaxis: { ...BASE_LAYOUT.xaxis, showgrid: false },
+        showlegend: true, legend: { orientation: 'h', y: -0.2, x: 0, title: { text: 'Seral stage ', font: { size: 12 } } } };
+      Plotly.newPlot('stand-density-plot', traces, layout, PLOT_CONFIG);
+
+      registerGrid('stand-density-grid', {
+        columnDefs: [
+          { field: 'type', headerName: 'Forest type', flex: 1.4, minWidth: 170 },
+          { field: 'stage', headerName: 'Seral stage', flex: 1, minWidth: 100 },
+          { field: 'acres', headerName: 'Acres assessed', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'meeting', headerName: 'Acres meeting', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'pct', headerName: 'Meeting (%)', type: 'num', valueFormatter: p => fmt(p.value, 1) },
+        ],
+        rowData: s.density,
+      }, 'stand-density');
+    })();
+
+    // WUI: single stacked horizontal bar of acres with target line
+    (function wui() {
+      const s = byId('wui-defense-zone'); if (!s) return;
+      const traces = s.hazard.map(h => ({
+        type: 'bar', orientation: 'h', name: h.label,
+        x: [h.acres], y: ['Defense Zone'],
+        marker: { color: HAZARD_COLORS[h.key], line: { color: '#FFFFFF', width: 2 } },
+        text: [`${h.label}<br>${fmt(h.acres)} ac · ${(h.acres / s.assessed * 100).toFixed(0)}%`],
+        textposition: 'inside', insidetextanchor: 'middle', textfont: { size: 12, color: '#FFFFFF' },
+        hovertemplate: `<b>${h.label}</b><br>%{x:,.0f} acres · ${(h.acres / s.assessed * 100).toFixed(1)}% of the zone<extra></extra>`,
+      }));
+      const layout = { ...BASE_LAYOUT, height: 220, barmode: 'stack', bargap: 0.35, margin: { t: 30, r: 16, b: 50, l: 8 },
+        xaxis: { ...BASE_LAYOUT.xaxis, range: [0, s.assessed], tickformat: ',d', title: { text: 'Acres', font: { size: 12 } } },
+        yaxis: { ...BASE_LAYOUT.yaxis, showticklabels: false, showgrid: false },
+        shapes: [{ type: 'line', x0: s.target, x1: s.target, y0: -0.5, y1: 0.5, line: { color: INK, width: 3 } }],
+        annotations: [{ x: s.target, y: 0.5, yshift: 6, text: `Target: 90% surface fire (${fmt(s.target)} ac)`, showarrow: false, xanchor: 'right', yanchor: 'bottom', font: { size: 11, color: INK } }],
+        showlegend: true, legend: { orientation: 'h', y: -0.5, x: 0 } };
+      Plotly.newPlot('wui-defense-zone-plot', traces, layout, PLOT_CONFIG);
+
+      registerGrid('wui-defense-zone-grid', {
+        columnDefs: [
+          { field: 'label', headerName: 'Predicted fire behavior', flex: 1.5, minWidth: 180 },
+          { field: 'acres', headerName: 'Acres', type: 'num', valueFormatter: p => fmt(p.value) },
+          { headerName: 'Share of zone (%)', type: 'num', valueGetter: p => p.data.acres / s.assessed * 100, valueFormatter: p => fmt(p.value, 1) },
+        ],
+        rowData: s.hazard,
+      }, 'wui-defense-zone');
+    })();
+
+    // Landscape fire: current vs ceiling
+    (function landscape() {
+      const s = byId('landscape-fire'); if (!s) return;
+      const rows = [
+        { label: 'Current area at risk', acres: s.meeting, pctOf: s.currentPct },
+        { label: 'Maximum allowed by the standard', acres: s.target, pctOf: s.targetPct },
+      ];
+      const trace = {
+        type: 'bar', orientation: 'h',
+        y: rows.map(r => r.label), x: rows.map(r => r.acres),
+        marker: { color: [STATUS.cw.color, RANGE_BAND], line: { width: 0 } }, width: 0.5,
+        text: rows.map(r => `${fmt(r.acres)} ac (${fmt(r.pctOf, 1)}%)`), textposition: 'outside', textfont: { size: 12, color: INK }, cliponaxis: false,
+        hovertemplate: '<b>%{y}</b><br>%{x:,.0f} acres<extra></extra>', showlegend: false,
+      };
+      const layout = { ...BASE_LAYOUT, height: 200, margin: { t: 8, r: 120, b: 44, l: 10 },
+        xaxis: { ...BASE_LAYOUT.xaxis, range: [0, s.meeting * 1.15], tickformat: ',d', title: { text: 'Acres of the 157,843-acre assessed landscape', font: { size: 12 } } },
+        yaxis: { ...BASE_LAYOUT.yaxis, automargin: true, autorange: 'reversed', showgrid: false, tickfont: { size: 12 } } };
+      Plotly.newPlot('landscape-fire-plot', [trace], layout, PLOT_CONFIG);
+
+      registerGrid('landscape-fire-grid', {
+        columnDefs: [
+          { field: 'label', headerName: 'Measure', flex: 2, minWidth: 220 },
+          { field: 'acres', headerName: 'Acres', type: 'num', valueFormatter: p => fmt(p.value) },
+          { field: 'pctOf', headerName: 'Share of landscape (%)', type: 'num', valueFormatter: p => fmt(p.value, 1) },
+        ],
+        rowData: rows,
+      }, 'landscape-fire-dynamics');
+    })();
+
+    // Fuels treatments: stacked bars by year
+    (function fuels() {
+      const f = DATA.fuels;
+      const zones = Object.keys(ZONE_COLORS);
+      const traces = zones.map(z => ({
+        type: 'bar', name: z, x: f.years, y: f.years.map(y => f.zones[z][y] ?? 0),
+        marker: { color: ZONE_COLORS[z], line: { color: '#FFFFFF', width: 1 } },
+        hovertemplate: `<b>${z}</b>: %{y:,.0f} acres<extra></extra>`,
+      }));
+      const layout = { ...BASE_LAYOUT, height: 340, barmode: 'stack', bargap: 0.25, hovermode: 'x unified', margin: { t: 16, r: 16, b: 60, l: 56 },
+        xaxis: { ...BASE_LAYOUT.xaxis, type: 'category', showgrid: false, tickangle: -45, tickfont: { size: 11 } },
+        yaxis: { ...BASE_LAYOUT.yaxis, tickformat: ',d', title: { text: 'Acres treated', font: { size: 12 } } },
+        showlegend: true, legend: { orientation: 'h', y: -0.28, x: 0 } };
+      Plotly.newPlot('fuels-plot', traces, layout, PLOT_CONFIG);
+
+      const rows = f.years.map(y => {
+        const r = { year: y };
+        let total = 0;
+        for (const z of zones) { r[z] = f.zones[z][y] ?? 0; total += r[z]; }
+        r.total = total;
+        return r;
+      });
+      registerGrid('fuels-grid', {
+        columnDefs: [
+          { field: 'year', headerName: 'Year', minWidth: 90 },
+          ...zones.map(z => ({ field: z, headerName: `${z} (ac)`, type: 'num', valueFormatter: p => fmt(p.value) })),
+          { field: 'total', headerName: 'Total (ac)', type: 'num', valueFormatter: p => fmt(p.value) },
+        ],
+        rowData: rows,
+      }, 'fuels-treatments-by-zone');
+    })();
+
+    /* ───────────────────────── TABLES (lazy) ───────────────────────── */
+    function buildGrid(containerId) {
+      const spec = gridSpecs[containerId]; if (!spec || spec.api) return;
+      const container = document.getElementById(containerId);
+      const toolbar = el('div', { style: 'display:flex;justify-content:flex-end;margin-bottom:0.4rem' });
+      const btn = el('calcite-button', { appearance: 'outline', scale: 's' }, 'Download CSV');
+      btn.setAttribute('icon-start', 'download');
+      toolbar.append(btn);
+      const gridDiv = el('div', { class: 'ag-theme-quartz', style: 'width:100%' });
+      container.append(toolbar, gridDiv);
+      spec.api = agGrid.createGrid(gridDiv, {
+        ...spec.options,
+        columnTypes: { num: { cellDataType: 'number', type: 'rightAligned', minWidth: 110 } },
+        defaultColDef: { sortable: true, filter: true, resizable: true, flex: 1, minWidth: 100 },
+        domLayout: 'autoHeight',
+        pagination: spec.options.rowData.length > 25,
+        paginationPageSize: 25,
+        suppressCellFocus: true,
+      });
+      btn.addEventListener('click', () => spec.api.exportDataAsCsv({ fileName: `${spec.exportName}.csv` }));
+    }
+
+    // Chart / table toggles
+    document.addEventListener('calciteSegmentedControlChange', (e) => {
+      const ctl = e.target; if (!ctl.dataset.toggle) return;
+      const id = ctl.dataset.toggle;
+      const view = ctl.selectedItem?.value || ctl.value;
+      const plot = document.getElementById(`${id}-plot`);
+      const gridEl = document.getElementById(`${id}-grid`);
+      if (view === 'table') { buildGrid(`${id}-grid`); plot.classList.add('hidden'); gridEl.classList.remove('hidden'); }
+      else { gridEl.classList.add('hidden'); plot.classList.remove('hidden'); Plotly.Plots.resize(plot); }
+      notifyHeight();
+    });
+
+    /* ───────────────────────── MAPS (lazy) ───────────────────────── */
+    function buildMap(container) {
+      if (container.dataset.built) return;
+      container.dataset.built = '1';
+      require(['esri/WebMap', 'esri/views/MapView', 'esri/widgets/Legend', 'esri/widgets/Home', 'esri/widgets/Expand', 'esri/widgets/Fullscreen'],
+        function (WebMap, MapView, Legend, Home, Expand, Fullscreen) {
+          const map = new WebMap({ portalItem: { id: container.dataset.webmap } });
+          const view = new MapView({ container, map, center: [-120.01, 39.05], zoom: 10, constraints: { snapToZoom: false } });
+          view.ui.move('zoom', 'top-left');
+          view.ui.add(new Home({ view }), 'top-left');
+          view.ui.add(new Fullscreen({ view }), 'top-left');
+          view.when(() => {
+            const legend = new Legend({ view });
+            // Inline legend on wide screens; drawer-mode Expand on phones so the legend stays inside
+            // the map frame (floating mode renders a popover that can escape a short iframe).
+            if (window.innerWidth > 700) view.ui.add(legend, 'top-right');
+            else view.ui.add(new Expand({ view, content: legend, expanded: false, mode: 'drawer', expandIcon: 'legend', expandTooltip: 'Legend' }), 'top-right');
+            container.querySelector('.map-placeholder')?.remove();
+          }).catch(err => {
+            const ph = container.querySelector('.map-placeholder');
+            if (ph) ph.textContent = 'The map could not be loaded. Use the summary and table above.';
+            console.error('Map failed to load', err);
+          });
+          // Keep page scrolling from turning into map zooming inside an iframe.
+          view.on('mouse-wheel', evt => { evt.stopPropagation(); });
+        });
+    }
+    const mapObserver = new IntersectionObserver((entries) => {
+      for (const en of entries) if (en.isIntersecting) { buildMap(en.target); mapObserver.unobserve(en.target); }
+    }, { rootMargin: '200px 0px' });
+    document.querySelectorAll('.map-view[data-webmap]').forEach(m => mapObserver.observe(m));
+
+    /* ───────────────────────── IFRAME HEIGHT ───────────────────────── */
+    // Lets a host page that listens for this message size the iframe to the content.
+    function notifyHeight() {
+      if (window.parent === window) return;
+      const h = document.documentElement.scrollHeight;
+      window.parent.postMessage({ type: 'forest-health-monitoring:height', height: h, page: pageKey }, '*');
+    }
+    new ResizeObserver(() => notifyHeight()).observe(document.body);
+    window.addEventListener('load', notifyHeight);
+
+    // Smooth in-page jumps that also work inside an iframe.
+    document.querySelectorAll('.section-nav a, .status-card').forEach(a => a.addEventListener('click', (e) => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', a.getAttribute('href'));
+    }));
+  </script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+/* html/assets/eip.css
+ *
+ * Lake Tahoe EIP brand tokens and the layout for the monitoring plan page.
+ * Palette is the EIP four colour system. Charts use only two of them, blue for
+ * the series and orange for the reference or the highlighted option, because
+ * EIP green against EIP orange fails colour vision separation (deutan dE 5.0)
+ * and can never carry categorical meaning in a chart. Green stays a UI accent
+ * on labelled elements, where the label does the work.
+ */
+
+:root {
+  /* EIP brand */
+  --eip-green:  #6EBE44;
+  --eip-blue:   #007DC3;
+  --eip-orange: #F16022;
+  --eip-navy:   #0B1F41;
+  --green-dark: #3E7A22;
+
+  /* tints */
+  --green-tint:  #E8F5E0;
+  --blue-tint:   #E0F0FA;
+  --orange-tint: #FDE8DC;
+  --navy-tint:   #E6E8EC;
+
+  /* surfaces and ink, light */
+  --bg: #FFFFFF;
+  --surface: #F5F7FA;
+  --surface-line: #E2E7EE;
+  --ink: #0B1F41;
+  --ink-dim: #55637A;
+  --rule: #E6E8EC;
+
+  /* chart roles, validated against the light surface */
+  --series: #007DC3;
+  --series-soft: #9CC9E6;
+  --accent: #F16022;
+  --chart-grid: #E6E8EC;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1F41;
+    --surface: #142B52;
+    --surface-line: #25457A;
+    --ink: #F2F4F7;
+    --ink-dim: #AFBBCD;
+    --rule: #1E3A66;
+    --green-tint: #15361D;
+    --blue-tint: #12365B;
+    --orange-tint: #3A1E10;
+    --navy-tint: #1E3A66;
+    --series: #2E96D8;
+    --series-soft: #2A4E7A;
+    --accent: #E0702A;
+    --chart-grid: #1E3A66;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0B1F41;
+  --surface: #142B52;
+  --surface-line: #25457A;
+  --ink: #F2F4F7;
+  --ink-dim: #AFBBCD;
+  --rule: #1E3A66;
+  --green-tint: #15361D;
+  --blue-tint: #12365B;
+  --orange-tint: #3A1E10;
+  --navy-tint: #1E3A66;
+  --series: #2E96D8;
+  --series-soft: #2A4E7A;
+  --accent: #E0702A;
+  --chart-grid: #1E3A66;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Open Sans', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+h1, h2, h3 {
+  font-family: 'Lexend Deca', 'Open Sans', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+a { color: var(--series); }
+
+/* ---------------------------------------------------------------- layout */
+
+main { scroll-snap-type: y proximity; }
+
+.slide {
+  min-height: 100vh;
+  padding: clamp(28px, 5vw, 64px) clamp(16px, 6vw, 96px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  scroll-snap-align: start;
+  border-bottom: 1px solid var(--rule);
+}
+
+.slide.dark {
+  background: var(--eip-navy);
+  color: #FFFFFF;
+  --ink: #FFFFFF;
+  --ink-dim: #B9C2CF;
+  --surface: #17335C;
+  --surface-line: #2C4F84;
+}
+
+.kicker {
+  font-family: 'Montserrat', 'Open Sans', sans-serif;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--series);
+  margin-bottom: .6rem;
+}
+
+.slide.dark .kicker { color: var(--eip-green); }
+
+.slide h1 { font-size: clamp(2rem, 5vw, 3.4rem); max-width: 22ch; }
+.slide h2 { font-size: clamp(1.45rem, 3.2vw, 2.15rem); max-width: 32ch; margin-bottom: 1.3rem; }
+
+.lede {
+  font-size: clamp(1rem, 1.35vw, 1.12rem);
+  max-width: 70ch;
+  color: var(--ink-dim);
+}
+
+.note { margin-top: 1.3rem; font-size: 1rem; max-width: 82ch; }
+
+.foot {
+  margin-top: auto;
+  padding-top: 1.3rem;
+  font-size: .78rem;
+  font-style: italic;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.grid { display: grid; gap: 1.1rem; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+.split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 2rem; align-items: center; }
+
+@media (max-width: 900px) {
+  .g2, .g3, .g4, .split { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-line);
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+}
+
+.card.blue   { background: var(--blue-tint); }
+.card.green  { background: var(--green-tint); }
+.card.orange { background: var(--orange-tint); }
+
+.card h3 { font-size: 1.04rem; margin-bottom: .35rem; }
+.card p  { margin: 0; font-size: .94rem; color: var(--ink-dim); }
+.card p + p { margin-top: .6rem; }
+
+.stat {
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: clamp(2rem, 4.2vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: .45rem;
+  color: var(--series);
+}
+
+.stat.accent { color: var(--accent); }
+.stat.ink { color: var(--ink); }
+
+.row { display: flex; gap: 1rem; align-items: flex-start; }
+
+.dot {
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.dot.one   { background: var(--eip-blue); }
+.dot.two   { background: var(--green-dark); }
+.dot.three { background: var(--eip-orange); }
+
+.tier { display: grid; grid-template-columns: 2.5rem 1fr auto; gap: 1rem; align-items: start; }
+.tier .tag { font-weight: 700; font-size: .88rem; white-space: nowrap; color: var(--ink-dim); }
+
+/* ---------------------------------------------------------------- plot rings */
+
+.rings { display: grid; grid-template-columns: minmax(220px, 1fr) 1.2fr; gap: 2rem; align-items: center; }
+@media (max-width: 900px) { .rings { grid-template-columns: 1fr; } }
+
+.legend div {
+  display: grid;
+  grid-template-columns: 1rem 1fr auto;
+  gap: .6rem .8rem;
+  align-items: baseline;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.legend span.sw { width: 1rem; height: 1rem; border-radius: 3px; display: inline-block; }
+.legend b { font-weight: 700; }
+.legend em { font-style: normal; color: var(--ink-dim); font-size: .9rem; }
+
+/* ---------------------------------------------------------------- charts */
+
+.chart { width: 100%; height: clamp(260px, 38vh, 380px); }
+
+.figure { margin: 0; }
+
+.figure figcaption {
+  font-size: .8rem;
+  color: var(--ink-dim);
+  margin-top: .5rem;
+}
+
+details.data {
+  margin-top: .6rem;
+  font-size: .85rem;
+  color: var(--ink-dim);
+}
+
+details.data summary {
+  cursor: pointer;
+  color: var(--series);
+  font-weight: 600;
+}
+
+details.data table { border-collapse: collapse; margin-top: .6rem; width: 100%; max-width: 46rem; }
+details.data th, details.data td { text-align: left; padding: .3rem .8rem .3rem 0; border-bottom: 1px solid var(--rule); }
+details.data th { color: var(--ink); font-weight: 700; }
+details.data td.num, details.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- timeline */
+
+.timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: .8rem; }
+@media (max-width: 900px) { .timeline { grid-template-columns: 1fr 1fr; } }
+
+.milestone {
+  border-top: 3px solid var(--series);
+  padding-top: .7rem;
+}
+
+.milestone.accent { border-top-color: var(--accent); }
+.milestone b { display: block; font-family: 'Lexend Deca', sans-serif; font-size: 1.05rem; }
+.milestone span { font-size: .88rem; color: var(--ink-dim); }
+
+/* ---------------------------------------------------------------- chrome */
+
+#dots {
+  position: fixed;
+  right: max(10px, 1.6vw);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  z-index: 20;
+}
+
+#dots a {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rule);
+  border: 1px solid var(--surface-line);
+  transition: background .2s, transform .2s;
+}
+
+#dots a.on { background: var(--series); transform: scale(1.35); }
+
+@media (max-width: 720px) { #dots { display: none; } }
+
+#themeToggle {
+  position: fixed;
+  right: max(10px, 1.6vw);
+  top: 1rem;
+  z-index: 20;
+  font: inherit;
+  font-size: .78rem;
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 30;
+  background: var(--surface);
+  color: var(--ink);
+  padding: .5rem .9rem;
+  border-radius: 8px;
+}
+
+@media print {
+  .slide { min-height: auto; page-break-after: always; border: none; }
+  #dots, #themeToggle { display: none; }
+}

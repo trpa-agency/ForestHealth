@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-21 (tessellation rewrite)
+- `06_tessellation` rebuilt around arcpy `GenerateTessellation`. The CSO owl grid is one exact lattice in NAD83 UTM 10N (400 ha flat top hexagons, residual under 5 mm over all 8,087 Sierra cells), so anchoring the tool's extent on a lattice point reproduces every delivered cell and extends the grid over Nevada. The sample design grid is the ratio 3 transverse hexagon on the same anchor; every owl centre is a fine centre. Scope cut to those two grids plus occupancy: the bin size sweep, EcObject overlay, rare type analysis, and extra grid family are gone (the sweep is uninformative on 125 sites and Pro 3.5.2 lacks the Esri tool anyway).
+- `tessellation:` config block rewritten: CRS is 26910, not 3310; `frame_raster` points at the threshold analysis raster on F: and is optional. `docs/tessellation_config_block.yaml` removed as a duplicate.
+- `src/tessellation.py`: `fit_lattice_xy` and `residuals_xy` fit a known construction from a centroid array with no spatial library, so arcpy cursors can feed them. Bug fix: the geopandas fits used `representative_point()`, which is not the centroid, and reported a 3 m residual on an exact lattice.
+- Outputs: `outputs/tessellation.gdb` with both grids, shapefile and GeoPackage copies, `tessellation_summary.json` (read by `scripts/build_html_data.py`), `tessellation_lattice_parameters.csv`, occupancy and increment CSVs, and a handoff note. Earlier `TahoeBasin_Hex399ha_*`, `owl_grid_lattice_parameters.csv`, `increment3_*.csv`, and `bin_size_evaluation_teon_sites.csv` came from code no longer in the repo and are superseded.
+
 ## 2026-09-09 (repo split)
 - LiDAR base processing (00a, 00_lidar, 00b, src/lidar.py, src/taos.py, run_lidar.py, segment_trees_lidr.R, SERVER_RUN.md) moved to trpa-agency/general-purpose/lidar-2022. This folder keeps 01 to 04, strata, qa, and the spsurvey draw, and reads LiDAR products from Derived via config.yaml sources.
 

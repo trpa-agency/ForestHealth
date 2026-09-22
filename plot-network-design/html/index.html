@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forest Health Threshold Monitoring Plan</title>
+<meta name="description" content="TRPA Forest Health Threshold Monitoring Plan, September 2026. The field plot network that lets the Basin report VP9 and VP10 from measured data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;700&family=Montserrat:wght@700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/eip.css">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<a class="skip" href="#s2">Skip to content</a>
+<button id="themeToggle" type="button">Dark</button>
+<nav id="dots" aria-label="Section navigation"></nav>
+
+<main>
+
+<!-- 1 --------------------------------------------------------------- -->
+<section class="slide dark" id="s1" data-title="Title">
+  <div class="kicker">Lake Tahoe EIP &nbsp;|&nbsp; Forest Health</div>
+  <h1>Forest Health Threshold Monitoring Plan</h1>
+  <p class="lede" style="margin-top:1.2rem">Building the field plot network that lets the Basin report its forest structure thresholds from measured data instead of modeled estimates.</p>
+  <p class="foot">September 2026 &nbsp;|&nbsp; Tahoe Regional Planning Agency</p>
+</section>
+
+<!-- 2 --------------------------------------------------------------- -->
+<section class="slide" id="s2" data-title="The problem">
+  <div class="kicker">The problem</div>
+  <h2>We are grading the forest on data we have never checked</h2>
+  <div class="grid g3">
+    <div class="card"><div class="stat">30</div><h3>Field plots</h3><p>Behind the adopted 2023 baseline</p></div>
+    <div class="card"><div class="stat accent">0</div><h3>On the Nevada side</h3><p>No plot east of the state line informs the model there</p></div>
+    <div class="card"><div class="stat ink"><span data-fig="meta.frame_acres">115,396</span></div><h3>Acres assessed</h3><p>The forested threshold population</p></div>
+  </div>
+  <p class="note">The structure layers behind the thresholds are imputed from a Sierra wide reference pool, so the Basin is not literally painted from thirty plots. But imputation accuracy is local. With nothing measured in Nevada, there is no way to tell when a match is wrong on that side of the lake.</p>
+  <p class="foot">Confirmed with Pat Manley, USFS PSW Region 5 Ecology Lab, September 19, 2026.</p>
+</section>
+
+<!-- 3 --------------------------------------------------------------- -->
+<section class="slide" id="s3" data-title="What we report">
+  <div class="kicker">What we have to report</div>
+  <h2>Both forest structure thresholds are out of attainment</h2>
+  <div class="split">
+    <figure class="figure">
+      <div id="chartAttainment" class="chart"></div>
+      <details class="data" id="dataAttainment"></details>
+    </figure>
+    <div class="card">
+      <h3>Where the gaps are</h3>
+      <p><b>VP10, stand density.</b> Twenty eight percent of the forest meets its target against a fifty percent standard. The shortfall is about 25,400 acres.</p>
+      <p><b>VP9, seral stage and canopy cover.</b> Roughly thirty seven percent of evaluated forest sits outside its desired range. Mid closed canopy is overrepresented everywhere, and early seral is scarce everywhere.</p>
+    </div>
+  </div>
+  <p class="foot">Source: ForestHealth threshold analysis. Confidence is rated moderate on status and low on trend.</p>
+</section>
+
+<!-- 4 --------------------------------------------------------------- -->
+<section class="slide" id="s4" data-title="The network">
+  <div class="kicker">The network</div>
+  <h2>Three hundred plots, assembled rather than purchased</h2>
+  <div class="grid g4">
+    <div class="card"><div class="stat">50 to 85</div><h3>New plots</h3><p>Bought under the RFP at firm unit rates</p></div>
+    <div class="card"><div class="stat">up to 100</div><h3>MSIM conversions</h3><p>Existing monumented sites, repositioned by a TRPA crew</p></div>
+    <div class="card"><div class="stat">about 60</div><h3>LTW plots</h3><p>Forest Service LiDAR validation plots, about ten years old</p></div>
+    <div class="card"><div class="stat ink">balance</div><h3>Burn and CSE plots</h3><p>Safford burn plots and adoptable pre-treatment plots</p></div>
+  </div>
+  <p class="note">Three hundred is an assembly target, not a purchase. The funding buys the new plots. Everything else is already installed and is brought in by fixing what is wrong with it, which for the hundred MSIM sites is the coordinates rather than the measurements.</p>
+</section>
+
+<!-- 5 --------------------------------------------------------------- -->
+<section class="slide" id="s5" data-title="The design">
+  <div class="kicker">The design</div>
+  <h2>Half the sample answers a question the other half cannot</h2>
+  <div class="grid g2">
+    <div class="card">
+      <div class="row"><div class="dot one">1</div><div><h3>Spatially balanced, not stratified</h3></div></div>
+      <p style="margin-top:.8rem">Sites spread evenly across the whole forested frame with no pre-stratification. This keeps the population definition intact as forest gains and loses ground between measurement cycles, which is what lets us report trend honestly in ten years. It is what the national inventory does, and it answers the objection our partners have raised twice.</p>
+    </div>
+    <div class="card">
+      <div class="row"><div class="dot two">2</div><div><h3>Weighted toward where we are blind</h3></div></div>
+      <p style="margin-top:.8rem">Sites selected with unequal probability, weighted toward the structural classes carrying the most reporting uncertainty and toward aspen, riparian, and LiDAR reference types. Weighted rather than hand picked, so every site keeps an inclusion probability and can still enter an estimate.</p>
+    </div>
+  </div>
+  <p class="note">One ranked site list, produced with the same method our partners already use, serves both this network and the biodiversity threshold now in development.</p>
+  <p class="foot">Recommended by Pat Manley, September 19, 2026. Resolves the proportional versus tail weighted question open since August 31.</p>
+</section>
+
+<!-- 6 --------------------------------------------------------------- -->
+<section class="slide" id="s6" data-title="One frame">
+  <div class="kicker">Working with TEON</div>
+  <h2>One grid over the whole Basin, not two</h2>
+  <div class="split">
+    <div>
+      <p class="lede">The Forest Service sampling frame is a hexagon grid built for California spotted owl monitoring. It stops at the state line, so it covers the California side of the Basin and almost none of Nevada. TRPA refit its lattice and extended it, which closes the gap without redrawing the cells that already exist.</p>
+      <div class="grid g3" style="margin-top:1.3rem">
+        <div class="card"><div class="stat ink"><span data-fig="grid.existing_cells">197</span></div><h3>Cells kept</h3><p>Delivered cells, original identifiers intact</p></div>
+        <div class="card"><div class="stat accent"><span data-fig="grid.new_cells">190</span></div><h3>Cells added</h3><p>Almost all of them Nevada side</p></div>
+        <div class="card"><div class="stat"><span data-fig="grid.cell_acres">987.8</span></div><h3>Acres per cell</h3><p>About 400 hectares, six times finer than the FIA hexagon</p></div>
+      </div>
+    </div>
+    <figure class="figure">
+      <div id="chartIncrements" class="chart"></div>
+      <details class="data" id="dataIncrements"></details>
+      <figcaption>Of <span data-fig="grid.land_cells">283</span> cells with land in them, <span data-fig="grid.occupied_cells">103</span> already hold a terrestrial site and <span data-fig="grid.empty_cells">180</span> are empty.</figcaption>
+    </figure>
+  </div>
+  <p class="foot">Lattice recovered to <span data-fig="grid.fit_residual_median_m">1.27</span> m median residual; regenerated cells match the delivered ones at <span data-fig="grid.iou_min">0.989</span> intersection over union or better. Built in notebooks/06_tessellation.</p>
+</section>
+
+<!-- 7 --------------------------------------------------------------- -->
+<section class="slide" id="s7" data-title="Cell size">
+  <div class="kicker">The scale question</div>
+  <h2>The owl cell is the right frame and the wrong sample size</h2>
+  <div class="split">
+    <figure class="figure">
+      <div id="chartCells" class="chart"></div>
+      <details class="data" id="dataCells"></details>
+    </figure>
+    <div>
+      <div class="card orange">
+        <h3>One point per owl hexagon is a third of a design</h3>
+        <p>At about 400 hectares the owl cell puts only <span data-fig="cells.n_cells.5">117</span> cells on the forested threshold frame, against the three hundred plots the reporting requirement needs. The cell size was chosen for spotted owls across the Sierra Nevada, and nothing about it was chosen for Tahoe Basin vegetation.</p>
+      </div>
+      <div class="card green" style="margin-top:1.1rem">
+        <h3>Nesting solves it</h3>
+        <p>A hexagon lattice at one third the area shares every centre with the owl lattice. TRPA draws its plots on the finer grid, about <span data-fig="cells.n_cells.1">351</span> cells on the same frame, and the Forest Service aggregates them back to owl cells exactly. Two sample sizes, one frame, no reconciliation later.</p>
+      </div>
+    </div>
+  </div>
+  <p class="note">Cell size gets argued three different ways, so we answer all three. What size displays a point pattern well is a cartographic question, and on a sample this sparse the standard test cannot even run. What size a sampling frame should use follows from the sample size the reporting requirement sets. What size a reporting unit should use follows from how many plots have to land inside it. Only the second one has authority here.</p>
+  <details class="data" id="dataBinsize" style="max-width:46rem"></details>
+  <p class="foot">Display scores computed with src/tessellation.evaluate_bin_sizes, which reimplements the criteria behind the ArcGIS Pro bin size tool so the result is reproducible in the repo.</p>
+</section>
+
+<!-- 8 --------------------------------------------------------------- -->
+<section class="slide" id="s8" data-title="The plot">
+  <div class="kicker">The plot</div>
+  <h2>One plot center, four nested circles</h2>
+  <div class="rings">
+    <svg viewBox="0 0 320 320" role="img" aria-label="Four concentric plot circles: a 56.4 metre macroplot, a 58.9 foot primary plot, a 24 foot subplot, and a 6.8 foot microplot, all sharing one centre.">
+      <circle cx="160" cy="160" r="150" fill="none" stroke="var(--series)" stroke-width="2" opacity="0.5"></circle>
+      <circle cx="160" cy="160" r="90"  fill="none" stroke="var(--series)" stroke-width="2.5"></circle>
+      <circle cx="160" cy="160" r="38"  fill="none" stroke="var(--accent)" stroke-width="2"></circle>
+      <circle cx="160" cy="160" r="11"  fill="none" stroke="var(--accent)" stroke-width="2"></circle>
+      <circle cx="160" cy="160" r="3"   fill="var(--ink)"></circle>
+      <line x1="160" y1="160" x2="160" y2="10" stroke="var(--ink-dim)" stroke-width="1" stroke-dasharray="3 4"></line>
+    </svg>
+    <div class="legend">
+      <div><span class="sw" style="background:var(--series);opacity:.5"></span><b>56.4 m macroplot</b><em>2.47 ac, trees 24 in and larger</em></div>
+      <div><span class="sw" style="background:var(--series)"></span><b>58.9 ft primary plot</b><em>0.25 ac, all trees 4.0 in and larger</em></div>
+      <div><span class="sw" style="background:var(--accent)"></span><b>24.0 ft subplot</b><em>1/24 ac, understory cover and fuels footprint</em></div>
+      <div><span class="sw" style="background:var(--accent);opacity:.6"></span><b>6.8 ft microplot</b><em>1/300 ac, saplings and seedlings</em></div>
+    </div>
+  </div>
+  <p class="note">The quarter acre is exactly the national inventory macroplot radius and a standard stand exam size, and the 56.4 metre ring is the one the existing Basin sites already use. Adopted sites nest inside our design instead of needing a crosswalk.</p>
+</section>
+
+<!-- 9 --------------------------------------------------------------- -->
+<section class="slide" id="s9" data-title="The protocol">
+  <div class="kicker">The protocol</div>
+  <h2>What gets measured, and what it costs</h2>
+  <div class="grid">
+    <div class="card tier"><div class="dot one">1</div><div><h3>Threshold metrics</h3><p>Every tree: species, diameter, height, crown base, crown ratio, crown width, damage, and decay. Plus a hundred point canopy cover reading and site data.</p></div><div class="tag">Every plot, base rate</div></div>
+    <div class="card tier"><div class="dot two">2</div><div><h3>Surface and ground fuels</h3><p>Four transects from plot center. Coarse and fine woody debris, duff and litter depth, and percent of each piece charred by fire.</p></div><div class="tag">Every plot, base rate</div></div>
+    <div class="card tier"><div class="dot three">3</div><div><h3>Understory composition</h3><p>Cover by growth habit and height layer, and species at three percent cover or more. Remote sensing cannot deliver this at all.</p></div><div class="tag">Subset, priced separately</div></div>
+  </div>
+  <p class="note">Pricing the understory separately lets us set the trade between how many plots we get and how much we learn at each one at the moment we sign the contract, rather than now.</p>
+  <p class="foot">The Forest Service's own protocol development guide, GTR WO-72, supplies the document structure, so the protocol reads as native to every partner reviewing it.</p>
+</section>
+
+<!-- 10 -------------------------------------------------------------- -->
+<section class="slide" id="s10" data-title="Plot size">
+  <div class="kicker">Why the plot got bigger</div>
+  <h2>Small plots cannot validate remote sensing</h2>
+  <div class="split">
+    <figure class="figure">
+      <div id="chartSize" class="chart"></div>
+      <details class="data" id="dataSize"></details>
+    </figure>
+    <div class="card blue">
+      <h3>Two things break a small plot</h3>
+      <p><b>Position error.</b> Shift a small plot four metres and it captures an almost entirely different set of LiDAR returns. Our plot keeps 86 percent of its footprint under the same shift.</p>
+      <p><b>Crown overhang.</b> The field rule counts a tree by where its trunk is. The LiDAR sees where its crown is. That mismatch halves every time the radius doubles.</p>
+    </div>
+  </div>
+  <p class="foot">Yang et al. 2023, Remote Sensing 15(14):3509. The 0.10 ha value is interpolated. Chirici et al. 2024 recommend against plots under 300 square metres for inventory of any kind.</p>
+</section>
+
+<!-- 11 -------------------------------------------------------------- -->
+<section class="slide" id="s11" data-title="Canopy cover">
+  <div class="kicker">The problem nobody had specified</div>
+  <h2>The canopy cover number is two different numbers</h2>
+  <div class="grid g2">
+    <div class="card green"><h3>What the standard means</h3><p>Draw the outline around a crown and everything inside it is cover, gaps included. This is how the threshold and the national inventory both define it.</p></div>
+    <div class="card blue"><h3>What the LiDAR measures</h3><p>A pulse that falls through a gap between branches is not a hit. The model sees through the crown that the standard treats as solid.</p></div>
+  </div>
+  <p class="note">Attainment turns on this. VP9 splits open from closed at fifty percent cover, and forty percent in Jeffrey pine. Field cover is systematically higher than modeled cover, and the gap is widest in the open crowned types, which are exactly the types furthest from target. So our crews record both readings at all one hundred points on every plot. The difference stops being an unknown and becomes a number we publish.</p>
+  <p class="foot">Ma et al. 2019 identify definitional differences as the dominant cause of disagreement between LiDAR cover products in the Sierra Nevada. TEON reached the same conclusion from the field side in 2024, finding the moosehorn underestimated cover against a densiometer.</p>
+</section>
+
+<!-- 12 -------------------------------------------------------------- -->
+<section class="slide" id="s12" data-title="The money">
+  <div class="kicker">The money</div>
+  <h2>What the funding actually buys</h2>
+  <div class="split">
+    <figure class="figure">
+      <div id="chartMoney" class="chart"></div>
+      <details class="data" id="dataMoney"></details>
+    </figure>
+    <div class="card">
+      <h3>Where the money is not going</h3>
+      <p>The sampling design, the field protocol, and the data collection app are all built in house. None of them are purchased.</p>
+      <p>That is the whole reason the funding reaches this many plots. The earlier version of this contract would have spent a large share of it buying a design.</p>
+    </div>
+  </div>
+  <p class="foot">Assumes fixed price mobilization and handoff tasks come off the top. Real per plot costs are being pulled from comparable Forest Service contracts.</p>
+</section>
+
+<!-- 13 -------------------------------------------------------------- -->
+<section class="slide" id="s13" data-title="Roles">
+  <div class="kicker">Roles</div>
+  <h2>Who does what</h2>
+  <div class="grid g3">
+    <div class="card"><h3>TRPA</h3><p>Sampling design, field protocol, Survey123 app, plot navigation packets, monumentation materials, land access coordination, and the survey grade repositioning of the existing sites.</p></div>
+    <div class="card"><h3>Contractor</h3><p>Installs, monuments, positions, and measures the new plots at firm unit rates, performs blind remeasurement on a subset, and delivers relocation documentation any agency can work from.</p></div>
+    <div class="card"><h3>Partners</h3><p>The Forest Service provides the existing site network, the ranked site list, and protocol review. Nobody advising on the design is bidding on the work.</p></div>
+  </div>
+  <p class="note">Doing the design in house is also what makes the network transferable. TRPA owns the protocol and the app from day one, so there is no handoff to negotiate at the end of a contract.</p>
+</section>
+
+<!-- 14 -------------------------------------------------------------- -->
+<section class="slide" id="s14" data-title="Timeline">
+  <div class="kicker">Timeline</div>
+  <h2>The schedule has no slack in it</h2>
+  <div class="timeline">
+    <div class="milestone"><b>Oct 16</b><span>Design and protocol freeze</span></div>
+    <div class="milestone"><b>Nov 2</b><span>RFP posts</span></div>
+    <div class="milestone accent"><b>Dec 16</b><span>Award, before the holidays</span></div>
+    <div class="milestone"><b>Jan 4</b><span>Work commences</span></div>
+    <div class="milestone"><b>Summer 2027</b><span>Field season</span></div>
+    <div class="milestone accent"><b>Sep 2027</b><span>Funds expire</span></div>
+  </div>
+  <p class="note">Award has to land before Christmas. December and January are when field contractors hire their crews for the following summer. An award in late January means bidding against everyone else for people who are already committed, and a 2027 season that starts short handed. Every week the RFP slips past mid November puts that at risk.</p>
+</section>
+
+<!-- 15 -------------------------------------------------------------- -->
+<section class="slide dark" id="s15" data-title="What we need">
+  <div class="kicker">What we need</div>
+  <h2>Three things that can still break this</h2>
+  <div class="grid">
+    <div class="card row"><div class="dot one">1</div><div><h3>The existing site measurements</h3><p>The site locations arrived on September 21, ninety nine core sites and twenty six more MSIM sites. The measurements, visit dates, and position accuracy behind them have not. How many new plots we buy depends on how many of those sites we can use, and the cost form cannot be written until we know.</p></div></div>
+    <div class="card row"><div class="dot two">2</div><div><h3>Field crew funding</h3><p>The repositioning work is about twelve weeks for two people. It is not something the team can absorb, and one person alone is not an option. We need to know what vehicle the funds can support before the end of October.</p></div></div>
+    <div class="card row"><div class="dot three">3</div><div><h3>Routing on time</h3><p>The package goes into approvals on October 19. It has to clear by October 30 for a November 2 posting, and that date is what protects the award before Christmas.</p></div></div>
+  </div>
+  <p class="foot">Figures generated <span data-fig="meta.generated">2026-09-21</span> from the plot-network-design repository. Grid counts use <span data-fig="meta.boundary">the interim boundary</span>.</p>
+</section>
+
+</main>
+
+<script src="data/figures.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

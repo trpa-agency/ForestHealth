@@ -144,6 +144,61 @@ access:
     3: {max_dist_m: 4000, max_slope_pct: 70}
     4: {max_dist_m: null, max_slope_pct: null}
 
+tessellation:
+  # 06_tessellation: two grids, both pure arcpy GenerateTessellation.
+  #   1. The Basin wide extension of the California spotted owl (CSO) grid for Pat Manley
+  #      and Shale Hunter, with every delivered cell reproduced exactly and its cell_id kept.
+  #   2. The sample design grid for the VP9 and VP10 plot network: a finer hexagon lattice
+  #      that shares every centre with the owl lattice, so plots aggregate to owl cells by
+  #      location with no reconciliation.
+  # The owl grid was constructed as 400 ha flat top hexagons in NAD83 UTM 10N and delivered
+  # in WGS84. Fitted over all 8,087 Sierra cells it is one exact lattice in UTM 10N
+  # (residual under 5 mm), which is what makes an exact extension possible. Do not change
+  # the CRS: the lattice exists only there.
+  epsg: 26910                    # NAD83 UTM 10N. Construction CRS of the owl grid, the repo's
+                                 # working CRS, and the native CRS of every TRPA service.
+  datum_transformation: "NAD_1983_To_WGS_1984_1"   # the zero shift transformation, applied when
+                                 # the WGS84 partner files are copied in. The owl grid was exported
+                                 # to WGS84 with no datum shift: with this it is exact 400 ha cells
+                                 # (residual under 1 cm); with the ITRF00 Helmert transformation its
+                                 # scale term shrinks the lattice by 0.1 ppm, 4 cm at the far end of
+                                 # the Sierra. Recorded in the handoff.
+  gdb: tessellation.gdb          # outputs/<gdb>; both grids land here as feature classes
+  cell_area_ha: 400              # owl cell, projected area; ground area is about 399.7 ha
+  hex_orientation_deg: 30        # direction of the first lattice vector: 30 is flat top
+  fine_ratio: 3                  # sample design grid = owl cell / ratio. 3 gives 133.3 ha
+                                 # (transverse hexagon, about 351 cells on the 115,396 ac
+                                 # frame); 4 gives 100 ha (flat top, about 467 cells). Only
+                                 # 3 and 4 nest without a rotation GenerateTessellation
+                                 # cannot make.
+  max_fit_residual_m: 0.05       # abort if the delivered grid is not one exact lattice
+  min_iou: 0.98                  # regenerated cells must match delivered cells this closely
+  pad_cells: 1                   # cells of margin around the boundary extent
+  min_land_frac: 0.01            # a cell needs this much non water to count as samplable
+  new_id_prefix: "TB"            # cell_id for cells the owl grid did not have
+  fine_id_prefix: "TF"           # cell_key prefix for the sample design grid
+  owl_id_field: "cell_id"
+  state_field: "STUSPS"          # CA NV States layer; values CA and NV
+  site_fields: {aquatic: "Aquatic", core99: "Core99"}   # Y/N flags on the TEON site layer
+
+  sources:
+    # Live TRPA REST services (host is maps.trpa.ORG) plus two partner files. arcpy copies
+    # either directly, projected on the way in.
+    boundary: "https://maps.trpa.org/server/rest/services/Boundaries/MapServer/4"
+                                 # TRPA Boundary, 1 feature, 1,328.7 km2. Authoritative here.
+    water: "https://maps.trpa.org/server/rest/services/DataDownloader_SoilsandHydro/MapServer/1"
+                                 # Lake Tahoe, 497.7 km2, leaving 831.0 km2 of land
+    state_line: "https://maps.trpa.org/server/rest/services/Boundaries/MapServer/16"
+    owl_grid: "data/raw/Sierra_Hexes_WGS84_ALL.shp"
+                                 # Pat Manley, Sept 21 2026. CSO grid from Anu Kramer via Craig
+                                 # Thompson, NOT derived from the FIA grid. 8,087 cells.
+    teon_sites: "data/raw/TEON99_aqterr_plus_MSIM.shp"
+                                 # Shale Hunter, Sept 21 2026. 166 points, Core99 and Aquatic flags.
+    frame_raster: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/veg_type_nonurban"
+                                 # The 115,396 acre assessed frame from the threshold analysis
+                                 # (ForestHealth repo). Not on the REST server. When F: is not
+                                 # mounted the notebook leaves frame_frac null and says so.
+
 run:
   synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers
   freeze: false          # true writes the frozen design layer with the seed recorded

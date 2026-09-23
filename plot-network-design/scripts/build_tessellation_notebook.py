@@ -84,7 +84,14 @@ Cell size is not a stratification; forest type and structure strata come from `0
     if not src.lower().startswith("http"):
         src = (Path.cwd() / src).resolve().as_posix()
     out = f"{WORK}/{name}"
-    arcpy.management.CopyFeatures(src, out)
+    try:
+        arcpy.management.CopyFeatures(src, out)
+    except arcpy.ExecuteError:
+        if src.lower().startswith("http") and arcpy.Exists(out):
+            log.warning(f"{key}: service unreachable ({arcpy.GetMessages(2).strip().splitlines()[-1]}); "
+                        f"reusing the copy already in {Path(WORK).name}")
+        else:
+            raise
     n = int(arcpy.management.GetCount(out)[0])
     log.info(f"{key}: {n:,} features -> {name} ({arcpy.Describe(out).spatialReference.name})")
     return out
@@ -337,40 +344,132 @@ for name, li in [("owl", lat), ("fine", fine_lat)]:
     print(f"  {name} cell {li.cell_area_ha:7.2f} ha = {li.cell_area_acres:7.1f} ac -> {frame_ac / li.cell_area_acres:6.0f} cells on the "
           f"{frame_ac:,} ac threshold frame (target {cfg['allocation']['levels']['full']} plots)")'''),
 
-("md", """### Frame fraction
+# ------------------------------------------------------------------ vegetation
+("md", """## 6. Vegetation attributes: forest type, the WHR crosswalk, and seral and canopy class
 
-`frame_frac` is how much of each cell is inside the assessed threshold frame: the 115,396 acres of Sierran mixed conifer, red fir, and Jeffrey pine types outside urban land use that VP9 and VP10 report on. That frame is the `veg_type_nonurban` raster in the threshold project geodatabase, which is not on the REST server, so this cell needs the F: drive. Without it the two fields stay null, the log says so, and everything else in the notebook is unaffected. Rerun this cell with F: mounted; nothing before it needs to run again."""),
+Both grids carry the vegetation conditions the threshold standards are assessed against, so a cell can be read the way TRPA reports: by the three forest types and the five seral and canopy classes. That is what makes the fine grid a reporting unit for the plot network rather than just a frame, and it is what lets any cell be compared with the plots that land in it. It also answers TEON's request to attribute the hexes with vegetation conditions, since the same fields serve both. The source is the threshold analysis rasters, which live in the threshold project geodatabase on F: and nowhere else. Without F: this section stops with a clear error and nothing before it needs rerunning.
 
-("code", '''FRAME = TC["sources"].get("frame_raster")
+**One classification, two levels.** The report does not use two vegetation schemes. Its frame raster is the Sierra Nevada Regional Resource Kit 2023 CWHR type layer, and every cell of it carries both a WHRTYPE (Sierran mixed conifer, Jeffrey pine, red fir, lodgepole pine, white fir, eastside pine, juniper, subalpine conifer, aspen, montane chaparral, wet meadow, and so on) and CWHR's own lifeform rollup of that type (conifer forest, conifer woodland, hardwood forest, hardwood woodland, herbaceous, shrub, wetland, barren, water, urban). Table 1 is the type level, restricted to the seven types that make up the assessed frame and grouped into the three TRPA reporting types. The appendix map is the lifeform level of the same raster. The crosswalk table this section writes is read straight from the raster attribute table, so it is the report's, not a reconstruction.
+
+**Primary attribution is the threshold grouping.** `jp_ac`, `smc_ac`, `rf_ac` are the acres of each TRPA type in the cell and `frame_ac` their sum, with `frame_frac` the share of the cell inside the frame. `jp_pct`, `smc_pct`, `rf_pct` are shares of the frame area in the cell, so they sum to 100 wherever there is frame. `trpa_type` is the dominant of the three and `type_pct` its share. Subalpine conifer is not one of the three; it has its own non-degradation standard and sits outside this frame on purpose.
+
+**Secondary field to crosswalk from.** `whr_type` is the dominant WHRTYPE over all non-urban land in the cell, forest or not, `whr_pct` its share of that land, and `lifeform` its CWHR lifeform. The full cell by WHRTYPE table goes out as a CSV so any other grouping can be built from it.
+
+**Seral stage and canopy class.** `sc_early`, `sc_midop`, `sc_midcl`, `sc_lateop`, `sc_latecl` are the shares of the frame area in the cell in each of the five VP9 classes: seral stage by quadratic mean diameter at 5 and 25 inches, open versus closed at 40 percent cover for Jeffrey pine and 50 percent for the other two. They are computed here from the component rasters with the class logic in `config.yaml`, not read from the classification raster in the geodatabase, because that product predates the fix to the mid and late canopy codes recorded in the ForestHealth repo. The five shares sum to less than 100 where the seral raster has no data."""),
+
+("code", '''FRAME, SERAL, CANOPY = (TC["sources"][k] for k in ("frame_raster", "seral_raster", "canopy_raster"))
+missing = [r for r in (FRAME, SERAL, CANOPY) if not arcpy.Exists(r)]
+assert not missing, f"threshold rasters not reachable, mount F: and rerun from here: {missing}"
+arcpy.CheckOutExtension("Spatial")
+from arcpy.sa import Raster, Con, IsNull, SetNull, Reclassify, RemapValue, TabulateArea
+
+RSR = arcpy.Describe(FRAME).spatialReference
+CELL = float(arcpy.Describe(FRAME).meanCellWidth)
+W2T = TC["whr_to_type"]
+TYPES = ("JP", "SMC", "RF")
+SC = TC["seral_canopy_classes"]
+
+# The crosswalk, read from the raster attribute table. Value codes differ by source map, so group on WHRTYPE.
+xw = table(FRAME, ["Value", "Count", "WHRTYPE", "WHRNAME", "WHR13NAME"])
+xw["trpa_type"] = xw["WHRTYPE"].map(W2T).fillna("not assessed")
+xw["acres_nonurban"] = xw["Count"] * CELL * CELL / AC
+crosswalk = (xw.groupby(["WHRTYPE", "WHRNAME", "WHR13NAME", "trpa_type"], as_index=False)["acres_nonurban"].sum()
+               .rename(columns={"WHR13NAME": "lifeform"}).sort_values("acres_nonurban", ascending=False))
+print(crosswalk.round(0).to_string(index=False))
+frame_by_type = crosswalk[crosswalk.trpa_type != "not assessed"].groupby("trpa_type")["acres_nonurban"].sum()
+print("\\nassessed frame acres by TRPA type, raster vs report Table 1:")
+for t in TYPES:
+    print(f"  {t:4s} {frame_by_type.get(t, 0):9,.0f}  vs {cfg['forest_types']['population_acres'][t]:9,}")
+print(f"  all  {frame_by_type.sum():9,.0f}  vs {frame_ac:9,}")
+LIFEFORM = crosswalk.drop_duplicates("WHRTYPE").set_index("WHRTYPE")["lifeform"].to_dict()'''),
+
+("code", '''# Forest type (1 JP, 2 SMC, 3 RF) and the five seral and canopy classes, on the frame only.
+code = {"JP": 1, "SMC": 2, "RF": 3}
+cut = cfg["threshold"]["cover_open_closed_pct"]
+with arcpy.EnvManager(outputCoordinateSystem=RSR, snapRaster=FRAME, cellSize=FRAME, extent=FRAME):
+    ft = Reclassify(Raster(FRAME), "WHRTYPE", RemapValue([[w, code[t]] for w, t in W2T.items()]), "NODATA")
+    ft.save(f"{WORK}/frame_type")
+    cc = Con(IsNull(Raster(CANOPY)), 0, Raster(CANOPY))
+    closed = Con(ft == 1, Con(cc >= cut["JP"], 1, 0), Con(ft == 2, Con(cc >= cut["SMC"], 1, 0), Con(cc >= cut["RF"], 1, 0)))
+    se = Raster(SERAL)
+    cls = Con(se == 1, 1, Con(se == 2, Con(closed == 1, 3, 2), Con(se == 3, Con(closed == 1, 5, 4))))
+    cls = SetNull(IsNull(ft), cls)
+    cls.save(f"{WORK}/frame_seral_canopy")
+sc_tab = table(f"{WORK}/frame_seral_canopy", ["Value", "Count"])
+sc_tab["class"] = sc_tab["Value"].map(SC); sc_tab["acres"] = sc_tab["Count"] * CELL * CELL / AC
+sc_tab["pct_of_frame"] = 100 * sc_tab["acres"] / frame_by_type.sum()
+print(sc_tab[["Value", "class", "acres", "pct_of_frame"]].round(1).to_string(index=False))
+log.info(f"seral and canopy classes cover {sc_tab.acres.sum():,.0f} of {frame_by_type.sum():,.0f} frame acres")'''),
+
+("code", '''VEG_FIELDS = [("frame_ac", "DOUBLE"), ("frame_frac", "DOUBLE"), ("jp_ac", "DOUBLE"), ("smc_ac", "DOUBLE"), ("rf_ac", "DOUBLE"),
+              ("jp_pct", "DOUBLE"), ("smc_pct", "DOUBLE"), ("rf_pct", "DOUBLE"), ("trpa_type", "TEXT", 4), ("type_pct", "DOUBLE"),
+              ("whr_type", "TEXT", 4), ("whr_pct", "DOUBLE"), ("lifeform", "TEXT", 20), ("other_ac", "DOUBLE"),
+              ("sc_early", "DOUBLE"), ("sc_midop", "DOUBLE"), ("sc_midcl", "DOUBLE"), ("sc_lateop", "DOUBLE"), ("sc_latecl", "DOUBLE")]
+SC_FIELD = {1: "sc_early", 2: "sc_midop", 3: "sc_midcl", 4: "sc_lateop", 5: "sc_latecl"}
+
+def tabulate(fc, raster, field):
+    """Area (m2) of each raster class per cell, zones projected to the raster's CRS so nothing is resampled."""
+    zones = f"{WORK}/{fc}_albers"
+    arcpy.management.Project(fc, zones, RSR)
+    tab = f"{WORK}/tab_{fc}_{field}"
+    with arcpy.EnvManager(snapRaster=FRAME, cellSize=FRAME):
+        TabulateArea(zones, "cell_key", raster, field, tab, CELL)
+    # An integer class field yields VALUE_1, VALUE_2, ...; a string class field yields the values themselves
+    # (RFR, SMC, ...) with no prefix. The zone key comes back upper cased.
+    cols = [f.name for f in arcpy.ListFields(tab) if f.name.upper() not in ("OBJECTID", "CELL_KEY")]
+    t = table(tab, ["cell_key"] + cols).set_index("cell_key")
+    pre = field.upper() + "_"
+    t.columns = [c[len(pre):] if c.upper().startswith(pre) else c for c in t.columns]
+    return t
+
+veg_long, veg_stats = [], {}
 for fc in (GRID, FINE):
-    add_fields(fc, [("frame_ha", "DOUBLE"), ("frame_frac", "DOUBLE")])
-frame_stats = {}
-if FRAME and arcpy.Exists(FRAME):
-    arcpy.CheckOutExtension("Spatial")
-    cell = arcpy.Describe(FRAME).meanCellWidth
-    for fc in (GRID, FINE):
-        tab = f"{WORK}/tabarea_{fc}"
-        arcpy.sa.TabulateArea(fc, "cell_key", FRAME, "Value", tab, cell)
-        t = table(tab, [f.name for f in arcpy.ListFields(tab)])
-        t["frame_m2"] = t[[c for c in t.columns if c.upper().startswith("VALUE_")]].sum(axis=1)
-        m = dict(zip(t["cell_key"], t["frame_m2"]))
-        with arcpy.da.UpdateCursor(fc, ["SHAPE@", "cell_key", "frame_ha", "frame_frac"]) as cur:
-            for r in cur:
-                a = m.get(r[1], 0.0)
-                r[2:] = [a / HA, a / r[0].area]
-                cur.updateRow(r)
-        f = table(fc, ["cell_key", "frame_ha", "frame_frac"])
-        frame_stats[fc] = {"frame_acres": float(f.frame_ha.sum() * HA / AC),
-                           "cells_touching_frame": int((f.frame_frac > 0).sum()),
-                           "cells_half_in_frame": int((f.frame_frac >= 0.5).sum()),
-                           "cell_equivalents": float(f.frame_frac.sum())}
-        print(fc, frame_stats[fc])
-    log.info(f"frame acres tabulated {frame_stats[GRID]['frame_acres']:,.0f} vs configured {frame_ac:,}")
-else:
-    log.warning(f"frame raster not reachable: {FRAME}. frame_ha and frame_frac left null; mount F: and rerun this cell.")'''),
+    add_fields(fc, VEG_FIELDS)
+    keys = table(fc, ["cell_key", "land_ha"]).set_index("cell_key")
+    whr = (tabulate(fc, FRAME, "WHRTYPE") / AC).reindex(keys.index, fill_value=0.0)            # acres by WHRTYPE
+    scl = (tabulate(fc, f"{WORK}/frame_seral_canopy", "Value") / AC).reindex(keys.index, fill_value=0.0)
+    scl.columns = [int(c) for c in scl.columns]
+    type_ac = pd.DataFrame({t: whr[[w for w in W2T if W2T[w] == t and w in whr.columns]].sum(axis=1) for t in TYPES})
+    frame = type_ac.sum(axis=1)
+    land_tab = whr.sum(axis=1)
+    dom_t = type_ac.idxmax(axis=1).where(frame > 0)
+    dom_w = whr.idxmax(axis=1).where(land_tab > 0)
+    rows = {}
+    for k in keys.index:
+        f = frame[k]
+        r = {"frame_ac": f, "frame_frac": None, "jp_ac": type_ac.at[k, "JP"], "smc_ac": type_ac.at[k, "SMC"], "rf_ac": type_ac.at[k, "RF"],
+             "jp_pct": 100 * type_ac.at[k, "JP"] / f if f else None, "smc_pct": 100 * type_ac.at[k, "SMC"] / f if f else None,
+             "rf_pct": 100 * type_ac.at[k, "RF"] / f if f else None,
+             "trpa_type": dom_t[k] if f else None, "type_pct": 100 * type_ac.loc[k].max() / f if f else None,
+             "whr_type": dom_w[k] if land_tab[k] else None, "whr_pct": 100 * whr.loc[k].max() / land_tab[k] if land_tab[k] else None,
+             "lifeform": LIFEFORM.get(dom_w[k]) if land_tab[k] else None, "other_ac": land_tab[k] - f}
+        for v, name in SC_FIELD.items():
+            r[name] = 100 * scl.at[k, v] / f if (f and v in scl.columns) else None
+        rows[k] = r
+        for w in whr.columns:
+            if whr.at[k, w] > 0:
+                veg_long.append({"grid": fc, "cell_key": k, "whr_type": w, "acres": whr.at[k, w],
+                                 "pct_of_cell_land": 100 * whr.at[k, w] / land_tab[k],
+                                 "trpa_type": W2T.get(w, "not assessed"), "lifeform": LIFEFORM.get(w)})
+    names = [n for n, *_ in VEG_FIELDS]
+    with arcpy.da.UpdateCursor(fc, ["SHAPE@", "cell_key"] + names) as cur:
+        for rec in cur:
+            r = rows[rec[1]]
+            r["frame_frac"] = r["frame_ac"] * AC / rec[0].area
+            rec[2:] = [r[n] for n in names]
+            cur.updateRow(rec)
+    v = table(fc, ["cell_key", "land_frac", "frame_ac", "frame_frac", "trpa_type", "whr_type", "lifeform"])
+    veg_stats[fc] = {"frame_acres": float(v.frame_ac.sum()), "cells_touching_frame": int((v.frame_frac > 0).sum()),
+                     "cells_half_in_frame": int((v.frame_frac >= 0.5).sum()), "cell_equivalents": float(v.frame_frac.sum()),
+                     "cells_by_trpa_type": v.trpa_type.value_counts().to_dict(), "cells_by_lifeform": v.lifeform.value_counts().to_dict()}
+    print(f"\\n{fc}: frame {v.frame_ac.sum():,.0f} ac over {(v.frame_frac > 0).sum()} cells "
+          f"({v.frame_frac.sum():.0f} cell equivalents); dominant type of cells with frame: {v.trpa_type.value_counts().to_dict()}")
+    print(f"  dominant lifeform of cells with land: {v[v.land_frac > TC['min_land_frac']].lifeform.value_counts().to_dict()}")
+veg_long = pd.DataFrame(veg_long)
+log.info(f"vegetation attributes written to {GRID} and {FINE}; {len(veg_long):,} cell by WHRTYPE rows")'''),
 
 # ------------------------------------------------------------------ export
-("md", """## 6. Exports
+("md", """## 7. Exports
 
 Both grids go out as feature classes in `outputs/tessellation.gdb`, plus a shapefile and a GeoPackage of each. The owl extension is one layer with every cell, `source` distinguishing delivered from new and the original `cell_id` preserved, so Pat and Shale drop it in without merging two grids.
 
@@ -396,6 +495,9 @@ lattice_rows = [{"grid": GRID, **lat.summary()}, {"grid": FINE, **fine_lat.summa
 pd.DataFrame(lattice_rows).to_csv(O / "tessellation_lattice_parameters.csv", index=False)
 cells.to_csv(O / f"{GRID}_occupancy_{STAMP}.csv", index=False)
 inc.to_csv(O / f"teon_increments_{STAMP}.csv", index=False)
+crosswalk.to_csv(O / f"whrtype_crosswalk_{STAMP}.csv", index=False)
+veg_long.to_csv(O / f"TahoeBasin_Hex_whrtype_by_cell_{STAMP}.csv", index=False)
+sc_tab[["Value", "class", "acres", "pct_of_frame"]].to_csv(O / f"seral_canopy_class_acres_{STAMP}.csv", index=False)
 
 summary = {
     "generated": pd.Timestamp.today().strftime("%Y-%m-%d"),
@@ -418,7 +520,13 @@ summary = {
         "cell_acres": round(fine_lat.cell_area_acres, 1), "spacing_m": round(fine_lat.spacing_m, 3),
         "total_cells": int(len(fine)), "land_cells": int((fine.land_frac > TC["min_land_frac"]).sum()),
         "on_owl_centre": int(fine.on_owl_ctr.sum()), "expected_cells_on_frame": round(frame_ac / fine_lat.cell_area_acres),
-        "frame": frame_stats.get(FINE), **{f"file_{k}": v for k, v in files[FINE].items()},
+        "frame": veg_stats.get(FINE), **{f"file_{k}": v for k, v in files[FINE].items()},
+    },
+    "veg": {
+        "frame_acres_by_type": {t: float(frame_by_type.get(t, 0)) for t in TYPES},
+        "frame_acres_report": cfg["forest_types"]["population_acres"],
+        "seral_canopy_pct_of_frame": dict(zip(sc_tab["class"], sc_tab["pct_of_frame"].round(1))),
+        "grid": veg_stats.get(GRID), "fine": veg_stats.get(FINE),
     },
     "frame_acres_configured": int(frame_ac), "target_plots": int(cfg["allocation"]["levels"]["full"]),
 }
@@ -435,12 +543,23 @@ Datum transformation applied to the WGS84 partner files on import: {TC['datum_tr
   centre spacing {lat.spacing_m:.4f} m, flat top, GenerateTessellation HEXAGON anchored at ({ax:.3f}, {ay:.3f})
   {len(cells)} cells intersect the TRPA boundary: {(cells.source == 'existing').sum()} delivered (cell_id kept), {(cells.source == 'new').sum()} new (cell_id {TC['new_id_prefix']}nnnn)
   fit residual over 8,087 delivered cells: max {res.max():.4f} m; IoU against delivered cells min {iou.min():.5f}
-  fields: cell_key (lattice index), cell_id, source, state, in_frac, land_frac, land_ha, n_sites, n_core99, n_msim, n_aquatic, frame_ha, frame_frac
+  fields: cell_key (lattice index), cell_id, source, state, in_frac, land_frac, land_ha, n_sites, n_core99, n_msim, n_aquatic
 
 {FINE}: sample design grid, one {frac_word} of the owl cell, {shape_type}, same anchor.
   cell area {fine_lat.cell_area_ha:.3f} ha ({fine_lat.cell_area_acres:.1f} ac), spacing {fine_lat.spacing_m:.4f} m
   every owl centre is a centre of this grid (max offset {owl_on_fine.max():.6f} m); on_owl_ctr flags those cells
   {len(fine)} cells intersect the boundary; about {frame_ac / fine_lat.cell_area_acres:.0f} on the {frame_ac:,} ac threshold frame
+
+Vegetation fields on both grids, from the threshold analysis rasters (RRK 2023 CWHR type, 30 m):
+  frame_ac, frame_frac        acres and share of the cell in the assessed frame (the seven WHRTYPEs of report Table 1)
+  jp_ac, smc_ac, rf_ac        acres of Jeffrey pine, Sierran mixed conifer, red fir (TRPA threshold types)
+  jp_pct, smc_pct, rf_pct     shares of the frame area in the cell; sum to 100 where frame_ac > 0
+  trpa_type, type_pct         dominant TRPA type and its share
+  whr_type, whr_pct, lifeform dominant CWHR WHRTYPE over all non urban land in the cell, its share, its CWHR lifeform
+  other_ac                    non urban land in the cell outside the frame
+  sc_early, sc_midop, sc_midcl, sc_lateop, sc_latecl
+                              shares of the frame area in the five seral stage and canopy classes (VP9)
+  Full cell by WHRTYPE table: TahoeBasin_Hex_whrtype_by_cell_{STAMP}.csv; crosswalk: whrtype_crosswalk_{STAMP}.csv
 
 Boundary: {TC['sources']['boundary']}
 """

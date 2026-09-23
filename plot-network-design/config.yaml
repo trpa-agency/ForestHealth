@@ -194,10 +194,20 @@ tessellation:
                                  # Thompson, NOT derived from the FIA grid. 8,087 cells.
     teon_sites: "data/raw/TEON99_aqterr_plus_MSIM.shp"
                                  # Shale Hunter, Sept 21 2026. 166 points, Core99 and Aquatic flags.
+    # Threshold analysis rasters (ForestHealth repo), 30 m, California Albers, on F: only.
+    # veg_type_nonurban is the RRK 2023 CWHR type raster clipped to non urban land use; its
+    # attribute table carries WHRTYPE and the lifeform rollup (WHR13NAME), which is the map in
+    # the report appendix. The seven WHRTYPEs in whr_to_type are the 115,396 acre frame.
     frame_raster: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/veg_type_nonurban"
-                                 # The 115,396 acre assessed frame from the threshold analysis
-                                 # (ForestHealth repo). Not on the REST server. When F: is not
-                                 # mounted the notebook leaves frame_frac null and says so.
+    seral_raster: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/seral_stage_nonurban"
+                                 # 1 early, 2 mid, 3 late, by QMD at threshold.qmd_breaks_in
+    canopy_raster: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/canopy_cover_nonurban"
+                                 # percent canopy cover; open/closed at threshold.cover_open_closed_pct
+
+  # Report Table 1: CWHR WHRTYPE to the three assessed TRPA forest types. Everything else in
+  # the raster (SCN, MHC, ASP, shrub, meadow, barren, water) is outside the frame.
+  whr_to_type: {JPN: JP, EPN: JP, JUN: JP, SMC: SMC, WFR: SMC, LPN: SMC, RFR: RF}
+  seral_canopy_classes: {1: early, 2: mid_open, 3: mid_closed, 4: late_open, 5: late_closed}
 
 run:
   synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers

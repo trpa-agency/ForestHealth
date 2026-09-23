@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-22 (tessellation vegetation attributes)
+- `06_tessellation` section 6 attributes both grids from the threshold analysis rasters on F: (`veg_type_nonurban`, `seral_stage_nonurban`, `canopy_cover_nonurban`): acres and shares of the three TRPA types, dominant type, dominant CWHR WHRTYPE with lifeform, and the five VP9 seral and canopy class shares, computed from the component rasters with the corrected class logic rather than the stale classification raster. Writes the WHRTYPE crosswalk (read from the raster attribute table) and a cell by WHRTYPE table. Frame totals: 115,692 ac over the cells against 115,396 in the report. `whr_to_type` and `seral_canopy_classes` added to config. `fetch` now falls back to the copy in the work gdb when a REST service is unreachable.
+- Delivery to TEON assembled in `outputs/delivery_20260922/` with `email_tables.md`.
+
 ## 2026-09-21 (tessellation rewrite)
 - `06_tessellation` rebuilt around arcpy `GenerateTessellation`. The CSO owl grid is one exact lattice in NAD83 UTM 10N (400 ha flat top hexagons, residual under 5 mm over all 8,087 Sierra cells), so anchoring the tool's extent on a lattice point reproduces every delivered cell and extends the grid over Nevada. The sample design grid is the ratio 3 transverse hexagon on the same anchor; every owl centre is a fine centre. Scope cut to those two grids plus occupancy: the bin size sweep, EcObject overlay, rare type analysis, and extra grid family are gone (the sweep is uninformative on 125 sites and Pro 3.5.2 lacks the Esri tool anyway).
 - `tessellation:` config block rewritten: CRS is 26910, not 3310; `frame_raster` points at the threshold analysis raster on F: and is optional. `docs/tessellation_config_block.yaml` removed as a duplicate.

@@ -3,81 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <title>Forest Composition Actions Table</title>
-
-  <!-- AG Grid styles (v31+) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/core.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/theme-alpine.css" />
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
-
   <style>
-    html, body, #myGrid {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
+    html, body, #myGrid { height: 100%; width: 100%; margin: 0; padding: 0; }
   </style>
 </head>
 <body>
   <div id="myGrid" class="ag-theme-alpine"></div>
-
   <script>
     const columnDefs = [
       { headerName: "Forest Type", field: "forestType", pinned: "left" },
-      { headerName: "Move Canopy from Closed to Open", field: "logging", type: 'numericColumn', valueFormatter: currencyFormatter },
-      { headerName: "Move to Early Seral", field: "earlySeral", type: 'numericColumn', valueFormatter: currencyFormatter },
-      { headerName: "Grow into Late Seral", field: "lateSeral", type: 'numericColumn', valueFormatter: currencyFormatter },
-      { headerName: "Total Acres to Target", field: "total", type: 'numericColumn', valueFormatter: currencyFormatter },
+      { headerName: "Acres Above Desired Range", field: "excess", type: 'numericColumn', valueFormatter: fmt },
+      { headerName: "Early Seral Deficit", field: "earlySeral", type: 'numericColumn', valueFormatter: fmt },
+      { headerName: "Mid and Late Seral Deficit", field: "lateSeral", type: 'numericColumn', valueFormatter: fmt },
+      { headerName: "Total Acres to Target", field: "total", type: 'numericColumn', valueFormatter: fmt },
     ];
-
     const rowData = [
-      {
-        forestType: "Jeffrey Pine",
-        logging: 9313.58,
-        earlySeral: 1174.77,
-        lateSeral: 5184.20,
-        total: 15672.55
-      },
-      {
-        forestType: "White Fir",
-        logging: 16046.44,
-        earlySeral: 4204.00,
-        lateSeral: 3586.95,
-        total: 23837.39
-      },
-      {
-        forestType: "Red Fir",
-        logging: 2585.62,
-        earlySeral: 1747.91,
-        lateSeral: 2954.02,
-        total: 7287.55
-      },
-      {
-        forestType: "Total",
-        logging: 27945.64,
-        earlySeral: 7126.68,
-        lateSeral: 11725.17,
-        total: 46797.49
-      }
-    ];
-
-    function currencyFormatter(params) {
-      return params.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    }
+  {
+    "forestType": "Jeffrey Pine",
+    "excess": 7287.99,
+    "earlySeral": 336.67,
+    "lateSeral": 5918.55,
+    "total": 13543.21
+  },
+  {
+    "forestType": "Sierran Mixed Conifer",
+    "excess": 15809.61,
+    "earlySeral": 4533.96,
+    "lateSeral": 4328.69,
+    "total": 24672.26
+  },
+  {
+    "forestType": "Red Fir",
+    "excess": 2577.11,
+    "earlySeral": 1745.44,
+    "lateSeral": 831.67,
+    "total": 5154.22
+  },
+  {
+    "forestType": "Total",
+    "excess": 25674.71,
+    "earlySeral": 6616.07,
+    "lateSeral": 11078.91,
+    "total": 43369.69
+  }
+];
+    function fmt(p) { return p.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 
     const gridOptions = {
       columnDefs,
       rowData,
-      defaultColDef: {
-        resizable: true,
-        sortable: true,
-        filter: true
-      }
+      defaultColDef: { resizable: true, sortable: true, filter: true }
     };
-
     document.addEventListener("DOMContentLoaded", function () {
-      const gridDiv = document.querySelector("#myGrid");
-      agGrid.createGrid(gridDiv, gridOptions);
+      agGrid.createGrid(document.querySelector("#myGrid"), gridOptions);
     });
   </script>
 </body>

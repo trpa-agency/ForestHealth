@@ -1,0 +1,10 @@
+metric,acres,percent_of_frame
+share_Early,3493.61,3.14
+share_Mid (closed canopy),23438.2,21.04
+share_Mid (open canopy),40128.93,36.01
+share_Late (open canopy),21703.3,19.48
+share_Late (closed canopy),22660.47,20.34
+assessed_acres,111424.51,100.0
+within_class_acres,13574.31,12.18
+not_in_excess_acres,85749.8,76.96
+report_within_acres,70836.0,63.57

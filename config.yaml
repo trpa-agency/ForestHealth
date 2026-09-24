@@ -1,0 +1,68 @@
+# ForestHealth threshold analysis: paths and adopted standard values.
+# No secrets here. Read by scripts/rerun_forest_structure.py and
+# scripts/build_forest_structure_charts.py. The notebooks still hardcode the same paths;
+# migrate them here as cells are promoted.
+
+paths:
+  # Project geodatabase holding the clipped RRK rasters and every analysis product.
+  gdb: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb"
+  # Raw Sierra Nevada Regional Resource Kit downloads (read only).
+  downloads: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/Download/SNV_RRK"
+  # Legacy F: output folder some Results cells still write to.
+  analysis_product: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/AnalysisProduct"
+  # Repo-relative folders.
+  output: "output"
+  datavis: "DataVisualizations"
+  logs: "logs"
+
+# Rasters inside paths.gdb that the forest structure standards read. All are the RRK
+# products clipped to the TRPA boundary and then to non urban land use (analysis cells 6
+# and 7). 30 m, California Teale Albers.
+rasters:
+  veg_type: "veg_type_nonurban"            # CWHR WHRTYPE, attribute table carries WHRTYPE
+  seral_stage: "seral_stage_nonurban"      # 1 early, 2 mid, 3 late, by QMD
+  canopy_cover: "canopy_cover_nonurban"    # percent canopy cover
+  stand_density: "stand_density_nonurban"  # trees per acre
+  basal_area: "basal_area_nonurban"        # basal area, sq ft per acre
+  # Products written by the rerun (overwritten each run, same names as the notebook).
+  density_assessment: "stand_density_threshold_assessment"
+  seral_classification: "seral_canopy_veg_classification"
+  seral_tabulation: "seral_tabulation"
+
+# Report Table 1 crosswalk, CWHR WHRTYPE to TRPA forest type code.
+forest_types:
+  veg_map: {JPN: 1, EPN: 1, JUN: 1, SMC: 2, WFR: 2, LPN: 2, RFR: 3}
+  # The repo used to call type 2 "White Fir". The report calls it Sierran Mixed Conifer and
+  # the class is mostly SMC plus Lodgepole, so the rerun adopts the report's name.
+  names: {1: "Jeffrey Pine", 2: "Sierran Mixed Conifer", 3: "Red Fir"}
+  # Report Table 1 acres, for the frame check.
+  report_acres: {1: 21450, 2: 70909, 3: 23037}
+
+# Stand density desired conditions. Values are MAXIMUMS: a pixel at or below both the TPA
+# and basal area value is in attainment. Keyed by forest type code then seral code.
+stand_density:
+  targets:
+    1: {1: [200, 30], 2: [70, 80], 3: [55, 100]}     # Jeffrey pine early, mid, late
+    2: {1: [300, 40], 2: [90, 130], 3: [75, 180]}    # Sierran mixed conifer
+    3: {1: [300, 50], 2: [100, 175], 3: [80, 250]}   # Red fir
+  attainment_target_pct: 50
+
+# Seral stage and canopy cover desired ranges, percent of each forest type.
+# Class codes: 1 early, 2 mid closed, 3 mid open, 4 late open, 5 late closed.
+seral_canopy:
+  class_names: {1: "Early", 2: "Mid (closed canopy)", 3: "Mid (open canopy)", 4: "Late (open canopy)", 5: "Late (closed canopy)"}
+  # Closed canopy at or above this percent cover, by forest type code.
+  closed_cutoff_pct: {1: 40, 2: 50, 3: 50}
+  desired_pct:
+    1: {1: [5, 15], 2: [5, 10], 3: [25, 30], 4: [40, 50], 5: [5, 10]}
+    2: {1: [10, 20], 2: [5, 15], 3: [15, 20], 4: [25, 35], 5: [15, 25]}
+    3: {1: [10, 20], 2: [15, 25], 3: [15, 25], 4: [30, 40], 5: [20, 30]}
+  attainment_target_pct: 75
+  # Published figures to compare the rerun against (Box report).
+  report_within_acres: 70836
+  report_assessed_acres: 115396
+
+charts:
+  template: "plotly_white"
+  font: "Calibri"
+  title_color: "#6680a8"

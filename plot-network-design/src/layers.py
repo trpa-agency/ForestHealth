@@ -41,7 +41,7 @@ import requests
 from src.io import project_root
 
 _ARCGIS_RE = re.compile(r"\.(sde|gdb)([\\/]|$)", re.IGNORECASE)
-_FORMS = ("rrk", "lidar", "sde", "file")
+_FORMS = ("rrk", "lidar", "sde", "rest", "file")
 
 
 def _is_url(s: str) -> bool:
@@ -67,12 +67,13 @@ def resolve_source(entry, cfg: dict, prefer: str | None = None) -> tuple[str, di
 
     A plain string is returned as is with empty options. A mapping holds alternative
     forms of the same source: `rrk` (threshold raster on F:), `lidar` (lidar-2022
-    Derived product), `sde` (Vector.sde or Raster.sde feature class or raster), `file`
-    (local copy under data/raw). Any other key (`where`, `field`, `layer`) is an
+    Derived product), `sde` (Vector.sde or Raster.sde feature class or raster), `rest`
+    (maps.trpa.org FeatureServer or MapServer layer URL), `file` (local copy under
+    data/raw). `use: <form>` on the entry pins one form. Any other key (`where`, `field`, `layer`) is an
     option returned in the second element.
 
     Selection order: `prefer` when present in the entry; cfg["strata"]["source"] when
-    that form is present; `sde` when arcpy is importable; `file`; else the only form.
+    that form is present; `sde` when arcpy is importable; `rest`; `file`; else the only form.
     """
     if not isinstance(entry, dict):
         return str(entry), {}
@@ -82,11 +83,16 @@ def resolve_source(entry, cfg: dict, prefer: str | None = None) -> tuple[str, di
         raise ValueError(f"source entry has no path form ({list(_FORMS)}): {entry}")
     if prefer and prefer in forms:
         return str(forms[prefer]), opts
+    use = str(opts.pop("use", "") or "").lower()          # per-entry pin, e.g. use: rest
+    if use in forms:
+        return str(forms[use]), opts
     want = str(cfg.get("strata", {}).get("source", "")).lower()
     if want in forms:
         return str(forms[want]), opts
     if "sde" in forms and arcpy_available():
         return str(forms["sde"]), opts
+    if "rest" in forms:
+        return str(forms["rest"]), opts
     if "file" in forms:
         return str(forms["file"]), opts
     if "sde" in forms:

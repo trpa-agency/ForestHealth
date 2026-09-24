@@ -57,13 +57,18 @@ sources:
   # Exclusions and access (Vector.sde, READ ONLY)
   boundary:
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.TRPA_bdy"
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/4"     # TRPA Boundary
     file: "data/raw/trpa_boundary.gpkg"
-  urban_boundary:                                        # urban land use, removed from the frame (report: mixed-use, residential, tourist)
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"
-    where: "Description IN ('Mixed-Use', 'Residential', 'Tourist')"
+  urban_boundary:                                        # urban area, removed from the frame. Mason, Sept 24 2026: use the parcel-aligned
+    use: rest                                            # Urban Area layer (Boundaries 14, aligned to parcels 2021-01-29), not the land use plan class
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/14"    # Urban Area
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"   # fallback: land use plan classes
+    where: "Description IN ('Mixed-Use', 'Residential', 'Tourist')"                   # applies to the sde form only
     file: "data/raw/trpa_urban_boundary.gpkg"
-  wilderness:                                            # the Wilderness class of RegionalLandUse; whether it leaves the frame is frame.exclude_wilderness
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"
+  wilderness:                                            # congressionally designated Forest Service wilderness (Boundaries 13). Mason, Sept 24 2026.
+    use: rest                                            # This is the layer the report's "excluding designated wilderness" means; frame.exclude_wilderness stays true.
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/13"    # Wilderness: WILDERNESSNAME, GIS_ACRES
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"   # fallback: the land use plan class, not the same thing
     where: "Description = 'Wilderness'"
     file: "data/raw/wilderness.gpkg"
   mgmt_zone:                                             # USFS forest management zone, carried as an attribute only
@@ -81,19 +86,25 @@ sources:
   structures:
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Structures\\SDE.Buildings"          # CONFIRM
     file: "data/raw/structures.gpkg"
-  parcels:
+  parcels:                                               # parcel edges for the edge buffer; the Ownership layer is parcel based and carries APN
+    use: rest
+    rest: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"           # Ownership: APN, JURISDICTION, COUNTY, OWNERSHIP_TYPE, PARCEL_ACRES
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Parcels\\SDE.Parcels"               # CONFIRM
     file: "data/raw/parcels.gpkg"
   dem:                                                   # slope, aspect, TPI, elevation; projected and snapped to the strata grid by the template
     rrk: "F:\\GIS\\DB_CONNECT\\Raster.sde\\SDE.DEM_BareEarth_LiDAR_2022"          # 2022 vendor bare earth, about 0.7 m, on F: today
     lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\dtm_1m_tiles\\dtm_2022_1m.vrt"   # or C:\\GIS\\dem-mosaic output
-  ownership:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Ownership\\SDE.LandOwnership"       # CONFIRM
-    field: "OWNER"                                       # CONFIRM the owner name field
+  ownership:                                             # Mason, Sept 24 2026: Ownership service, OWNERSHIP_TYPE in Federal, State, Local, Private
+    use: rest
+    rest: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"
+    field: "OWNERSHIP_TYPE"
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Ownership\\SDE.LandOwnership"       # CONFIRM if an SDE copy is wanted instead
     file: "data/raw/ownership.gpkg"
   state_line:
+    use: rest
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/16"    # CA NV States
+    field: "STUSPS"                                      # CONFIRM the field on layer 16; values CA and NV (tessellation.state_field)
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.States"          # CONFIRM
-    field: "STUSPS"                                      # CONFIRM; values CA and NV (tessellation.state_field)
     file: "data/raw/states.gpkg"
   # Disturbance
   treatments_2027_2031:
@@ -190,8 +201,9 @@ frame:
   exclude_existing_plot_buffer_m: 50
   max_access_distance_m: null            # null keeps all and prices as class 4
   max_solid_fraction: 0.85               # cells where > 85% of above-2 m pulses are single-return are roofs or rock, not canopy; excluded
-  exclude_wilderness: true               # CONFIRM (Andy): the report says the 115,396 ac frame excludes designated wilderness, but the
-                                         # threshold notebook's non urban clause KEEPS the Wilderness class. Check both against 115,396.
+  exclude_wilderness: true               # Designated wilderness (sources.wilderness, Boundaries 13) leaves the frame, per the report. The
+                                         # threshold notebook's non urban clause kept the land use plan's Wilderness class, which is a
+                                         # different polygon; the population check against 115,396 shows which definition the report used.
   population_tolerance_pct: 2            # the template stops when the population is further than this from report Table 1
 
 strata:

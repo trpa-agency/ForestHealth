@@ -1,7 +1,7 @@
 project:
   name: plot-network-design
   owner: mbindl@trpa.gov
-  description: Stratification, allocation, and GRTS draw for the forest health plot network (VP9, VP10)
+  description: Stratification, allocation, and GRTS site selection for the forest health plot network (VP9, VP10)
 
 paths:
   raw: data/raw
@@ -13,44 +13,118 @@ crs:
   working: "EPSG:26910"        # NAD83 UTM 10N; all layers reprojected here
   lidar_grid_m: 30             # analysis grid; match Shengli's model grid
 
-# LiDAR products come from the lidar-2022 pipeline in trpa-agency/general-purpose and are read from Derived.
-# Other sources may be local files under data/raw OR TRPA ArcGIS REST URLs.
+# Enterprise geodatabase connections and the threshold project gdb, the way the threshold
+# notebooks read them. Every .sde connection is READ ONLY: never write, create, or delete
+# through one. Scratch products go to data/processed/design_template_work.gdb.
+sde:
+  vector: "F:\\GIS\\DB_CONNECT\\Vector.sde"          # TRPA boundary, RegionalLandUse, ForestManagementZone_USFS, roads, parcels, ...
+  raster: "F:\\GIS\\DB_CONNECT\\Raster.sde"          # SDE.DEM_BareEarth_LiDAR_2022, the 2022 vendor bare earth, about 0.7 m
+  project_gdb: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb"
+                                                     # threshold analysis rasters, 30 m California Teale Albers
+  # Name fragments the discovery cell in 00_sample_design_template matches against every
+  # feature dataset and class in Vector.sde, so the CONFIRM names below can be filled in.
+  discovery_keywords: [road, trail, stream, hydro, struct, building, parcel, owner, wilder, fire, burn, treat, fuel, boundary, jurisdiction, landuse]
+
+# Two kinds of entry. A plain string is a file under data/raw, a TRPA ArcGIS REST URL, or an
+# arcpy path (.sde or .gdb); src/layers.py reads any of them. A mapping holds alternative
+# forms of one source and src/layers.resolve_source picks one:
+#   rrk:    the threshold analysis raster on F: (sde.project_gdb), in hand today
+#   lidar:  the lidar-2022 Derived product (trpa-agency/general-purpose), once it exists
+#           strata.source picks rrk or lidar; every notebook reads src["<key>"] unchanged
+#   sde:    the Vector.sde or Raster.sde class, picked whenever arcpy is importable (READ ONLY)
+#   file:   a local copy under data/raw, picked when arcpy is not importable
+#   where:  a definition query applied on read;  field: the attribute the notebook carries
+# CONFIRM marks a placeholder class name in the SDE.<Dataset>\SDE.<Class> pattern. Run the
+# discovery cell (00 template, section 1), paste the real names here (Andy).
 # Feature layers:  https://maps.trpa.gov/server/rest/services/<Service>/FeatureServer/<n>
 # Image services:  https://maps.trpa.gov/server/rest/services/<Image>/ImageServer
-# src/layers.py reads either transparently. Replace the placeholders below with the service URLs.
 sources:
   # Frame and strata
-  cwhr_veg: "data/raw/cwhr_veg.gpkg"                     # threshold assessment CWHR layer
+  cwhr_veg: "data/raw/cwhr_veg.gpkg"                     # threshold assessment CWHR layer as a file (01_frame); the template reads veg_type
+  veg_type:                                              # the frame raster: RRK 2023 CWHR WHRTYPE clipped to non urban land use; attribute table carries WHRTYPE
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/veg_type_nonurban"
   chm_2022: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\chm_1m_tiles\\chm_2022_1m.vrt"   # 1 m CHM from lidar-2022 (general-purpose repo)
-  canopy_cover_30m: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_cover_30m.tif"   # point-based cover > 2 m, from 00a
-  p95_height_30m: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_p95_30m.tif"
-  stem_density_30m: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_itd_per_ac_30m.tif"   # or ..._midcanopy_30m.tif or taos\\lidar2022_tao_per_ac_30m.tif; Shengli decides
-  solid_frac_30m: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_solid_frac_30m.tif"   # non-vegetation exclusion in 01_frame
-  # Exclusions and access
-  urban_boundary: "data/raw/trpa_urban_boundary.gpkg"
-  wilderness: "data/raw/wilderness.gpkg"
-  roads: "data/raw/roads.gpkg"
-  trails: "data/raw/trails.gpkg"
-  streams: "data/raw/streams.gpkg"
-  structures: "data/raw/structures.gpkg"
-  parcels: "data/raw/parcels.gpkg"
-  dem: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\dtm_1m_tiles\\dtm_2022_1m.vrt"   # or F:\\GIS\\DB_CONNECT\\Raster.sde\\SDE.DEM_BareEarth_LiDAR_2022, or C:\\GIS\\dem-mosaic output
-  ownership: "data/raw/ownership.gpkg"
-  state_line: "data/raw/states.gpkg"
+  canopy_cover_30m:                                      # cover axis; open/closed at threshold.cover_open_closed_pct
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/canopy_cover_nonurban"   # CFO canopy cover 2020, percent
+    lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_cover_30m.tif"   # point-based cover > 2 m, from 00a
+  p95_height_30m:                                        # seral axis
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/seral_stage_nonurban"   # 1 early, 2 mid, 3 late by QMD; already at the threshold decision points
+    lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_p95_30m.tif"   # p95 height, binned with strata.height_breaks_m
+  stem_density_30m:                                      # density axis
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/stand_density_threshold_assessment"   # 0 at or below the TPA and BA maxima, 1 exceeds (rerun of Sept 23 2026)
+    lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_itd_per_ac_30m.tif"   # or ..._midcanopy_30m.tif or taos\\lidar2022_tao_per_ac_30m.tif; Shengli decides
+  solid_frac_30m: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\metrics_30m\\lidar2022_solid_frac_30m.tif"   # non-vegetation exclusion in 01_frame; LiDAR only
+  # Exclusions and access (Vector.sde, READ ONLY)
+  boundary:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.TRPA_bdy"
+    file: "data/raw/trpa_boundary.gpkg"
+  urban_boundary:                                        # urban land use, removed from the frame (report: mixed-use, residential, tourist)
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"
+    where: "Description IN ('Mixed-Use', 'Residential', 'Tourist')"
+    file: "data/raw/trpa_urban_boundary.gpkg"
+  wilderness:                                            # the Wilderness class of RegionalLandUse; whether it leaves the frame is frame.exclude_wilderness
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"
+    where: "Description = 'Wilderness'"
+    file: "data/raw/wilderness.gpkg"
+  mgmt_zone:                                             # USFS forest management zone, carried as an attribute only
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.ForestManagementZone_USFS"
+    field: "ZONE_NAME"                                   # CONFIRM the field name
+  roads:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Transportation\\SDE.Roads"          # CONFIRM
+    file: "data/raw/roads.gpkg"
+  trails:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Recreation\\SDE.Trails"             # CONFIRM
+    file: "data/raw/trails.gpkg"
+  streams:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Hydro\\SDE.Streams"                 # CONFIRM
+    file: "data/raw/streams.gpkg"
+  structures:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Structures\\SDE.Buildings"          # CONFIRM
+    file: "data/raw/structures.gpkg"
+  parcels:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Parcels\\SDE.Parcels"               # CONFIRM
+    file: "data/raw/parcels.gpkg"
+  dem:                                                   # slope, aspect, TPI, elevation; projected and snapped to the strata grid by the template
+    rrk: "F:\\GIS\\DB_CONNECT\\Raster.sde\\SDE.DEM_BareEarth_LiDAR_2022"          # 2022 vendor bare earth, about 0.7 m, on F: today
+    lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\dtm_1m_tiles\\dtm_2022_1m.vrt"   # or C:\\GIS\\dem-mosaic output
+  ownership:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Ownership\\SDE.LandOwnership"       # CONFIRM
+    field: "OWNER"                                       # CONFIRM the owner name field
+    file: "data/raw/ownership.gpkg"
+  state_line:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.States"          # CONFIRM
+    field: "STUSPS"                                      # CONFIRM; values CA and NV (tessellation.state_field)
+    file: "data/raw/states.gpkg"
   # Disturbance
-  treatments_2027_2031: "data/raw/tfft_ltw_treatments_2027_2031.gpkg"
-  fire_severity: "data/raw/fire_severity_2007_2025.gpkg"
-  # Evaluation only (never strata)
-  rrk_seral: "data/raw/rrk_seral_v43.tif"
-  rrk_cover: "data/raw/rrk_canopy_cover.tif"
-  rrk_tpa: "data/raw/rrk_tpa.tif"
-  rrk_ba: "data/raw/rrk_ba.tif"
+  treatments_2027_2031:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Vegetation\\SDE.FuelTreatments"     # CONFIRM; TFFT and LTW units 2027 to 2031 (Brian Garrett)
+    file: "data/raw/tfft_ltw_treatments_2027_2031.gpkg"
+  fire_severity:
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Vegetation\\SDE.FirePerimeters"     # CONFIRM; 2007 and later
+    file: "data/raw/fire_severity_2007_2025.gpkg"
+  # Evaluation only. The rrk form is always read for the VP9 and VP10 cross tabs, whatever strata.source is.
+  rrk_seral:
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/seral_stage_nonurban"
+    file: "data/raw/rrk_seral_v43.tif"
+  rrk_cover:
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/canopy_cover_nonurban"
+    file: "data/raw/rrk_canopy_cover.tif"
+  rrk_tpa:
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/stand_density_nonurban"
+    file: "data/raw/rrk_tpa.tif"
+  rrk_ba:
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/basal_area_nonurban"
+    file: "data/raw/rrk_ba.tif"
+  rrk_density_assessment:                                # rerun product: 0 in attainment, 1 exceeds
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/stand_density_threshold_assessment"
+  rrk_seral_classification:                              # rerun product: type * 100 + class * 10 + canopy, labelled attribute table
+    rrk: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/seral_canopy_veg_classification"
   representativeness: "data/raw/f3_representativeness.tif"   # from Shengli, optional
   covariate_stack_dir: "data/raw/covariates"                 # Shengli's stack, optional
-  # Existing plots and legacy sites
+  # Existing plots and legacy sites (partner files; Becky Estes and Hugh Safford)
   ltw_plots: "data/raw/ltw_lidar_validation_plots.gpkg"
   burn_plots: "data/raw/safford_burn_plots.gpkg"
-  teon_sites_100: "data/raw/teon_grts_100.gpkg"              # requested from Shale
+  teon_sites_100: "data/raw/teon_grts_100.gpkg"              # reference only; not monumented, not a legacy source (Sept 23 2026)
   teon_sites_pool: "data/raw/TEON_historicalsites_allprojects.shp"
   teon_hex_2km: "data/raw/teon_hex_2km.gpkg"
   teon_hex_4km: "data/raw/teon_hex_4km.gpkg"
@@ -88,15 +162,16 @@ plot:
   window: "3x3"                          # the sampling unit (frame.unit_px) is the 3x3 window; plot on its centre pixel
 
 split_sample:
-  # Half A: stratified by forest type, balanced on side x landform via caty_n, legacy sites honoured.
-  # Half B: unequal probability by structural cell using the allocation block below.
+  # Half A: stratified by forest type, balanced on side x landform x elevation band via caty_n, legacy sites honoured.
+  # Half B: unequal probability by structural cell using the allocation block below. Half B weights are Andy's to set.
   half_a_share: 0.5
   half_a_by_type: {SMC: 0.54, JP: 0.26, RF: 0.20}   # area shares from the threshold repo
   seed_offset_b: 1
   balance:
-    tpi_radius_px: 30                    # ~30 m at the 1 m DTM; tune in 01_frame
+    tpi_radius_px: 30                    # pixels of the grid the DEM is sampled to (900 m at 30 m, a landform scale); Andy tunes
     lake_axis_azimuth_deg: 20            # NNE long axis; anchor set below
-    lake_axis_anchor_xy: null            # [x, y] in frame CRS, lake centroid; or swap in a PRISM split
+    lake_axis_anchor_xy: null            # [x, y] in frame CRS, lake centroid; null uses the boundary centroid; or swap in a PRISM split
+    elev_bands_m: [2200]                 # elevation band edges, metres; one edge gives two bands. Andy decides with Becky
 
 frame:
   # Sampling unit, decided Sept. 23, 2026: a unit_px by unit_px block of LiDAR pixels
@@ -104,6 +179,9 @@ frame:
   # sits on the block's centre pixel, so co-registration to the imputation grid is kept.
   # A 30 m pixel (900 m2) is smaller than the primary plot (1,012 m2), so a pixel cannot
   # be the unit. Strata attributes are block means over the population pixels in the block.
+  # The block is defined on the grid the strata come from (strata.source): the F: rasters
+  # are 30 m California Teale Albers, the LiDAR products 30 m EPSG:26910. Swapping the
+  # source re-defines every unit; nothing selected on one grid carries to the other.
   unit_px: 3
   min_unit_fraction: 0.5                 # a unit needs this share of its pixels in the population, plus its centre pixel
   max_slope_pct: 70
@@ -112,15 +190,22 @@ frame:
   exclude_existing_plot_buffer_m: 50
   max_access_distance_m: null            # null keeps all and prices as class 4
   max_solid_fraction: 0.85               # cells where > 85% of above-2 m pulses are single-return are roofs or rock, not canopy; excluded
+  exclude_wilderness: true               # CONFIRM (Andy): the report says the 115,396 ac frame excludes designated wilderness, but the
+                                         # threshold notebook's non urban clause KEEPS the Wilderness class. Check both against 115,396.
+  population_tolerance_pct: 2            # the template stops when the population is further than this from report Table 1
 
 strata:
-  # p95 height (m) breaks per type, seral proxy. PLACEHOLDERS: calibrate in 02_strata to QMD 5 / 25 in.
+  source: rrk                            # rrk | lidar. Which raster set the strata come from. Decision date Oct 1, 2026 (Mason):
+                                         # lidar if the lidar-2022 metrics exist by then, else rrk (the F: rasters the thresholds
+                                         # were assessed on). In rrk mode the seral axis is the RRK seral code (1, 2, 3) and the
+                                         # density axis is the 0/1 stand density assessment, so the breaks below are not used.
+  # p95 height (m) breaks per type, seral proxy. PLACEHOLDERS: calibrate in 02_strata to QMD 5 / 25 in. Becky Estes decides.
   height_breaks_m: {JP: [8, 22], SMC: [10, 26], RF: [10, 26]}
   # stem density proxy breaks per type (units of the proxy raster). PLACEHOLDERS: set on TPA decision points.
   density_breaks: {JP: [70, 200], SMC: [90, 300], RF: [100, 300]}
-  density_classes: 3                     # 2 or 3
+  density_classes: 3                     # 2 or 3 (lidar mode; rrk mode is always 2)
   use_cover_axis: false                  # true adds open/closed as a fourth axis
-  min_cell_acres: 300                    # collapse smaller cells within type
+  min_cell_acres: 300                    # collapse smaller cells within type. Andy decides with Becky.
   class_labels:
     seral: [early, mid, late]
     density: [low, moderate, high]
@@ -145,7 +230,7 @@ draw:
                                          # (112.8 m) rounded up, so no two macroplots overlap. spsurvey mindis.
   weight_by_representativeness: false
   remeasure_share: 0.08
-  legacy_sources: ["ltw_plots", "burn_plots", "teon_sites_100"]
+  legacy_sources: ["ltw_plots", "burn_plots"]   # TEON removed Sept 23 2026: no monuments, phone-fixed centers, cannot be re-occupied
 
 access:
   classes:
@@ -220,6 +305,7 @@ tessellation:
   seral_canopy_classes: {1: early, 2: mid_open, 3: mid_closed, 4: late_open, 5: late_closed}
 
 run:
-  synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers
-  freeze: false          # true writes the frozen design layer with the seed recorded
+  synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers (F: and Vector.sde through arcpy)
+  freeze: false          # true writes the frozen design layer with the seed recorded; Oct 16, 2026, and nothing changes after
+  rscript: "Rscript"     # spsurvey selection. Rscript on PATH, or the full path, e.g. "C:/Program Files/R/R-4.4.1/bin/Rscript.exe"
   publish_strip_fields: ["remeasure_flag"]

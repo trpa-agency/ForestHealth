@@ -4,6 +4,8 @@ Sampling frame, LiDAR strata, nested allocation, and GRTS draw for TRPA's forest
 
 LiDAR base products (CHM, DTM, 30 m metrics, TAOs) are NOT built here. They come from `trpa-agency/general-purpose/lidar-2022` and are read from `\\vcenter2\GIS_DATA\LiDAR\2022\Derived` through `sources:` in `config.yaml`. If a metric is missing or wrong, fix it there and rerun; do not recompute LiDAR metrics in this folder.
 
+Sample design is Andy McClary's from Sept 24 2026. Start at `notebooks/00_sample_design_template.ipynb` (built by `scripts/build_sample_design_template.py`) and `docs/HANDOFF-ANDY-2026-09-24.md`. Data comes from SDE and the threshold project gdb (`sde:` in config), not REST.
+
 Read first: `PLAN.md` (why), `docs/METHODS.md` (what the code does), `docs/INPUTS_OUTPUTS.md`.
 
 ## Layout
@@ -31,10 +33,11 @@ Read first: `PLAN.md` (why), `docs/METHODS.md` (what the code does), `docs/INPUT
 
 ## Design decisions (do not silently undo)
 
-- Strata are LiDAR proxies for QMD (seral) and TPA (density) crossed with forest type (CWHR mapping verbatim from threshold report Table 1). RRK rasters are evaluation only, never strata. Disturbance is a sub-allocation by inclusion weight, not a stratum.
+- Strata are LiDAR proxies for QMD (seral) and TPA (density) crossed with forest type (CWHR mapping verbatim from threshold report Table 1). RRK and CFO rasters are the strata source until the LiDAR metrics exist (`strata.source: rrk`, decision date Oct 1 2026); after the swap they go back to evaluation only. Disturbance is a sub-allocation by inclusion weight, not a stratum.
 - Cells under `strata.min_cell_acres` collapse within type; the collapse log is an output.
 - Allocation is nested: 60, 100, 300 are prefixes of one GRTS order, tail cells first. Every cell gets the floor even at the minimum; Nevada floor per type.
 - Python GRTS is for iteration; the frozen draw is `spsurvey::grts()` for parity with TEON's backbone.
+- Legacy sites are LTW and burn plots only. TEON MSIM and LTUB sites are NOT legacy sites and never enter the sample: no monuments, tablet-fixed centers, cannot be re-occupied (Shale Hunter, Sept 23 2026). TEON stays in the design only as the shared frame (extended owl grid, conifer domain inside it). Do not add `teon_sites_100` back to `legacy_sources`.
 - The sampling unit is a 3 by 3 block of 2022 LiDAR pixels (`frame.unit_px`, 90 m, 0.81 ha), the window the imputation model trains on; the plot sits on the block's centre pixel, survey-grade position. A 30 m pixel is smaller than the primary plot and is not the unit. No two selected sites, legacy included, are closer than `draw.min_distance_m` (120 m, two macroplot radii; spsurvey `mindis`). Never move a design coordinate to make access easier; that is the backup list's job. Decided Sept. 23, 2026.
 - The plot is protocol v1.0 (Sept. 19): nested quarter-acre primary plot, 56.4 m macroplot, microplot, and fuels subplot. `PLAN.md` still says 1/7 acre in places; the revision note at its top governs.
 - `threshold:` values match the threshold report; do not edit without a citation. The blind remeasure flag is stripped from the published layer (`run.publish_strip_fields`).

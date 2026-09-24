@@ -1,0 +1,67 @@
+name,label,scientific_name,common_name,lifeform,woody,fia_spcd,notes
+ABCO,ABCO White fir,Abies concolor,White fir,tree,1,15,
+ABMA,ABMA Red fir,Abies magnifica,Red fir,tree,1,20,Includes var. shastensis
+CADE27,CADE27 Incense cedar,Calocedrus decurrens,Incense cedar,tree,1,81,
+JUGR7,JUGR7 Sierra juniper,Juniperus grandis,Sierra juniper,tree,1,64,FIA carries this as western juniper 64
+PIAL,PIAL Whitebark pine,Pinus albicaulis,Whitebark pine,tree,1,101,
+PICO,PICO Lodgepole pine,Pinus contorta,Lodgepole pine,tree,1,108,Sierra lodgepole var. murrayana
+PIFL2,PIFL2 Limber pine,Pinus flexilis,Limber pine,tree,1,113,Carson Range only
+PIJE,PIJE Jeffrey pine,Pinus jeffreyi,Jeffrey pine,tree,1,116,
+PILA,PILA Sugar pine,Pinus lambertiana,Sugar pine,tree,1,117,
+PIMO3,PIMO3 Western white pine,Pinus monticola,Western white pine,tree,1,119,
+PIPO,PIPO Ponderosa pine,Pinus ponderosa,Ponderosa pine,tree,1,122,
+PIWA,PIWA Washoe pine,Pinus washoensis,Washoe pine,tree,1,127,Rare; verify before use
+PSME,PSME Douglas-fir,Pseudotsuga menziesii,Douglas-fir,tree,1,202,
+TSME,TSME Mountain hemlock,Tsuga mertensiana,Mountain hemlock,tree,1,264,
+TABR2,TABR2 Pacific yew,Taxus brevifolia,Pacific yew,tree,1,231,Rare
+POTR5,POTR5 Quaking aspen,Populus tremuloides,Quaking aspen,tree,1,746,Aspen flag plots
+POBAT,POBAT Black cottonwood,Populus balsamifera ssp. trichocarpa,Black cottonwood,tree,1,747,
+ALIN2,ALIN2 Mountain alder,Alnus incana ssp. tenuifolia,Mountain alder,tree,1,351,Tree form only; shrub form goes to shrub cover
+BEOC2,BEOC2 Water birch,Betula occidentalis,Water birch,tree,1,374,
+QUKE,QUKE California black oak,Quercus kelloggii,California black oak,tree,1,818,
+QUCH2,QUCH2 Canyon live oak,Quercus chrysolepis,Canyon live oak,tree,1,805,
+ACGL,ACGL Rocky Mountain maple,Acer glabrum,Rocky Mountain maple,tree,1,321,
+CELE3,CELE3 Curl-leaf mountain mahogany,Cercocarpus ledifolius,Curl-leaf mountain mahogany,tree,1,475,Tree form only
+SALIX,SALIX Willow spp.,Salix spp.,Willow,tree,1,920,Tree form only; shrub form goes to shrub cover
+SASC,SASC Scouler willow,Salix scouleriana,Scouler willow,tree,1,927,
+ARPA6,ARPA6 Greenleaf manzanita,Arctostaphylos patula,Greenleaf manzanita,shrub,1,,
+ARNE,ARNE Pinemat manzanita,Arctostaphylos nevadensis,Pinemat manzanita,shrub,1,,
+CECO,CECO Mountain whitethorn,Ceanothus cordulatus,Mountain whitethorn,shrub,1,,
+CEVE,CEVE Snowbrush,Ceanothus velutinus,Snowbrush ceanothus,shrub,1,,
+CEPR,CEPR Prostrate ceanothus,Ceanothus prostratus,Mahala mat,shrub,1,,
+CHSE11,CHSE11 Bush chinquapin,Chrysolepis sempervirens,Bush chinquapin,shrub,1,,
+QUVA,QUVA Huckleberry oak,Quercus vacciniifolia,Huckleberry oak,shrub,1,,
+ARTRV,ARTRV Mountain big sagebrush,Artemisia tridentata ssp. vaseyana,Mountain big sagebrush,shrub,1,,
+PUTR2,PUTR2 Antelope bitterbrush,Purshia tridentata,Antelope bitterbrush,shrub,1,,
+ERNA10,ERNA10 Rubber rabbitbrush,Ericameria nauseosa,Rubber rabbitbrush,shrub,1,,
+CHVI8,CHVI8 Yellow rabbitbrush,Chrysothamnus viscidiflorus,Yellow rabbitbrush,shrub,1,,
+SYRO,SYRO Roundleaf snowberry,Symphoricarpos rotundifolius,Roundleaf snowberry,shrub,1,,
+RIBES,RIBES Currant or gooseberry spp.,Ribes spp.,Currant or gooseberry,shrub,1,,
+RICE,RICE Wax currant,Ribes cereum,Wax currant,shrub,1,,
+PREM,PREM Bitter cherry,Prunus emarginata,Bitter cherry,shrub,1,,
+AMAL2,AMAL2 Serviceberry,Amelanchier alnifolia,Saskatoon serviceberry,shrub,1,,
+SARA2,SARA2 Red elderberry,Sambucus racemosa,Red elderberry,shrub,1,,
+HODI,HODI Oceanspray,Holodiscus discolor,Oceanspray,shrub,1,,
+SPSP2,SPSP2 Rose spiraea,Spiraea splendens,Rose spiraea,shrub,1,,
+ROWO,ROWO Woods rose,Rosa woodsii,Woods rose,shrub,1,,
+LOIN5,LOIN5 Twinberry honeysuckle,Lonicera involucrata,Twinberry honeysuckle,shrub,1,,
+VACA13,VACA13 Sierra bilberry,Vaccinium cespitosum,Dwarf bilberry,shrub,1,,
+KAPO,KAPO Alpine laurel,Kalmia polifolia,Bog laurel,shrub,1,,
+PHLE4,PHLE4 Mountain heather,Phyllodoce breweri,Purple mountainheath,shrub,1,,
+ERCA6,ERCA6 Sulphur buckwheat,Eriogonum umbellatum,Sulphur-flower buckwheat,shrub,1,,Subshrub
+WYMO,WYMO Mule ears,Wyethia mollis,Woolly mule-ears,forb,0,,
+LUPIN,LUPIN Lupine spp.,Lupinus spp.,Lupine,forb,0,,
+ACMI2,ACMI2 Yarrow,Achillea millefolium,Common yarrow,forb,0,,
+PTAQ,PTAQ Bracken fern,Pteridium aquilinum,Western brackenfern,fern,0,,
+CARO5,CARO5 Ross sedge,Carex rossii,Ross sedge,graminoid,0,,
+CAREX,CAREX Sedge spp.,Carex spp.,Sedge,graminoid,0,,
+ELEL5,ELEL5 Squirreltail,Elymus elymoides,Squirreltail,graminoid,0,,
+POA,POA Bluegrass spp.,Poa spp.,Bluegrass,graminoid,0,,
+BRTE,BRTE Cheatgrass,Bromus tectorum,Cheatgrass,graminoid,0,,Nonnative
+UNKCNF,UNKCNF Unknown conifer,Unknown conifer,Unknown conifer,tree,1,299,TEON code
+UNKTRE,UNKTRE Unknown tree,Unknown tree,Unknown tree,tree,1,999,TEON code
+UNKHDW,UNKHDW Unknown hardwood,Unknown hardwood,Unknown hardwood,tree,1,998,TEON code
+UNKSHR,UNKSHR Unknown shrub,Unknown shrub,Unknown shrub,shrub,1,,TEON code
+UNKGRA,UNKGRA Unknown graminoid,Unknown graminoid,Unknown graminoid,graminoid,0,,TEON code
+UNKHRB,UNKHRB Unknown herbaceous,Unknown herbaceous plant,Unknown herbaceous,forb,0,,TEON code
+XXXX,XXXX None present,No species,None present,none,1,,TEON code for an empty repeat

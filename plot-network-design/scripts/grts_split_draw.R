@@ -14,7 +14,7 @@
 #         in scripts/grts_draw.R.
 #
 # Both halves keep design weights, so they pool in spsurvey estimators. Legacy
-# sites (LTW, burn plots, MSIM/LTUB conversions) enter Half A as legacy_sites so
+# sites (LTW and burn plots only; TEON sites are not legacy sites as of Sept 23 2026) enter Half A as legacy_sites so
 # the equal-probability selection balances around them.
 #
 # Inputs (written by notebooks/03_allocate_draw.ipynb):

@@ -1,5 +1,5 @@
 """
-src/strata.py — helpers for the plot network design.
+src/strata.py: helpers for the plot network design.
 
 Kept deliberately linear and small. The notebooks carry the flow; these are
 the pieces that get reused across notebooks:
@@ -283,8 +283,12 @@ def grts_draw(points: pd.DataFrame, n_by_cell: dict, inclusion_weight: pd.Series
 
         cand = sub[~legacy[sub.index]]
         addr = _hierarchical_address(cand["x"].values, cand["y"].values, levels, rng)
-        order = _reverse_hierarchical_order(addr, levels)
-        cand = cand.assign(_ord=order, _w=w[cand.index].values).sort_values("_ord")
+        # Systematic selection runs along the hierarchical (locality preserving) line; the
+        # reverse hierarchical ordering is applied to the selected sites afterwards, as in
+        # spsurvey, so any prefix of the ranked sample is spatially balanced. Reversing the
+        # line before selecting (the earlier version) gave a sample no more balanced than
+        # simple random sampling. Fixed Sept. 24, 2026.
+        cand = cand.assign(_ord=addr, _w=w[cand.index].values).sort_values("_ord")
 
         # systematic selection along the ordered line, unequal probability
         p = cand["_w"].values / cand["_w"].sum() * n_total
@@ -293,6 +297,9 @@ def grts_draw(points: pd.DataFrame, n_by_cell: dict, inclusion_weight: pd.Series
         hits = np.floor(cum - start).astype(int)
         hits = np.diff(np.concatenate([[-1], hits]))
         chosen = cand[hits > 0].copy()
+        digits = max(1, int(np.ceil(np.log(max(len(chosen), 2)) / np.log(4))))
+        rev = _reverse_hierarchical_order(np.arange(len(chosen)), digits)
+        chosen = chosen.iloc[np.argsort(rev, kind="stable")]
         chosen["grts_rank"] = np.arange(1, len(chosen) + 1)
         chosen["status"] = np.where(chosen["grts_rank"] <= n_new, "primary", "backup")
 

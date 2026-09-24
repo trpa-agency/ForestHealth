@@ -192,8 +192,8 @@ get recorded here and in `thresholds/_INDEX.md`.
 - No further TEON deliverables (grids, occupancy counts, increment sizing, delivery tables)
   unless Mason asks for them. The grids shipped Sept. 22.
 - Decide on VP9 and VP10 merits which Sept. 19 changes survive: the nested quarter-acre plot
-  (defensible on its own), the split sample (needs Becky and Shengli), and the MSIM
-  conversions (not counted toward 300 until Shale's site data arrives).
+  (defensible on its own) and the split sample (needs Becky and Shengli). The MSIM
+  conversions are dead as of Sept. 23 (no monuments); every plot the RFP buys is new.
 - DONE Sept. 23: `PLAN.md` carries a revision note reconciling the Sept. 19 decisions and
   the folder `CLAUDE.md` design decisions are current. The body text of `PLAN.md` still
   says 1/7 acre in places; the note governs.
@@ -206,8 +206,14 @@ get recorded here and in `thresholds/_INDEX.md`.
   unreachable from Mason's workstation and the heavy pass has not run; the SDE holds only
   the 2022 bare earth.
 - Pat Manley reply (Sept. 23 draft, in the session transcript, not in the repo): yes to
-  "do it once" on the forest frame on TRPA's terms, strata stay, TEON sites enter as legacy
-  sites, protocol talks go through Becky. Send only after Dan clears it.
+  "do it once" on the forest frame on TRPA's terms, strata stay, protocol talks go through
+  Becky. **Superseded Sept. 23 by the Shale Hunter meeting:** TEON sites have no monuments
+  and tablet-fixed centers, so they are out of the sample entirely (not legacy sites) and
+  the RTK conversion, seasonal crew, and tree table asks are withdrawn. `legacy_sources` is
+  LTW and burn plots only; the Sept. 24 03:56 run used the old list and must be rerun.
+  Frame co-location with Pat's grid stands. Notes, action plan, and the Survey123 v1.1
+  hybrid form are in the project folder (2026-09-23-Meeting-Notes-Shale-Hunter-and-
+  Survey123-Review.md, Action-Plan-and-Emails-2026-09-23.md, Design-and-Protocol-Package/).
 
 ### Housekeeping
 

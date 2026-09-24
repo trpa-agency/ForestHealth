@@ -10,6 +10,7 @@ __pycache__/
 
 # Editor / tooling noise
 debug.log
+logs/
 
 # Large regenerable outputs (not referenced by index.md or any StoryMap)
 DataVisualizations/CompositionAge_Chart_Ecobject.html

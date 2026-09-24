@@ -7,13 +7,19 @@
 
 This document is the soup-to-nuts plan for producing the plot location layer, allocation table, backup list, and installation order that the field-only RFP references. It replaces the August 31 methods outline. The code that implements it lives in this repo (`notebooks/`, `src/`, `scripts/`), configured by `config.yaml`, and documented in `docs/METHODS.md`.
 
+> **Revisions since Sept. 5.** Where this document and `config.yaml` disagree, the config is current. Three decisions postdate the text below and are not yet threaded through every section:
+>
+> 1. **Sept. 19, protocol v1.0.** The plot is a nested fixed-radius design with one centre: a quarter-acre primary plot (58.9 ft) for all trees 4.0 in and larger, a 56.4 m macroplot for trees at or above the breakpoint, a 1/300 acre microplot for saplings, and a 24 ft subplot for understory and fuels. It replaces the 1/7 acre plot in sections 2, 7, and 9 (`plot:` block, `src/plot_geometry.py`, `docs/CHANGES-2026-09-19.md`).
+> 2. **Sept. 19, split sample.** Half A is stratified by forest type only and balanced on basin side and landform; Half B is unequal probability by structural cell. It replaces the single Candidate B draw in sections 6 and 7 (`split_sample:` block, `scripts/grts_split_draw.R`).
+> 3. **Sept. 23, sampling unit.** The unit is a 3 by 3 block of 2022 LiDAR pixels (90 m, 0.81 ha), the window the imputation model trains on, with the plot on the block's centre pixel. A 30 m pixel is smaller than the primary plot and cannot be the unit. Strata attributes are block means. No two selected sites, legacy included, may be closer than 120 m (two macroplot radii), enforced with spsurvey's `mindis`, so plot footprints never overlap. It replaces "pixel" wherever sections 4, 5, and 7 use it as the sampling unit (`frame.unit_px`, `draw.min_distance_m`).
+
 ---
 
 ## 0. The plan in plain language
 
 **What we are doing and why.** TRPA adopted new forest health standards. Two of them, seral stage and canopy cover (VP9) and stand density (VP10), say what share of the Basin's forest should look a certain way, and the 2028 evaluation has to report how close we are. Today's numbers come from a model trained on about 30 California field plots and none in Nevada; the Forest Service's own demonstration of the same model used 305. The threshold report calls its models planning-level and records TSAC's request for ground monitoring. So we are building a network of permanent field plots that measure the forest the way the standard is written, at enough places to make 2028 defensible. There is $188K for this year, the plots must go in next summer, and the field contract must be awarded before Christmas.
 
-**Working with TEON (Pat Manley and Shale Hunter).** TEON was funded by TRPA and the Forest Service to design a Basin monitoring system. Its report recommends a spatially balanced network and says plainly it was not designed to meet agency reporting needs. Shale picked 100 of 195 historical wildlife-habitat sites as a backbone with GRTS. Our position: TRPA implements the forest tier of TEON with a protocol that can answer the thresholds; every plot is open data tagged with TEON's site and grid IDs so Pat gets our structure data back at her sites; her team can bid on the field work. What we do not do is adopt her plot design or let TEON own strata, plot size, or protocol, because the MSIM habitat plot only tallies every tree inside a 7 m circle and cannot produce the standard's numbers. If Pat might bid, she gets a briefing and the published design package rather than a seat in design meetings. Next moves: the Shale email (layer, ranks, design, which sites have a fixed-radius exam, datums, whether plot centers can be found again); hold the reply to Pat until Shale answers; a joint call with Becky so Becky can say what a threshold-grade plot needs. See section 8.
+**Working with TEON (Pat Manley and Shale Hunter).** TEON was funded by TRPA and the Forest Service to design a Basin monitoring system. Its report recommends a spatially balanced network and says plainly it was not designed to meet agency reporting needs. Shale picked 100 of 195 historical wildlife-habitat sites as a backbone with GRTS. Our position: TRPA implements the forest tier of TEON with a protocol that can answer the thresholds; every plot is open data tagged with TEON's site and grid IDs so Pat gets our structure data back at her sites; her team can bid on the field work. What we do not do is adopt her plot design or let TEON own strata, plot size, or protocol, because the MSIM habitat plot only tallies every tree inside a 7 m circle and cannot produce the standard's numbers. If Pat might bid, she gets a briefing and the published design package rather than a seat in design meetings. Update September 23, 2026: Shale confirmed the TEON sites have no monuments and their centers are phone fixes, the first 30 were hand-picked, and the 2025 and 2026 selections ran over a finite list of legacy sites filtered by bird data. TEON sites are therefore out of the sample entirely, as legacy sites or otherwise. What remains with TEON is the shared frame (Pat's extended owl grid with our conifer domain and per-type counts) and co-location in reverse: TEON adds bird stations at TRPA plots once they are installed. See section 8 and 2026-09-23-Meeting-Notes-Shale-Hunter-and-Survey123-Review.md in the project folder.
 
 **Processing the 2022 LiDAR first.** The strata come from the LiDAR and the plots are placed to line up with its pixels, so nothing downstream starts until it exists. The archive is about 2 TB of LAZ on an external drive on the network, and that drive's read speed is the limit. `00a` inventories the drive without opening files, reads tile headers to keep only Basin tiles, samples a few to confirm ground is classified, then on the 32 GB server copies one tile at a time to local disk, builds a bare-earth surface, converts every return to height above ground, and writes a 1 m canopy height tile, a 1 m bare-earth tile, a height-normalized copy of the tile back to the drive, and per-cell counts. Three tiles run at once, every tile is resumable, and the log projects total runtime early. The merge produces 30 m rasters: canopy cover, 95th percentile height, the 2 to 8 m ladder-fuel fraction, densities, and a solid-surface flag that separates roofs and rock from canopy. `00_lidar` adds tree tops per acre and rumple. See section 3.
 
@@ -47,8 +53,8 @@ The DBH floor for TPA is not stated in the threshold report. It is fixed in the 
 2. **Strata are allocation-time covariate bins, not analysis strata.** Inference is model-based and refit against each LiDAR epoch; design-based status estimates are post-stratified to the current epoch and carry the GRTS weights. A plot that moves class between epochs is the signal. This is the answer to TEON's "do not pre-stratify."
 3. **Any stratum needs a wall-to-wall layer at design time that is not the product under validation.** Seral (QMD) and TPA exist Basin-wide only as RRK rasters. The classes are defined in the standard's units, mapped by 2022 LiDAR proxies, and verified by the plots. RRK rasters are evaluation only.
 4. **Cross only the structure axes.** Forest type by seral proxy by density proxy. Disturbance is a flagged sub-allocation; aspect, soils, ownership, access, and treatment status are attributes, checks, or inclusion weights, never strata.
-5. **Fixed radius, one plot size, co-registered.** 1/7 acre (13.6 m, 44.5 ft radius) per Shengli, rationale to confirm against the pixel or 3 by 3 window he trains on. Variable-radius plots cannot be co-registered and are not adopted.
-6. **Design independently, then fold in existing plots.** Existing permanently marked plots (Lake Tahoe West LiDAR validation plots, Hugh's burned-area plots, TEON's 100 GRTS sites where recoverable) enter as legacy sites in the draw or as adopted replacements inside a cell, never by changing the strata.
+5. **Fixed radius, one plot design, co-registered, on a plot-sized sampling unit.** Nested quarter-acre primary plot with a 56.4 m macroplot (protocol v1.0). The sampling unit is the 3 by 3 LiDAR pixel block Shengli trains on, and the plot centre is that block's centre pixel, so the unit the draw selects, the footprint the crew measures, and the window the model reads are the same piece of ground. Variable-radius plots cannot be co-registered and are not adopted.
+6. **Design independently, then fold in existing plots.** Existing permanently marked plots (Lake Tahoe West LiDAR validation plots, Hugh's burned-area plots) enter as legacy sites in the selection or as adopted replacements inside a cell, never by changing the strata. TEON sites are not permanently marked and do not enter (September 23, 2026).
 7. **Any prefix of the installation order is a coherent sample.** The minimum authorized quantity, the option task, and future seasons are the same design.
 
 ## 3. LiDAR processing (`00a_las_to_chm.ipynb`, `00_lidar.ipynb`)
@@ -87,7 +93,7 @@ Population = the threshold report's assessment population, 115,396 acres of CWHR
 
 Frame construction (`01_frame.ipynb`) starts from that population and removes, with area accounting at each step:
 
-- pixels within one plot radius plus the positional tolerance of a road, trail, stream, structure, or parcel boundary where access is not assured;
+- units whose centre is within one primary-plot radius plus the positional tolerance of a road, trail, stream, structure, or parcel boundary where access is not assured (the macroplot may cross an edge; it only tallies trees at or above the breakpoint);
 - slope above the safety cutoff (`frame.max_slope_pct`, default 70), recorded so the design report states what the network cannot represent;
 - existing plot footprints with a buffer, unless adopted;
 - optionally, areas beyond the realistic access distance, or kept and priced as access class 4.
@@ -148,15 +154,15 @@ Two implementations, deliberately:
 
 **7.4 Backup rule.** A backup replaces a primary only with TRPA's written concurrence for access denial, safety, or site not as mapped, and the replacement is recorded with the reason.
 
-**7.5 Point placement.** Plot center at the center of the selected LiDAR pixel (or the 3 by 3 window center, per Shengli). Design coordinates and field-established coordinates are recorded separately.
+**7.5 Point placement.** The draw selects sampling units, 3 by 3 blocks of 2022 LiDAR pixels; the plot centre is the centre pixel's centre. No two selected sites, legacy included, are closer than 120 m (`draw.min_distance_m`, spsurvey `mindis`), so no two macroplots overlap. The centre is never moved within the unit: a random location inside the block would break co-registration with the model grid, and access problems are what the backup list is for. Design coordinates and field-established coordinates are recorded separately.
 
 ## 8. Existing plots, TEON, and the communication plan
 
-Order of operations: draw independently first, then overlay.
+Order of operations: select independently first, then overlay. Updated September 23, 2026: TEON sites removed from the legacy list (no monuments, phone-fixed centers, cannot be re-occupied; see the Sept 23 meeting notes in the project folder).
 
 1. **Lake Tahoe West LiDAR validation plots (~60, Becky).** Same protocol family. Each that falls in a cell and can be re-GPSed to the positional standard replaces a drawn plot in that cell.
 2. **Hugh's burned-area permanent plots.** Same rule, and they satisfy part of the post-fire sub-allocation.
-3. **TEON's 100 GRTS sites (Shale).** Supplied as legacy sites in the draw once the layer and the spsurvey design arrive. An adopted TEON site gets a 1/7 acre fixed plot installed at plot center; the MSIM 7.3 m and 17 m subplots nest inside it and give a partial 20-year backstory. TEON's MSIM habitat plot is not a stand exam and is not adopted as a protocol.
+3. **TEON's 100 GRTS sites (Shale).** Not adopted. No monument at any site, centers are tablet fixes with no accuracy record, and the 2026 protocol on 44 of the 100 sites recorded DBH and a prism count only. A plot installed at the coordinate would be a new plot next to an unmarked point with nothing to co-register. TEON keeps the frame relationship: Pat's extended owl grid is the all-lands frame, our conifer area is a domain inside it, and TEON can add bird stations at TRPA plots after installation. The 2024 and 2025 tree tables are a site-scale cross-check at most.
 4. Variable-radius CSE, ecology, and meadow plots are not adopted.
 
 All plots are tagged with TEON's 2, 4, and 8 km hex IDs and published open on LTInfo and Tahoe Open Data under a schema that joins to TEON site IDs. That is what "TRPA implements TEON's forest tier" means operationally.
@@ -165,10 +171,10 @@ All plots are tagged with TEON's 2, 4, and 8 km hex IDs and published open on LT
 
 | Step | Who | What | When |
 |---|---|---|---|
-| Email Shale | Mason | The 100-site layer with GRTS ranks and weights; the spsurvey design (frame, strata, probabilities, legacy sites, seed); which of the 195 sites have a true fixed-radius exam; datum per site; monument and recoverability status (rebar, tags, witness trees, photos, whether 2024 centers were re-GPSed); what the FORR and UPFU project codes are; the 2024 tree and transect tables for Shengli | Now |
+| Email Shale | Mason | Done Sept 9 and answered Sept 23: no monuments, phone-fixed centers, protocol by year in the Survey123 forms. Remaining ask is only the grts() call, frame, and seed for the 2026 selection, because the frame agreement depends on the ranking | Sept 24 |
 | Summary to Andy and Beth | Mason | What TRPA holds from Pat and Shale so far (report, appendices, shapefile, what the 100 sites are, what the MSIM plot measures) | Before the Tuesday or Wednesday strategy session |
-| Reply to Pat | Mason, after Dan | "TRPA is implementing TEON's forest tier": robust protocol, one GRTS draw with TEON legacy sites, open data back to her, open RFP she may bid on | After Shale answers |
-| Joint call Pat, Becky, Mason | Becky leads on protocol | Becky explains what a threshold-grade plot requires and why the MSIM plot cannot substitute; agree co-location mechanics and data schema | Late September |
+| Note to Pat and Shale | Mason | Withdraw the position and tree table asks; confirm TRPA selects on the shared frame with its conifer domain counts; offer bird stations at TRPA plots after installation; plot coordinates published at the freeze | Sept 24 |
+| Frame agreement Pat, Shale, Andy, Mason | Mason | One frame, conifer domain, per-type counts, seed. Settled by Sept 30 or TRPA selects its own Oct 16 | Sept 30 |
 | Briefing package to PSW | Mason | Published design and protocol package at posting, same as every bidder; no design-group seat if PSW may bid | November 2 |
 
 ## 9. Protocol, and why not the alternatives
@@ -224,7 +230,7 @@ All paths are in `config.yaml` (`sources:` for inputs, `lidar:` and `paths:` for
 | RRK Sierra rasters: seral (v4.3), canopy cover, TPA, BA, SDI, VP9 and VP10 attainment | 30 m | Evaluation cross-tabs only, never strata | RRK Sierra | In hand |
 | Lake Tahoe West LiDAR validation plots (~60) | Points with tree lists | Height-to-QMD calibration; legacy sites | Becky Estes | Requested |
 | Hugh Safford burned-area plots | Points | Legacy sites; post-fire sub-allocation | UC Davis | Requested |
-| TEON 100-site GRTS layer, 195-site pool, 2/4/8 km hex grids | Points, polygons | Legacy sites; hex ID attribute; co-location | Shale Hunter (PSW) | Pool in hand; 100-site layer requested |
+| TEON 100-site GRTS layer, 195-site pool, 2/4/8 km hex grids | Points, polygons | Hex ID attribute and frame; not legacy sites (no monuments) | Shale Hunter (PSW) | Pool and site tables in hand |
 | FIA plots with true coordinates | Points | Calibration; evaluation | RSL / PNW / RMRS | Access requested |
 | Threshold definitions (QMD breaks, cover cutoffs, TPA and BA maxima, CWHR mapping) | Table | Class definitions and frame | Threshold report, in `config.yaml` `threshold:` | In hand; DBH floor pending Shengli |
 
@@ -275,7 +281,7 @@ All paths are in `config.yaml` (`sources:` for inputs, `lidar:` and `paths:` for
 
 - **Shengli:** DBH floor for TPA as RRK computes it; 1/7 acre rationale and plot-to-pixel rule; pixel versus 3 by 3 window training; which LiDAR metric predicts TPA; which candidate allocation; whether the model test can turn around by early October.
 - **Becky:** height and density breaks per forest type; cell floor and tail boost; Nevada floor; disturbance sub-allocation size; which of the ~60 LTW plots qualify; Tier 2 fuels in or out of the required set; per-tree position as an optional item.
-- **Shale:** the 100-site layer with GRTS ranks and weights and the spsurvey design (frame, strata, probabilities, legacy sites, seed); which of the 195 sites have a true fixed-radius exam; datum per site; monument status.
+- **Shale:** the grts() call, frame, and seed for the 2026 selection, and which site_order (2025 or 2026 table) is the ranking of record. Monument status answered Sept 23: none.
 - **Brian:** NF monumentation authorization lead time, started before posting; TFFT polygons 2027 to 2031.
 - **Internal:** minimum quantity once unit cost benchmarks arrive; slope cutoff and access class thresholds; whether cover becomes a fourth axis; how Pat and PSW are briefed if they may bid (briefing and published package, not a design-group seat).
 

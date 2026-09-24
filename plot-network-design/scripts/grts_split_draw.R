@@ -14,7 +14,7 @@
 #         in scripts/grts_draw.R.
 #
 # Both halves keep design weights, so they pool in spsurvey estimators. Legacy
-# sites (LTW, burn plots, MSIM/LTUB conversions) enter Half A as legacy_sites so
+# sites (LTW and burn plots only; TEON sites are not legacy sites as of Sept 23 2026) enter Half A as legacy_sites so
 # the equal-probability selection balances around them.
 #
 # Inputs (written by notebooks/03_allocate_draw.ipynb):
@@ -29,14 +29,20 @@
 #   outputs/grts_split_draw.gpkg         siteID, half, stratum, wgt, ip, siteuse, seed
 #   outputs/grts_split_balance.csv       sp_balance for each half
 #
-# Run: Rscript scripts/grts_split_draw.R 20261016 2.5
-#   arg1 = seed, arg2 = oversample factor (backups per primary)
+# Sampling units are 3x3 LiDAR pixel blocks (plot on the centre pixel). No two sites,
+# legacy included, may be closer than mindis (two macroplot radii), so plot footprints
+# never overlap. Half B is drawn from the units left after Half A's sites and their
+# mindis buffers are removed.
+#
+# Run: Rscript scripts/grts_split_draw.R 20261016 2.5 120
+#   arg1 = seed, arg2 = oversample factor (backups per primary), arg3 = min distance in metres
 
 suppressPackageStartupMessages({ library(sf); library(spsurvey) })
 
 args <- commandArgs(trailingOnly = TRUE)
-seed <- if (length(args) >= 1) as.integer(args[1]) else 20261016L
-over <- if (length(args) >= 2) as.numeric(args[2]) else 2.5
+seed   <- if (length(args) >= 1) as.integer(args[1]) else 20261016L
+over   <- if (length(args) >= 2) as.numeric(args[2]) else 2.5
+mindis <- if (length(args) >= 3) as.numeric(args[3]) else 120
 
 frame  <- st_read("data/processed/frame_points.gpkg", quiet = TRUE)
 allocB <- read.csv("data/processed/allocation_full.csv", stringsAsFactors = FALSE)
@@ -68,14 +74,20 @@ drawA <- grts(
   n_over             = nA_over,
   legacy_sites       = legacy,
   legacy_stratum_var = if (!is.null(legacy)) "forest_type" else NULL,
+  mindis             = mindis,
   DesignID           = "TRPA-FH-A"
 )
 
 # ---- Half B: unequal probability within structural cell ---------------------
-# Exclude points already selected in Half A so a site cannot be chosen twice.
-takenA <- c(drawA$sites_base$siteID, drawA$sites_over$siteID)
-frameB <- frame
-if ("siteID" %in% names(frameB)) frameB <- frameB[!(frameB$siteID %in% takenA), ]
+# Remove every unit within mindis of a Half A site (legacy, primary, or backup) so no
+# Half B site can sit on or overlap a Half A plot.
+sitesA <- rbind(
+  if (!is.null(drawA$sites_legacy) && nrow(drawA$sites_legacy)) drawA$sites_legacy[, "siteID"] else NULL,
+  drawA$sites_base[, "siteID"], drawA$sites_over[, "siteID"]
+)
+tooClose <- lengths(st_is_within_distance(frame, sitesA, dist = mindis)) > 0
+frameB <- frame[!tooClose, ]
+message("Half B frame: ", nrow(frameB), " of ", nrow(frame), " units after removing Half A sites and their ", mindis, " m buffers")
 
 set.seed(seed + 1L)
 nB_base <- setNames(allocB$n_B, allocB$cell_id)
@@ -88,6 +100,7 @@ drawB <- grts(
   seltype     = "proportional",
   aux_var     = "inclusion_weight",
   n_over      = nB_over,
+  mindis      = mindis,
   DesignID    = "TRPA-FH-B"
 )
 

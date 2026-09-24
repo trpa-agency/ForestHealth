@@ -34,12 +34,15 @@ Figures on this page are drawn from the Forest Health Threshold Standards report
 the authoritative source. The assessment reflects a 2023 data vintage covering disturbance
 through 2022, so recent treatments are not reflected.
 
-> **Note on the seral stage visualizations below.** The seral stage tables and charts on
-> this page were generated from an earlier analysis run and are being regenerated. They use
-> a larger assessed area than the report, 127,322 acres rather than 115,396, and they carry
-> a canopy class labeling error in which the open and closed canopy classes are transposed
-> for the mid and late seral stages. Cite the report figures in the table above, not the
-> embedded tables, until this notice is removed.
+> **Note on the seral stage and stand density visualizations below.** The embedded tables
+> and charts were regenerated on Sept. 23, 2026 from a corrected analysis run. The
+> correction fixed a labeling error that had transposed the open and closed canopy classes
+> for the mid and late seral stages, and it moved Lodgepole Pine into Sierran Mixed Conifer
+> as the report's Table 1 specifies. The regenerated figures therefore differ from the
+> report figures in the table above, which are retained here until the report is revised.
+> Basin-wide, the corrected run finds 59 percent of the forested area within desired seral
+> ranges and 30 percent within density ranges, and it finds the forest dominated by
+> mid-seral open canopy rather than closed canopy.
 
 ---
 
@@ -332,7 +335,7 @@ Fire and Fuels Team and with peer review by the Tahoe Science Advisory Council.
 Two of the five standards are not yet reproducible from this repository. The WUI Defense
 Zone results exist in the project geodatabase but are not produced by any committed code or
 stored in `output/`, and the fire severity summary values are written to a network path
-outside the repository. The seral stage visualizations are being regenerated to correct a
-canopy class labeling error and to align the assessed area with the report. Progress on
+outside the repository. The seral stage and stand density visualizations were regenerated
+on Sept. 23, 2026 and now differ from the report figures, as noted above. Progress on
 these items is tracked in
 [thresholds/_INDEX.md](https://github.com/trpa-agency/ForestHealth/blob/main/thresholds/_INDEX.md).

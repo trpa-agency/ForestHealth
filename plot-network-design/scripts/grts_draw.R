@@ -2,20 +2,23 @@
 # Frozen GRTS draw with spsurvey, for parity with the TEON backbone (Shale Hunter used spsurvey).
 #
 # Inputs (written by notebooks/03_allocate_draw.ipynb):
-#   data/processed/frame_points.gpkg     candidate pixel centers with cell_id, inclusion_weight, x, y
+#   data/processed/frame_points.gpkg     sampling unit centres (3x3 LiDAR pixel blocks, plot on the
+#                                        centre pixel) with cell_id, inclusion_weight, x, y
 #   data/processed/allocation_full.csv   cell_id, n_B  (use the level you are freezing)
 #   data/processed/legacy_sites.gpkg     existing plots with cell_id (optional)
 # Output:
 #   outputs/grts_draw_spsurvey.gpkg      sites with siteID, stratum, wgt, ip, siteuse (Base/Over), caty
 #
-# Run: Rscript scripts/grts_draw.R 20261016 2.5
-#   arg1 = seed, arg2 = oversample factor
+# Run: Rscript scripts/grts_draw.R 20261016 2.5 120
+#   arg1 = seed, arg2 = oversample factor, arg3 = minimum distance between sites in metres
+#   (draw.min_distance_m in config.yaml: two macroplot radii, so no two plots overlap)
 
 suppressPackageStartupMessages({ library(sf); library(spsurvey) })
 
 args <- commandArgs(trailingOnly = TRUE)
-seed <- if (length(args) >= 1) as.integer(args[1]) else 20261016L
-over <- if (length(args) >= 2) as.numeric(args[2]) else 2.5
+seed   <- if (length(args) >= 1) as.integer(args[1]) else 20261016L
+over   <- if (length(args) >= 2) as.numeric(args[2]) else 2.5
+mindis <- if (length(args) >= 3) as.numeric(args[3]) else 120
 set.seed(seed)
 
 frame <- st_read("data/processed/frame_points.gpkg", quiet = TRUE)
@@ -41,6 +44,7 @@ draw <- grts(
   n_over     = n_over,
   legacy_sites = legacy,
   legacy_stratum_var = if (!is.null(legacy)) "cell_id" else NULL,
+  mindis     = mindis,
   DesignID   = "TRPA-FH"
 )
 

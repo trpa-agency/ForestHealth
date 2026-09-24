@@ -1,16 +1,16 @@
 Forest Type,Seral Stage,Desired % Range,Classification,Current Area %,Area (m²),Area (acres),Total Area of Type (acres),Acres from Target
-Jeffrey Pine,Early,5–15%,Underrepresented,2.77,3223800.0,796.62,28783.45,642.55
-Jeffrey Pine,Mid (closed canopy),5–10%,Overrepresented,30.53,35561700.0,8787.49,28783.45,-5909.14
-Jeffrey Pine,Mid (open canopy),25–30%,Within,27.7,32262300.0,7972.19,28783.45,0.0
-Jeffrey Pine,Late (open canopy),40–50%,Underrepresented,25.89,30151800.0,7450.67,28783.45,4062.71
-Jeffrey Pine,Late (closed canopy),5–10%,Overrepresented,13.12,15282900.0,3776.49,28783.45,-898.14
-White Fir,Early,10–20%,Underrepresented,3.66,8927100.0,2205.93,60276.12,3821.68
-White Fir,Mid (closed canopy),5–15%,Overrepresented,37.09,90465300.0,22354.46,60276.12,-13313.04
-White Fir,Mid (open canopy),15–20%,Overrepresented,22.38,54602100.0,13492.47,60276.12,-1437.25
-White Fir,Late (open canopy),25–35%,Underrepresented,19.63,47888100.0,11833.41,60276.12,3235.62
-White Fir,Late (closed canopy),15–25%,Within,17.24,42046200.0,10389.84,60276.12,0.0
+Jeffrey Pine,Early,5–15%,Underrepresented,3.37,2817000.0,696.1,20655.37,336.67
+Jeffrey Pine,Mid (closed canopy),5–10%,Overrepresented,30.12,25177500.0,6221.5,20655.37,-4155.96
+Jeffrey Pine,Mid (open canopy),25–30%,Overrepresented,32.12,26847000.0,6634.04,20655.37,-437.43
+Jeffrey Pine,Late (open canopy),40–50%,Underrepresented,11.35,9484200.0,2343.6,20655.37,5918.55
+Jeffrey Pine,Late (closed canopy),5–10%,Overrepresented,23.05,19263600.0,4760.14,20655.37,-2694.6
+Sierran Mixed Conifer,Early,10–20%,Underrepresented,3.37,9333900.0,2306.46,68404.21,4533.96
+Sierran Mixed Conifer,Mid (closed canopy),5–15%,Overrepresented,21.09,58374000.0,14424.53,68404.21,-4163.9
+Sierran Mixed Conifer,Mid (open canopy),15–20%,Overrepresented,37.02,102492900.0,25326.55,68404.21,-11645.71
+Sierran Mixed Conifer,Late (open canopy),25–35%,Underrepresented,18.67,51687900.0,12772.36,68404.21,4328.69
+Sierran Mixed Conifer,Late (closed canopy),15–25%,Within,19.84,54933300.0,13574.31,68404.21,0.0
 Red Fir,Early,10–20%,Underrepresented,2.2,1987200.0,491.05,22364.92,1745.44
-Red Fir,Mid (closed canopy),15–25%,Overrepresented,36.52,33056100.0,8168.34,22364.92,-2577.11
-Red Fir,Mid (open canopy),15–25%,Underrepresented,12.48,11299500.0,2792.17,22364.92,562.57
-Red Fir,Late (open canopy),30–40%,Underrepresented,19.34,17506800.0,4326.02,22364.92,2383.45
-Red Fir,Late (closed canopy),20–30%,Within,29.45,26658000.0,6587.34,22364.92,0.0
+Red Fir,Mid (closed canopy),15–25%,Underrepresented,12.48,11299500.0,2792.17,22364.92,562.57
+Red Fir,Mid (open canopy),15–25%,Overrepresented,36.52,33056100.0,8168.34,22364.92,-2577.11
+Red Fir,Late (open canopy),30–40%,Underrepresented,29.45,26658000.0,6587.34,22364.92,122.14
+Red Fir,Late (closed canopy),20–30%,Underrepresented,19.34,17506800.0,4326.02,22364.92,146.96

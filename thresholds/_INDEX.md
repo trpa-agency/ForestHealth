@@ -46,9 +46,26 @@ wins and the repo is treated as needing reconciliation.
    115,600 against the report's 115,396 — within 0.2 percent. `"LPN": 2` has been added to
    the crosswalk in both notebooks.
 
+## Rerun of Sept. 23, 2026
+
+`scripts/rerun_forest_structure.py` reran stand density and seral stage with the corrected
+canopy classes and the Lodgepole crosswalk. Blockers 1 and 2 below are cleared in the
+working tree; the outputs are not yet committed. What the numbers do to the drafts:
+
+- **189.** Basin attainment moves from 28 to 30 percent (34,461 of 111,424 assessed acres,
+  or 29.9 percent of 115,396). By type: Jeffrey pine 8, Sierran mixed conifer 30, red fir
+  56 percent. The rise is Lodgepole moving from Jeffrey pine targets to mixed conifer
+  targets, where the old run had it.
+- **190.** Using the report's own definition (assessed minus excess minus deficit, which
+  reproduces its 70,836 acres exactly on the old run), the basin figure is 68,055 acres,
+  59 percent of 115,396. By type: Jeffrey pine 34, mixed conifer 64, red fir 77 percent.
+  The headline flips: the forest is dominated by mid-seral **open** canopy (36 percent)
+  rather than closed (21 percent). Class calls that change: Jeffrey pine mid open is now
+  Overrepresented, red fir mid closed and late closed are Underrepresented.
+
 ## Open blockers, in the order they should be cleared
 
-1. **190 — canopy classes are transposed.** In `classify_seral_stage` and
+1. **190 — canopy classes are transposed. CLEARED Sept. 23, pending commit.** In `classify_seral_stage` and
    `classify_seral_stage_single_raster`, the `combined_class_r` codes for mid and late
    seral disagreed with both `seral_stage_map` and the keys of `desired_conditions`, so
    each mid and late class was compared against the wrong target range. The code is fixed;
@@ -57,8 +74,13 @@ wins and the repo is treated as needing reconciliation.
    `DataVisualizations/CompositionAge_Table_Updated.html`, and
    `DataVisualizations/Composition_Action_Table.html` all still carry the swap. The chart
    is embedded live in the public StoryMap. Rerun and regenerate before publishing 190.
+   Rerun prepared Sept. 23: `scripts/rerun_forest_structure.py`, then
+   `scripts/build_forest_structure_charts.py`. Expect the mid open class, not mid closed,
+   to dominate once the labels are right (CLAUDE.md divergence 9); the by-type
+   Underrepresented and Overrepresented calls in this draft will change with it.
 
-2. **All indicators — rerun required.** The canopy fix and the Lodgepole addition both
+2. **All indicators — rerun required. CLEARED Sept. 23 for 189 and 190, pending commit.**
+   The notebooks themselves have not been rerun with outputs. Original text: the canopy fix and the Lodgepole addition both
    change results. Nothing derived from `output/` should be published until the analysis
    notebook is rerun against `F:\` and the outputs are recommitted with cell outputs
    intact.

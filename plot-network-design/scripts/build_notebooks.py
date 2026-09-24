@@ -32,11 +32,13 @@ def nb(name, cells):
 nb("01_frame", [
 ("md", """# 01 Frame
 
-Build the sampling frame: the threshold report's 115,396 acre assessment population (CWHR conifer outside urban and wilderness), minus edge buffers, steep ground, and existing plot footprints, with area accounting at every step. Output is one row per candidate 30 m pixel with forest type, LiDAR metrics, slope, road distance, state, ownership, and disturbance flags.
+Build the sampling frame: the threshold report's 115,396 acre assessment population (CWHR conifer outside urban and wilderness), minus edge buffers, steep ground, and existing plot footprints, with area accounting at every step.
+
+**The sampling unit is a block of `frame.unit_px` by `frame.unit_px` LiDAR pixels** (3 by 3, 90 m, 0.81 ha), decided Sept. 23, 2026. A 30 m pixel is smaller than the primary plot, so it cannot be the unit; the block is the 3 by 3 window the imputation model trains on. The plot sits on the block's centre pixel. A block is in the frame when its centre pixel is in the population and at least `frame.min_unit_fraction` of its pixels are. LiDAR metrics are block means over the population pixels. Output is one row per candidate unit with forest type, LiDAR metrics, slope, road distance, state, ownership, and disturbance flags; `acres` is the population area the unit represents and `unit_acres` the block area.
 
 With `run.synthetic: true` a toy Basin is generated instead so the chain can be exercised. Replace the synthetic block with the real-layer block once layers are in `data/raw/`."""),
 ("code", HEADER.format(name="01_frame")),
-("md", "## Real layers (runs when `run.synthetic` is false)\n\nRasterize forest type to the LiDAR grid, sample the 2022 LiDAR metric rasters, DEM slope, and distance to roads at each pixel center, then apply exclusions. Every step logs acres removed."),
+("md", "## Real layers (runs when `run.synthetic` is false)\n\nRasterize forest type to the LiDAR grid, reduce it and the 2022 LiDAR metric rasters to blocks, sample the DEM and distance to roads at each block centre, then apply exclusions. Every step logs acres removed."),
 ("code", '''if not cfg["run"]["synthetic"]:
     import geopandas as gpd, rasterio
     from rasterio import features
@@ -57,29 +59,44 @@ With `run.synthetic: true` a toy Basin is generated instead so the chain can be 
     pop = veg.overlay(pd.concat([urban[["geometry"]], wild[["geometry"]]]), how="difference")
     log.info(f"Population after urban + wilderness removal: {pop.area.sum()/4046.86:,.0f} ac (report: 115,396)")
 
-    # grid of pixel centers on the LiDAR grid inside the population
+    # sampling units: k x k blocks of LiDAR pixels anchored at the raster origin, plot on the centre pixel
+    k = cfg["frame"]["unit_px"]; B = k * g
     bbox = tuple(pop.total_bounds)
     p95, transform, rcrs = read_raster(src["p95_height_30m"], cfg, bbox=bbox, log=log)
     assert abs(transform.a - g) < 1e-6, f"expected {g} m grid, got {transform.a}"
     shape = p95.shape
     ft_raster = features.rasterize(((geom, i + 1) for i, geom in enumerate(pop.geometry)), out_shape=shape, transform=transform, fill=0)
-    rows, cols = np.nonzero(ft_raster)
+    inpop = ft_raster > 0
+    frac = strata.block_reduce(inpop.astype(float), k, "mean")            # share of the block in the population
+    centre = strata.block_reduce(ft_raster.astype(float), k, "center")     # polygon index at the centre pixel
+    keep = (centre > 0) & (frac >= cfg["frame"]["min_unit_fraction"])
+    bi, bj = np.nonzero(keep)
+    rows, cols = bi * k + k // 2, bj * k + k // 2
     xs, ys = rasterio.transform.xy(transform, rows, cols)
-    frame = pd.DataFrame({"x": xs, "y": ys, "pixel_id": rows * shape[1] + cols})
-    frame["forest_type"] = pop["forest_type"].values[ft_raster[rows, cols] - 1]
-    frame["acres"] = g * g / 4046.86
+    frame = pd.DataFrame({"x": xs, "y": ys, "unit_id": bi * keep.shape[1] + bj, "unit_row": bi, "unit_col": bj})
+    frame["forest_type"] = pop["forest_type"].values[centre[bi, bj].astype(int) - 1]
+    frame["unit_frac_in_frame"] = frac[bi, bj]
+    frame["unit_acres"] = B * B / 4046.86
+    frame["acres"] = frame["unit_frac_in_frame"] * frame["unit_acres"]   # population acres the unit represents
+    log.info(f"Units: {len(frame):,} blocks of {k}x{k} pixels ({B} m); population pixels {int(inpop.sum()):,}, "
+             f"in kept units {int((frac[bi, bj] * k * k).sum()):,}")
 
-    def sample(source, name):
+    def sample(source, name, how="mean"):
+        """Block mean over population pixels when the raster shares the LiDAR grid; else the centre-point value."""
         arr, tr, _ = read_raster(source, cfg, bbox=bbox, log=log)
-        rr, cc = rasterio.transform.rowcol(tr, frame["x"].values, frame["y"].values)
-        rr = np.clip(rr, 0, arr.shape[0] - 1); cc = np.clip(cc, 0, arr.shape[1] - 1)
-        frame[name] = arr[rr, cc]
+        if arr.shape == shape and abs(tr.a - g) < 1e-6:
+            red = strata.block_reduce(np.where(inpop, arr, np.nan), k, how)
+            frame[name] = red[bi, bj]
+        else:
+            rr, cc = rasterio.transform.rowcol(tr, frame["x"].values, frame["y"].values)
+            rr = np.clip(rr, 0, arr.shape[0] - 1); cc = np.clip(cc, 0, arr.shape[1] - 1)
+            frame[name] = arr[rr, cc]
     sample(src["p95_height_30m"], "p95_height_m")
     sample(src["canopy_cover_30m"], "canopy_cover_pct")
     sample(src["stem_density_30m"], "stem_density")
     if Path(str(src.get("solid_frac_30m", ""))).exists() or str(src.get("solid_frac_30m", "")).startswith("http"):
         sample(src["solid_frac_30m"], "solid_frac")
-    sample(src["dem"], "elev_m")   # slope/aspect: derive with rasterio or sample pre-computed rasters the same way
+    sample(src["dem"], "elev_m")   # 1 m DTM: centre-point value; slope/aspect from a pre-computed raster the same way
 
     pts = gpd.GeoDataFrame(frame, geometry=[Point(xy) for xy in zip(frame.x, frame.y)], crs=wcrs)
     edges = pd.concat([read_layer(src[k], cfg, log=log)[["geometry"]] for k in ["roads", "trails", "streams", "structures"]])
@@ -101,25 +118,25 @@ With `run.synthetic: true` a toy Basin is generated instead so the chain can be 
     log.info("Synthetic frame generated")
 frame.head()'''),
 ("md", "## Exclusions and area accounting"),
-("code", '''acct = [{"step": "population", "acres": frame["acres"].sum(), "pixels": len(frame)}]
+("code", '''acct = [{"step": "population", "acres": frame["acres"].sum(), "units": len(frame)}]
 steep = frame["slope_pct"] > cfg["frame"]["max_slope_pct"]
-acct.append({"step": f"removed slope > {cfg['frame']['max_slope_pct']}%", "acres": frame.loc[steep, "acres"].sum(), "pixels": int(steep.sum())})
+acct.append({"step": f"removed slope > {cfg['frame']['max_slope_pct']}%", "acres": frame.loc[steep, "acres"].sum(), "units": int(steep.sum())})
 frame = frame[~steep].copy()
 if cfg["frame"]["max_access_distance_m"]:
     far = frame["dist_road_m"] > cfg["frame"]["max_access_distance_m"]
-    acct.append({"step": "removed beyond access distance", "acres": frame.loc[far, "acres"].sum(), "pixels": int(far.sum())})
+    acct.append({"step": "removed beyond access distance", "acres": frame.loc[far, "acres"].sum(), "units": int(far.sum())})
     frame = frame[~far].copy()
 if "solid_frac" in frame and cfg["frame"].get("max_solid_fraction"):
     solid = (frame["solid_frac"] > cfg["frame"]["max_solid_fraction"]) & (frame["canopy_cover_pct"] > cfg["threshold"]["cover_sparse_pct"])
-    acct.append({"step": f"removed solid-surface cells (single-return fraction > {cfg['frame']['max_solid_fraction']})", "acres": frame.loc[solid, "acres"].sum(), "pixels": int(solid.sum())})
+    acct.append({"step": f"removed solid-surface units (single-return fraction > {cfg['frame']['max_solid_fraction']})", "acres": frame.loc[solid, "acres"].sum(), "units": int(solid.sum())})
     frame = frame[~solid].copy()
-acct.append({"step": "frame", "acres": frame["acres"].sum(), "pixels": len(frame)})
+acct.append({"step": "frame", "acres": frame["acres"].sum(), "units": len(frame)})
 acct = pd.DataFrame(acct)
-for r in acct.itertuples(): log.info(f"{r.step}: {r.acres:,.0f} ac, {r.pixels:,} pixels")
+for r in acct.itertuples(): log.info(f"{r.step}: {r.acres:,.0f} ac, {r.units:,} units")
 acct.to_csv(O / "frame_accounting.csv", index=False)
 frame["access_class"] = strata.access_class(frame["dist_road_m"], frame["slope_pct"], cfg)
 frame.to_parquet(P / "frame.parquet", index=False)
-log.info(f"Wrote frame: {len(frame):,} pixels, {frame['acres'].sum():,.0f} ac")
+log.info(f"Wrote frame: {len(frame):,} units of {cfg['frame']['unit_px']}x{cfg['frame']['unit_px']} pixels, {frame['acres'].sum():,.0f} ac")
 frame.groupby("forest_type")["acres"].sum().round()'''),
 ])
 
@@ -127,10 +144,10 @@ frame.groupby("forest_type")["acres"].sum().round()'''),
 nb("02_strata", [
 ("md", """# 02 Strata
 
-Classify every frame pixel into forest type x seral proxy x density proxy (cover as an attribute), collapse cells below the minimum area, and produce the cell table with acres. Includes the height-to-QMD calibration step that turns the placeholder breaks in `config.yaml` into defensible ones once plots with both QMD and LiDAR height are available."""),
+Classify every sampling unit into forest type x seral proxy x density proxy (cover as an attribute), collapse cells below the minimum area, and produce the cell table with acres. Includes the height-to-QMD calibration step that turns the placeholder breaks in `config.yaml` into defensible ones once plots with both QMD and LiDAR height are available."""),
 ("code", HEADER.format(name="02_strata")),
 ("code", '''frame = pd.read_parquet(P / "frame.parquet")
-log.info(f"Frame: {len(frame):,} pixels")'''),
+log.info(f"Frame: {len(frame):,} units")'''),
 ("md", """## Calibrate height breaks to the QMD definition (when calibration plots exist)
 
 The standard defines seral by QMD (5 and 25 in). We need the p95 height that corresponds to those QMDs per forest type. Fit on Lake Tahoe West validation plots (and FIA if coordinates are available), then write the breaks back to `config.yaml` by hand and record the fit in `docs/DESIGN_SUMMARY.md`. Skipped on the synthetic run."""),
@@ -183,7 +200,7 @@ for lvl in cfg["allocation"]["levels"]:
     a = alloc[alloc["level"] == lvl]
     log.info(f"{lvl}: n={a['n_B'].sum()}  cells at floor (B)={int((a['n_B'] == cfg['allocation']['floor_per_cell'][lvl]).sum())}  cells with 0-1 plots (A)={int((a['n_A'] <= 1).sum())}")
 alloc.pivot_table(index=["forest_type", "seral_class", "density_class"], columns="level", values=["n_A", "n_B"]).astype(int)'''),
-("md", "## Inclusion weights: disturbance targeting and tail boost\n\nDisturbance is not a stratum. It enters as an inclusion weight that lifts post-fire and scheduled-treatment pixels so the expected share of the sample lands near `allocation.disturbance_shares`. Representativeness weighting is switched on with `draw.weight_by_representativeness` once Shengli's raster is in hand."),
+("md", "## Inclusion weights: disturbance targeting and tail boost\n\nDisturbance is not a stratum. It enters as an inclusion weight that lifts post-fire and scheduled-treatment units so the expected share of the sample lands near `allocation.disturbance_shares`. Representativeness weighting is switched on with `draw.weight_by_representativeness` once Shengli's raster is in hand."),
 ("code", '''ds = cfg["allocation"]["disturbance_shares"]
 w = pd.Series(1.0, index=frame.index)
 for flag, share in [("post_fire", ds["post_fire"]), ("treatment_2027_2031", ds["treatment"])]:
@@ -192,9 +209,9 @@ for flag, share in [("post_fire", ds["post_fire"]), ("treatment_2027_2031", ds["
         w[frame[flag]] *= share / p_frame          # lift so expected share ~ target
     log.info(f"{flag}: frame share {p_frame:.3f}, target {share:.2f}")
 if cfg["draw"]["weight_by_representativeness"] and "representativeness" in frame:
-    w *= 1 + (frame["representativeness"].rank(pct=True))   # later-imputed (less represented) pixels up-weighted
+    w *= 1 + (frame["representativeness"].rank(pct=True))   # later-imputed (less represented) units up-weighted
 frame["inclusion_weight"] = w'''),
-("md", "## Legacy sites\n\nExisting permanently marked plots that fall inside the frame are attached to their pixel and passed to the draw as legacy sites. They count toward the cell's allocation and the new plots balance around them."),
+("md", "## Legacy sites\n\nExisting permanently marked plots that fall inside the frame are attached to the sampling unit that contains them and passed to the draw as legacy sites. They count toward the cell's allocation, the new plots balance around them, and the minimum-distance rule keeps new plots off them."),
 ("code", '''legacy_mask = pd.Series(False, index=frame.index)
 if not cfg["run"]["synthetic"]:
     import geopandas as gpd
@@ -205,17 +222,19 @@ if not cfg["run"]["synthetic"]:
         src_k = cfg["sources"][key]
         if not (str(src_k).startswith("http") or Path(src_k).exists()): log.info(f"{key}: not available yet"); continue
         leg = read_layer(src_k, cfg, log=log)
-        near = gpd.sjoin_nearest(leg[["geometry"]], pts[["pixel_id", "geometry"]], max_distance=cfg["crs"]["lidar_grid_m"])
-        legacy_mask[frame["pixel_id"].isin(near["pixel_id"])] = True
-        log.info(f"{key}: {len(leg)} sites, {near['pixel_id'].nunique()} inside the frame")
+        half_diag = cfg["crs"]["lidar_grid_m"] * cfg["frame"]["unit_px"] * 0.7072   # any point in the block is this close to its centre
+        near = gpd.sjoin_nearest(leg[["geometry"]], pts[["unit_id", "geometry"]], max_distance=half_diag)
+        legacy_mask[frame["unit_id"].isin(near["unit_id"])] = True
+        log.info(f"{key}: {len(leg)} sites, {near['unit_id'].nunique()} inside the frame")
 else:
     legacy_mask[frame.sample(12, random_state=1).index] = True   # pretend a dozen LTW plots exist
 frame["legacy"] = legacy_mask
 log.info(f"Legacy sites in frame: {int(legacy_mask.sum())}")'''),
-("md", "## GRTS draw (Python, for iteration)"),
+("md", "## GRTS draw (Python, for iteration)\n\nOne unit per site, and no two sites closer than `draw.min_distance_m` (two macroplot radii), legacy sites included, so no plot footprints overlap. The frozen draw applies the same rule through spsurvey's `mindis`."),
 ("code", '''full = alloc[alloc["level"] == "full"].set_index("cell_id")["n_B"].to_dict()
 sel = strata.grts_draw(frame, full, frame["inclusion_weight"], seed=cfg["draw"]["seed"],
-                       oversample_factor=cfg["draw"]["oversample_factor"], legacy_mask=frame["legacy"])
+                       oversample_factor=cfg["draw"]["oversample_factor"], legacy_mask=frame["legacy"],
+                       min_distance_m=cfg["draw"]["min_distance_m"])
 sel = strata.installation_order(sel, cfg, alloc).merge(
     sel[sel["status"] == "backup"], how="outer")
 sel["status"] = sel["status"].fillna("backup")
@@ -231,9 +250,10 @@ sel.groupby(["level", "status"]).size().unstack(fill_value=0)'''),
 try:
     import geopandas as gpd
     from shapely.geometry import Point
-    gpd.GeoDataFrame(frame[["pixel_id", "cell_id", "inclusion_weight", "x", "y"]],
+    keep_cols = [c for c in ["unit_id", "cell_id", "forest_type", "inclusion_weight", "balance_caty", "x", "y"] if c in frame]
+    gpd.GeoDataFrame(frame[keep_cols],
                      geometry=[Point(xy) for xy in zip(frame.x, frame.y)], crs=cfg["crs"]["working"]).to_file(P / "frame_points.gpkg", driver="GPKG")
-    gpd.GeoDataFrame(frame.loc[frame["legacy"], ["pixel_id", "cell_id"]],
+    gpd.GeoDataFrame(frame.loc[frame["legacy"], [c for c in ["unit_id", "cell_id", "forest_type"] if c in frame]],
                      geometry=[Point(xy) for xy in zip(frame.loc[frame.legacy].x, frame.loc[frame.legacy].y)], crs=cfg["crs"]["working"]).to_file(P / "legacy_sites.gpkg", driver="GPKG")
     stamp = pd.Timestamp.today().strftime("%Y%m%d")
     internal = gpd.GeoDataFrame(sel, geometry=[Point(xy) for xy in zip(sel.x, sel.y)], crs=cfg["crs"]["working"])
@@ -310,7 +330,8 @@ pd.concat({"access": prac, "state": st, "flags": dist}, axis=1)'''),
 ("code", '''checks = {
     "nulls": qa.check_nulls(prim, ["plot_id", "cell_id", "x", "y", "forest_type", "access_class"]),
     "duplicate_plot_ids": qa.check_duplicates(sel, ["plot_id"]),
-    "duplicate_pixels": qa.check_duplicates(sel, ["pixel_id"]),
+    "duplicate_units": qa.check_duplicates(sel, ["unit_id"]),
+    "sites_closer_than_min_distance": qa.check_min_distance(prim, cfg["draw"]["min_distance_m"]),
     "row_count_primary": qa.check_row_count(prim, expected_min=cfg["allocation"]["levels"]["min"], expected_max=cfg["allocation"]["levels"]["full"] + 50),
     "forest_type_domain": qa.check_value_domain(prim, "forest_type", list(cfg["forest_types"]["population_acres"])),
     "cells_below_floor_min": {"count": int(cov["below_floor_min"].sum())},

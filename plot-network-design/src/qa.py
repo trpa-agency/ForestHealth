@@ -83,6 +83,25 @@ def check_spatial_nulls(
     }
 
 
+def check_min_distance(df: pd.DataFrame, min_distance_m: float, x: str = "x", y: str = "y") -> dict[str, Any]:
+    """
+    Count pairs of rows closer than min_distance_m (planar, in the units of x and y).
+    Used to prove that no two selected sites, legacy included, can have overlapping
+    plot footprints.
+    """
+    if x not in df.columns or y not in df.columns:
+        return {"error": f"missing columns: {[c for c in (x, y) if c not in df.columns]}"}
+    if len(df) < 2 or not min_distance_m:
+        return {"min_distance_m": min_distance_m, "pairs_too_close": 0, "closest_m": None}
+    from scipy.spatial import cKDTree
+
+    xy = df[[x, y]].to_numpy(float)
+    tree = cKDTree(xy)
+    pairs = tree.query_pairs(min_distance_m)
+    d, _ = tree.query(xy, k=2)
+    return {"min_distance_m": min_distance_m, "pairs_too_close": len(pairs), "closest_m": round(float(d[:, 1].min()), 1)}
+
+
 def check_yoy_change(
     current: pd.DataFrame,
     previous: pd.DataFrame,

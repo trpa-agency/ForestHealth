@@ -7,6 +7,12 @@
 
 This document is the soup-to-nuts plan for producing the plot location layer, allocation table, backup list, and installation order that the field-only RFP references. It replaces the August 31 methods outline. The code that implements it lives in this repo (`notebooks/`, `src/`, `scripts/`), configured by `config.yaml`, and documented in `docs/METHODS.md`.
 
+> **Revisions since Sept. 5.** Where this document and `config.yaml` disagree, the config is current. Three decisions postdate the text below and are not yet threaded through every section:
+>
+> 1. **Sept. 19, protocol v1.0.** The plot is a nested fixed-radius design with one centre: a quarter-acre primary plot (58.9 ft) for all trees 4.0 in and larger, a 56.4 m macroplot for trees at or above the breakpoint, a 1/300 acre microplot for saplings, and a 24 ft subplot for understory and fuels. It replaces the 1/7 acre plot in sections 2, 7, and 9 (`plot:` block, `src/plot_geometry.py`, `docs/CHANGES-2026-09-19.md`).
+> 2. **Sept. 19, split sample.** Half A is stratified by forest type only and balanced on basin side and landform; Half B is unequal probability by structural cell. It replaces the single Candidate B draw in sections 6 and 7 (`split_sample:` block, `scripts/grts_split_draw.R`).
+> 3. **Sept. 23, sampling unit.** The unit is a 3 by 3 block of 2022 LiDAR pixels (90 m, 0.81 ha), the window the imputation model trains on, with the plot on the block's centre pixel. A 30 m pixel is smaller than the primary plot and cannot be the unit. Strata attributes are block means. No two selected sites, legacy included, may be closer than 120 m (two macroplot radii), enforced with spsurvey's `mindis`, so plot footprints never overlap. It replaces "pixel" wherever sections 4, 5, and 7 use it as the sampling unit (`frame.unit_px`, `draw.min_distance_m`).
+
 ---
 
 ## 0. The plan in plain language
@@ -47,7 +53,7 @@ The DBH floor for TPA is not stated in the threshold report. It is fixed in the 
 2. **Strata are allocation-time covariate bins, not analysis strata.** Inference is model-based and refit against each LiDAR epoch; design-based status estimates are post-stratified to the current epoch and carry the GRTS weights. A plot that moves class between epochs is the signal. This is the answer to TEON's "do not pre-stratify."
 3. **Any stratum needs a wall-to-wall layer at design time that is not the product under validation.** Seral (QMD) and TPA exist Basin-wide only as RRK rasters. The classes are defined in the standard's units, mapped by 2022 LiDAR proxies, and verified by the plots. RRK rasters are evaluation only.
 4. **Cross only the structure axes.** Forest type by seral proxy by density proxy. Disturbance is a flagged sub-allocation; aspect, soils, ownership, access, and treatment status are attributes, checks, or inclusion weights, never strata.
-5. **Fixed radius, one plot size, co-registered.** 1/7 acre (13.6 m, 44.5 ft radius) per Shengli, rationale to confirm against the pixel or 3 by 3 window he trains on. Variable-radius plots cannot be co-registered and are not adopted.
+5. **Fixed radius, one plot design, co-registered, on a plot-sized sampling unit.** Nested quarter-acre primary plot with a 56.4 m macroplot (protocol v1.0). The sampling unit is the 3 by 3 LiDAR pixel block Shengli trains on, and the plot centre is that block's centre pixel, so the unit the draw selects, the footprint the crew measures, and the window the model reads are the same piece of ground. Variable-radius plots cannot be co-registered and are not adopted.
 6. **Design independently, then fold in existing plots.** Existing permanently marked plots (Lake Tahoe West LiDAR validation plots, Hugh's burned-area plots, TEON's 100 GRTS sites where recoverable) enter as legacy sites in the draw or as adopted replacements inside a cell, never by changing the strata.
 7. **Any prefix of the installation order is a coherent sample.** The minimum authorized quantity, the option task, and future seasons are the same design.
 
@@ -87,7 +93,7 @@ Population = the threshold report's assessment population, 115,396 acres of CWHR
 
 Frame construction (`01_frame.ipynb`) starts from that population and removes, with area accounting at each step:
 
-- pixels within one plot radius plus the positional tolerance of a road, trail, stream, structure, or parcel boundary where access is not assured;
+- units whose centre is within one primary-plot radius plus the positional tolerance of a road, trail, stream, structure, or parcel boundary where access is not assured (the macroplot may cross an edge; it only tallies trees at or above the breakpoint);
 - slope above the safety cutoff (`frame.max_slope_pct`, default 70), recorded so the design report states what the network cannot represent;
 - existing plot footprints with a buffer, unless adopted;
 - optionally, areas beyond the realistic access distance, or kept and priced as access class 4.
@@ -148,7 +154,7 @@ Two implementations, deliberately:
 
 **7.4 Backup rule.** A backup replaces a primary only with TRPA's written concurrence for access denial, safety, or site not as mapped, and the replacement is recorded with the reason.
 
-**7.5 Point placement.** Plot center at the center of the selected LiDAR pixel (or the 3 by 3 window center, per Shengli). Design coordinates and field-established coordinates are recorded separately.
+**7.5 Point placement.** The draw selects sampling units, 3 by 3 blocks of 2022 LiDAR pixels; the plot centre is the centre pixel's centre. No two selected sites, legacy included, are closer than 120 m (`draw.min_distance_m`, spsurvey `mindis`), so no two macroplots overlap. The centre is never moved within the unit: a random location inside the block would break co-registration with the model grid, and access problems are what the backup list is for. Design coordinates and field-established coordinates are recorded separately.
 
 ## 8. Existing plots, TEON, and the communication plan
 

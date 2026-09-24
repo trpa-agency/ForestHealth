@@ -194,8 +194,20 @@ get recorded here and in `thresholds/_INDEX.md`.
 - Decide on VP9 and VP10 merits which Sept. 19 changes survive: the nested quarter-acre plot
   (defensible on its own), the split sample (needs Becky and Shengli), and the MSIM
   conversions (not counted toward 300 until Shale's site data arrives).
-- Reconcile `plot-network-design/PLAN.md` and its `CLAUDE.md` with its `config.yaml`; both
-  still describe a 1/7-acre plot and a single GRTS draw.
+- DONE Sept. 23: `PLAN.md` carries a revision note reconciling the Sept. 19 decisions and
+  the folder `CLAUDE.md` design decisions are current. The body text of `PLAN.md` still
+  says 1/7 acre in places; the note governs.
+- DONE Sept. 23: **the sampling unit is a 3 by 3 block of LiDAR pixels** (90 m, 0.81 ha),
+  plot on the centre pixel, with a 120 m minimum separation between sites (spsurvey
+  `mindis`). A 30 m pixel is smaller than the primary plot and cannot be the unit. In
+  config, `01_frame`, both R scripts, and the Python GRTS.
+- Decision date **Oct. 1** for strata inputs: LiDAR derived metrics if they exist by then,
+  otherwise the CFO canopy height and cover rasters already on F:. The LiDAR share is
+  unreachable from Mason's workstation and the heavy pass has not run; the SDE holds only
+  the 2022 bare earth.
+- Pat Manley reply (Sept. 23 draft, in the session transcript, not in the repo): yes to
+  "do it once" on the forest frame on TRPA's terms, strata stay, TEON sites enter as legacy
+  sites, protocol talks go through Becky. Send only after Dan clears it.
 
 ### Housekeeping
 

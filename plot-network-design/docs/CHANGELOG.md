@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-23 (plot-sized sampling unit)
+- The sampling unit is now a `frame.unit_px` by `frame.unit_px` block of LiDAR pixels (3 by 3, 90 m, 0.81 ha) with the plot on the centre pixel, instead of a single 30 m pixel, which is smaller than the primary plot. `01_frame` builds units with `strata.block_reduce` (centre pixel in the population and at least `frame.min_unit_fraction` of the block), LiDAR metrics become block means over population pixels, `pixel_id` becomes `unit_id`, and `acres` versus `unit_acres` are both carried. `frame.edge_buffer_m` is 20 (primary radius plus tolerance).
+- `draw.min_distance_m` (120 m, two macroplot radii) is enforced in `strata.grts_draw` (greedy pass in GRTS order with re-ranking, `strata.enforce_min_distance`) and in both R scripts through spsurvey `mindis`; `grts_split_draw.R` also removes units within that distance of Half A sites before Half B. `qa.check_min_distance` proves it in `04_evaluate`.
+- `make_synthetic_frame` now places units on the block lattice so the separation rule is exercised. `plot.window` is `3x3`. `PLAN.md` carries a revision note reconciling the Sept. 19 and Sept. 23 decisions with the text.
+
 ## 2026-09-22 (tessellation vegetation attributes)
 - `06_tessellation` section 6 attributes both grids from the threshold analysis rasters on F: (`veg_type_nonurban`, `seral_stage_nonurban`, `canopy_cover_nonurban`): acres and shares of the three TRPA types, dominant type, dominant CWHR WHRTYPE with lifeform, and the five VP9 seral and canopy class shares, computed from the component rasters with the corrected class logic rather than the stale classification raster. Writes the WHRTYPE crosswalk (read from the raster attribute table) and a cell by WHRTYPE table. Frame totals: 115,692 ac over the cells against 115,396 in the report. `whr_to_type` and `seral_canopy_classes` added to config. `fetch` now falls back to the copy in the work gdb when a REST service is unreachable.
 - Delivery to TEON assembled in `outputs/delivery_20260922/` with `email_tables.md`.

@@ -35,7 +35,8 @@ Read first: `PLAN.md` (why), `docs/METHODS.md` (what the code does), `docs/INPUT
 - Cells under `strata.min_cell_acres` collapse within type; the collapse log is an output.
 - Allocation is nested: 60, 100, 300 are prefixes of one GRTS order, tail cells first. Every cell gets the floor even at the minimum; Nevada floor per type.
 - Python GRTS is for iteration; the frozen draw is `spsurvey::grts()` for parity with TEON's backbone.
-- Plots sit on 30 m pixel centers, 1/7 acre, survey-grade positions. Never move a design coordinate to make access easier; that is the backup list's job.
+- The sampling unit is a 3 by 3 block of 2022 LiDAR pixels (`frame.unit_px`, 90 m, 0.81 ha), the window the imputation model trains on; the plot sits on the block's centre pixel, survey-grade position. A 30 m pixel is smaller than the primary plot and is not the unit. No two selected sites, legacy included, are closer than `draw.min_distance_m` (120 m, two macroplot radii; spsurvey `mindis`). Never move a design coordinate to make access easier; that is the backup list's job. Decided Sept. 23, 2026.
+- The plot is protocol v1.0 (Sept. 19): nested quarter-acre primary plot, 56.4 m macroplot, microplot, and fuels subplot. `PLAN.md` still says 1/7 acre in places; the revision note at its top governs.
 - `threshold:` values match the threshold report; do not edit without a citation. The blind remeasure flag is stripped from the published layer (`run.publish_strip_fields`).
 - The owl grid is one exact lattice only in NAD83 UTM 10N (400 ha flat top hexagons, residual under 5 mm over all 8,087 cells). `tessellation.epsg` stays 26910; the sample design grid is the ratio 3 transverse hexagon anchored on the same corner, so every owl centre is a fine centre. Do not fit or extend it in California Albers, and do not add a parent cell field: hexagons never nest, plots aggregate to owl cells by location.
 

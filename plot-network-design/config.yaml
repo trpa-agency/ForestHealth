@@ -85,7 +85,7 @@ plot:
   dbh_floor_in: 4.0
   breakpoint_dia_in: 24.0                # stored per plot in the form; CA FIA uses 24, Interior West uses 21
   positional_tolerance_m: 1.0            # under 0.3 m on aspen plots
-  window: "pixel"                        # "pixel" or "3x3", per Shengli
+  window: "3x3"                          # the sampling unit (frame.unit_px) is the 3x3 window; plot on its centre pixel
 
 split_sample:
   # Half A: stratified by forest type, balanced on side x landform via caty_n, legacy sites honoured.
@@ -99,8 +99,16 @@ split_sample:
     lake_axis_anchor_xy: null            # [x, y] in frame CRS, lake centroid; or swap in a PRISM split
 
 frame:
+  # Sampling unit, decided Sept. 23, 2026: a unit_px by unit_px block of LiDAR pixels
+  # (3 x 30 m = 90 m, 0.81 ha, about 2.0 ac), the 3x3 window Shengli trains on. The plot
+  # sits on the block's centre pixel, so co-registration to the imputation grid is kept.
+  # A 30 m pixel (900 m2) is smaller than the primary plot (1,012 m2), so a pixel cannot
+  # be the unit. Strata attributes are block means over the population pixels in the block.
+  unit_px: 3
+  min_unit_fraction: 0.5                 # a unit needs this share of its pixels in the population, plus its centre pixel
   max_slope_pct: 70
-  edge_buffer_m: 15                      # plot radius + tolerance, from roads/trails/streams/structures/parcel edges
+  edge_buffer_m: 20                      # primary plot radius (18 m) + tolerance, from roads/trails/streams/structures/parcel edges;
+                                         # the 56.4 m macroplot may cross an edge, it only tallies trees at or above the breakpoint
   exclude_existing_plot_buffer_m: 50
   max_access_distance_m: null            # null keeps all and prices as class 4
   max_solid_fraction: 0.85               # cells where > 85% of above-2 m pulses are single-return are roofs or rock, not canopy; excluded
@@ -133,6 +141,8 @@ draw:
   method: "grts"
   seed: 20261016
   oversample_factor: 2.5
+  min_distance_m: 120                    # between any two selected sites, legacy included: two macroplot radii
+                                         # (112.8 m) rounded up, so no two macroplots overlap. spsurvey mindis.
   weight_by_representativeness: false
   remeasure_share: 0.08
   legacy_sources: ["ltw_plots", "burn_plots", "teon_sites_100"]

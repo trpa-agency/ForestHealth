@@ -226,32 +226,60 @@ def _reverse_hierarchical_order(rank: np.ndarray, levels: int) -> np.ndarray:
     return rev
 
 
+def enforce_min_distance(points: pd.DataFrame, min_distance_m: float, keep_first: pd.Series | None = None) -> pd.Series:
+    """
+    Greedy pass in row order: a row is kept unless it is within min_distance_m of a
+    row already kept. Rows flagged in keep_first (legacy sites) are kept unconditionally
+    and considered first. Returns a boolean Series aligned to points.
+    """
+    if min_distance_m <= 0 or len(points) == 0:
+        return pd.Series(True, index=points.index)
+    first = (pd.Series(False, index=points.index) if keep_first is None
+             else keep_first.reindex(points.index).fillna(False).astype(bool))
+    order = points.index[first.values].append(points.index[~first.values])
+    xy = points.loc[order, ["x", "y"]].to_numpy(float)
+    kept = np.zeros(len(order), dtype=bool)
+    for i in range(len(order)):
+        if first.loc[order[i]]:
+            kept[i] = True
+            continue
+        prev = xy[:i][kept[:i]]
+        kept[i] = len(prev) == 0 or bool(np.hypot(prev[:, 0] - xy[i, 0], prev[:, 1] - xy[i, 1]).min() >= min_distance_m)
+    return pd.Series(kept, index=order).reindex(points.index)
+
+
 def grts_draw(points: pd.DataFrame, n_by_cell: dict, inclusion_weight: pd.Series | None,
               seed: int, oversample_factor: float = 2.0, levels: int = 12,
-              legacy_mask: pd.Series | None = None) -> pd.DataFrame:
+              legacy_mask: pd.Series | None = None, min_distance_m: float = 0.0) -> pd.DataFrame:
     """
     Spatially balanced draw within each cell.
 
-    points:           DataFrame with x, y, cell_id (one row per candidate pixel / point)
+    points:           DataFrame with x, y, cell_id (one row per candidate sampling unit,
+                      a unit_px x unit_px block of LiDAR pixels with the plot on its centre)
     n_by_cell:        {cell_id: n primary}
     inclusion_weight: optional per-row relative inclusion probability (tail boost,
                       disturbance targeting, representativeness); None = equal
     legacy_mask:      optional boolean Series; True rows are existing plots that are
                       included first and count toward the cell's n
-    Returns selected rows with columns: grts_rank, sample_order, status (primary/backup/legacy).
+    min_distance_m:   minimum separation between any two selected sites across all cells
+                      (spsurvey's mindis). Conflicting candidates are dropped in GRTS
+                      order and the next candidate in the ordered line takes their place.
+    Returns selected rows with columns: grts_rank, status (primary/backup/legacy).
     """
     rng = np.random.default_rng(seed)
     w = pd.Series(1.0, index=points.index) if inclusion_weight is None else inclusion_weight.astype(float)
     legacy = pd.Series(False, index=points.index) if legacy_mask is None else legacy_mask.astype(bool)
 
-    picks = []
+    picks, n_new_by_cell = [], {}
     for cell, n in n_by_cell.items():
         sub = points[points["cell_id"] == cell]
         if sub.empty or n <= 0:
             continue
         n_leg = int(legacy[sub.index].sum())
         n_new = max(n - n_leg, 0)
-        n_total = int(np.ceil(n_new * oversample_factor))
+        n_new_by_cell[cell] = n_new
+        # draw extra so the separation rule has candidates to fall back on
+        n_total = int(np.ceil(n_new * oversample_factor * (1.5 if min_distance_m > 0 else 1.0)))
 
         cand = sub[~legacy[sub.index]]
         addr = _hierarchical_address(cand["x"].values, cand["y"].values, levels, rng)
@@ -275,6 +303,21 @@ def grts_draw(points: pd.DataFrame, n_by_cell: dict, inclusion_weight: pd.Series
 
     out = pd.concat(picks) if picks else points.iloc[0:0].copy()
     out = out.drop(columns=[c for c in ["_ord", "_w"] if c in out.columns])
+
+    if min_distance_m > 0 and len(out):
+        # Legacy sites first, then everything else in GRTS order; drop conflicts, then
+        # re-rank within each cell so the next candidate steps up.
+        pri = out["status"].map({"legacy": 0, "primary": 1, "backup": 2})
+        ordered = out.assign(_pri=pri).sort_values(["_pri", "grts_rank"]).drop(columns="_pri")
+        keep = enforce_min_distance(ordered, min_distance_m, keep_first=(ordered["status"] == "legacy"))
+        out = ordered[keep.values].copy()
+        new = out["status"] != "legacy"
+        out.loc[new, "grts_rank"] = out[new].groupby("cell_id").cumcount() + 1
+        n_new_s = out["cell_id"].map(n_new_by_cell).fillna(0)
+        out.loc[new, "status"] = np.where(out.loc[new, "grts_rank"] <= n_new_s[new], "primary", "backup")
+        cap = int(np.ceil(oversample_factor)) * pd.Series(n_new_by_cell)
+        out = out[(~new) | (out["grts_rank"] <= out["cell_id"].map(cap).fillna(0))]
+
     out["inclusion_weight"] = w[out.index].values
     return out
 
@@ -327,29 +370,53 @@ def access_class(dist_to_road_m: pd.Series, slope_pct: pd.Series, cfg: dict) -> 
 # Synthetic Basin (exercise the chain before real layers exist)
 # ---------------------------------------------------------------------------
 
+def block_reduce(arr: np.ndarray, k: int, how: str = "mean") -> np.ndarray:
+    """
+    Reduce a 2-D raster array to k x k blocks anchored at the array origin. NaN-aware.
+    how: "mean" or "sum" over the block, or "center" for the centre pixel's value.
+    Partial blocks at the right and bottom edges are padded with NaN.
+    """
+    a = arr.astype(float)
+    pr, pc = (-a.shape[0]) % k, (-a.shape[1]) % k
+    if pr or pc:
+        a = np.pad(a, ((0, pr), (0, pc)), constant_values=np.nan)
+    if how == "center":
+        return a[k // 2::k, k // 2::k]
+    b = a.reshape(a.shape[0] // k, k, a.shape[1] // k, k)
+    with np.errstate(all="ignore"):
+        return np.nanmean(b, axis=(1, 3)) if how == "mean" else np.nansum(b, axis=(1, 3))
+
+
 def make_synthetic_frame(cfg: dict, seed: int = 1) -> pd.DataFrame:
     """
-    A toy Basin on a 30 m grid with the real forest type acreages, plausible
-    LiDAR metrics, a state line, slope, road distance, fire and treatment
-    flags. Enough to run every notebook end to end.
+    A toy Basin of sampling units on the block lattice (frame.unit_px LiDAR pixels
+    on a side) with the real forest type acreages, plausible LiDAR metrics, a state
+    line, slope, road distance, fire and treatment flags. Enough to run every
+    notebook end to end, including the minimum-distance rule in the draw.
     """
     rng = np.random.default_rng(seed)
-    cell_ac = (cfg["crs"]["lidar_grid_m"] ** 2) / 4046.86
+    g = cfg["crs"]["lidar_grid_m"]
+    k = cfg["frame"].get("unit_px", 1)
+    B = g * k
+    unit_ac = (B * B) / 4046.86
     pop = cfg["forest_types"]["population_acres"]
     rows = []
     for ftype, acres in pop.items():
-        n = int(acres / cell_ac / 10)        # thin by 10x to keep the toy fast
-        # give each type a blob of space
+        n = int(acres / unit_ac)
+        # give each type a blob of space, then snap to the block lattice and drop collisions
         cx = {"SMC": 0.0, "RF": 12000.0, "JP": 24000.0}[ftype]
-        x = rng.normal(cx, 3500, n) + 745000
-        y = rng.normal(0, 9000, n) + 4315000
+        x = np.round((rng.normal(cx, 3500, n) + 745000) / B) * B + B / 2
+        y = np.round((rng.normal(0, 9000, n) + 4315000) / B) * B + B / 2
+        xy = pd.DataFrame({"x": x, "y": y}).drop_duplicates()
+        x, y = xy["x"].to_numpy(), xy["y"].to_numpy()
+        n = len(x)
         h = rng.gamma(4, {"SMC": 6, "RF": 6.5, "JP": 4.5}[ftype], n)
         dens = np.clip(rng.gamma(3, {"SMC": 90, "RF": 100, "JP": 60}[ftype], n), 5, 1200)
         cover = np.clip(20 + 2.2 * h + rng.normal(0, 12, n), 0, 98)
         rows.append(pd.DataFrame({
             "x": x, "y": y, "forest_type": ftype,
             "p95_height_m": h, "stem_density": dens, "canopy_cover_pct": cover,
-            "acres": cell_ac * 10,
+            "acres": unit_ac, "unit_acres": unit_ac, "unit_frac_in_frame": 1.0,
             "slope_pct": np.clip(rng.gamma(2, 12, n), 0, 120),
             "dist_road_m": rng.exponential(700, n),
             "state": np.where(x > 760000, "NV", "CA"),
@@ -359,6 +426,6 @@ def make_synthetic_frame(cfg: dict, seed: int = 1) -> pd.DataFrame:
             "treatment_2027_2031": rng.random(n) < 0.10,
             "owner": rng.choice(["USFS", "CSP", "NDF", "CTC", "Private"], n, p=[0.7, 0.08, 0.05, 0.07, 0.10]),
         }))
-    frame = pd.concat(rows, ignore_index=True)
-    frame["pixel_id"] = np.arange(len(frame))
+    frame = pd.concat(rows, ignore_index=True).drop_duplicates(subset=["x", "y"]).reset_index(drop=True)
+    frame["unit_id"] = np.arange(len(frame))
     return frame

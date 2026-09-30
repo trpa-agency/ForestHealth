@@ -285,6 +285,8 @@ tessellation:
   new_id_prefix: "TB"            # cell_id for cells the owl grid did not have
   fine_id_prefix: "TF"           # cell_key prefix for the sample design grid
   owl_id_field: "cell_id"
+  ownership_field: "OWNERSHIP_TYPE"
+  ownership_classes: {Federal: own_fed_pct, State: own_state_pct, Local: own_local_pct, Private: own_priv_pct}
   state_field: "STUSPS"          # CA NV States layer; values CA and NV
   site_fields: {aquatic: "Aquatic", core99: "Core99"}   # Y/N flags on the TEON site layer
 
@@ -292,10 +294,20 @@ tessellation:
     # Live TRPA REST services (host is maps.trpa.ORG) plus two partner files. arcpy copies
     # either directly, projected on the way in.
     boundary: "https://maps.trpa.org/server/rest/services/Boundaries/MapServer/4"
-                                 # TRPA Boundary, 1 feature, 1,328.7 km2. Authoritative here.
+                                 # TRPA Boundary, 1 feature, 1,328.7 km2.
+    ltbmu_boundary: "data/raw/ltbmu_admin_boundary_edw.shp"
+                                 # LTBMU administrative boundary (0519), 1,340.3 km2, 23.2 km2 of it outside
+                                 # the TRPA boundary. Pulled Sept 29 2026 from the USFS EDW service
+                                 # apps.fs.usda.gov/arcx/rest/services/EDW/EDW_ForestSystemBoundaries_01/MapServer/0
+                                 # (forestname = 'Lake Tahoe Basin Management Unit'). Cells are kept if they
+                                 # intersect EITHER boundary, so Pat's grid covers the whole LTBMU: five cells
+                                 # beyond the TRPA line, three of them real (230, 78, 22 ha), two slivers.
     water: "https://maps.trpa.org/server/rest/services/DataDownloader_SoilsandHydro/MapServer/1"
                                  # Lake Tahoe, 497.7 km2, leaving 831.0 km2 of land
     state_line: "https://maps.trpa.org/server/rest/services/Boundaries/MapServer/16"
+    ownership: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"
+                                 # TRPA parcel ownership, ~61,000 parcels. OWNERSHIP_TYPE is Federal, State,
+                                 # Local, Private, or blank (56 ac). Dissolved by class before the overlay.
     owl_grid: "data/raw/Sierra_Hexes_WGS84_ALL.shp"
                                  # Pat Manley, Sept 21 2026. CSO grid from Anu Kramer via Craig
                                  # Thompson, NOT derived from the FIA grid. 8,087 cells.

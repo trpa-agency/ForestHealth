@@ -121,22 +121,28 @@ def add_fields(fc: str, spec: list) -> None:
 # ------------------------------------------------------------------ inputs
 ("md", """## 1. Inputs
 
-Boundary, lake, state line, the delivered owl grid, and the TEON sites. `fetch` copies each one into a scratch geodatabase, projected to UTM 10N on the way in, so nothing downstream touches a service or a WGS84 file again.
+Two boundaries, lake, state line, the delivered owl grid, and the TEON sites. `fetch` copies each one into a scratch geodatabase, projected to UTM 10N on the way in, so nothing downstream touches a service or a WGS84 file again.
 
-The boundary matters more than it looks. The TRPA boundary, the LTBMU administrative boundary, and the USGS HUC8 disagree around the edges by enough to change the cell count. `tessellation.sources.boundary` names the authoritative one."""),
+The boundary matters more than it looks. The TRPA boundary, the LTBMU administrative boundary, and the USGS HUC8 disagree around the edges by enough to change the cell count. The grid has to serve both agencies, so a cell is kept if it intersects either the TRPA boundary or the LTBMU boundary, and every cell carries its fraction inside each (`in_trpa`, `in_ltbmu`) as well as inside the union (`in_frac`). The LTBMU line adds 23 km2 beyond TRPA's, almost all on the east side, and five cells."""),
 
 ("code", '''boundary_fc = fetch("boundary", "boundary")
+ltbmu_fc = fetch("ltbmu_boundary", "ltbmu")
 lake_fc = fetch("water", "lake")
 states_fc = fetch("state_line", "states")
 owl_fc = fetch("owl_grid", "owl_grid")
 sites_fc = fetch("teon_sites", "teon_sites")
 
-BOUND = one_geom(boundary_fc)
+TRPA = one_geom(boundary_fc)
+LTBMU = one_geom(ltbmu_fc)
+BOUND = TRPA.union(LTBMU)                              # cells are selected against the union
+bound_fc = f"{WORK}/boundary_union"
+arcpy.management.CopyFeatures([BOUND], bound_fc)
 LAKE = one_geom(lake_fc)
 LAND = BOUND.difference(LAKE)
 NV = one_geom(states_fc, f"{TC['state_field']} = 'NV'")
-log.info(f"boundary {BOUND.area / 1e6:,.1f} km2, lake {LAKE.area / 1e6:,.1f} km2, "
-         f"land {LAND.area / 1e6:,.1f} km2 ({100 * LAND.area / BOUND.area:.0f}% of boundary)")'''),
+log.info(f"TRPA {TRPA.area / 1e6:,.1f} km2, LTBMU {LTBMU.area / 1e6:,.1f} km2 "
+         f"({LTBMU.difference(TRPA).area / 1e6:,.1f} km2 outside TRPA), union {BOUND.area / 1e6:,.1f} km2, "
+         f"lake {LAKE.area / 1e6:,.1f} km2, land {LAND.area / 1e6:,.1f} km2 ({100 * LAND.area / BOUND.area:.0f}% of union)")'''),
 
 # ------------------------------------------------------------------ fit
 ("md", """## 2. Recover the lattice
@@ -174,7 +180,9 @@ log.info(f"lattice recovered: spacing {lat.spacing_m:.4f} m, area {lat.cell_area
 
 `GenerateTessellation` puts a cell centre exactly on the extent's lower left corner and fills up and to the right. So the extent is anchored on a lattice point southwest of the Basin, the tool is asked for the configured cell area, and the output is the same lattice. The first check below proves it: every generated centre is a fitted lattice point to within a centimetre.
 
-Cells that intersect the boundary are kept and attributed: lattice indices, a deterministic `cell_key` from them, the delivered `cell_id` where the indices match a delivered cell and a new id otherwise, `source`, the fraction of each cell inside the boundary and on land, and which state the centre is in. Both projected and geodesic areas are carried, because a UTM cell of exactly 400 hectares is about 399.7 on the ground at this distance from the central meridian."""),
+Cells that intersect either boundary are kept and attributed: lattice indices, a deterministic `cell_key` from them, the delivered `cell_id` where the indices match a delivered cell and a new id otherwise, `source`, the fraction of each cell inside the TRPA boundary, the LTBMU boundary, their union, and land, and which state the centre is in. Both projected and geodesic areas are carried, because a UTM cell of exactly 400 hectares is about 399.7 on the ground at this distance from the central meridian.
+
+New cell ids are sticky. Once a `TBnnnn` id has gone out it stays with its `cell_key`; a rerun reads the ids already in `outputs/tessellation.gdb` and numbers only cells it has never seen, continuing the sequence. Otherwise adding a cell on the edge would renumber every id Pat and Shale already hold."""),
 
 ("code", '''def anchor_below(lat, x, y):
     """Lattice point with integer indices at or southwest of (x, y), the one nearest the corner."""
@@ -200,46 +208,66 @@ print(f"GenerateTessellation reproduces the fitted lattice: max centre offset {r
 assert raw_res.max() < 0.01'''),
 
 ("code", '''GRID = f"TahoeBasin_Hex{int(TC['cell_area_ha'])}ha"
+
+# Ids already delivered for new cells, keyed by cell_key, read before the feature class is overwritten.
+prior_ids = {}
+if arcpy.Exists(f"{GDB}/{GRID}"):
+    # The cursor must be closed before CopyFeatures overwrites the feature class, or its shared lock
+    # blocks the exclusive schema lock (ERROR 000464). The with block releases it.
+    with arcpy.da.SearchCursor(f"{GDB}/{GRID}", ["cell_key", "cell_id"], where_clause="source = 'new'") as cur:
+        prior_ids = {k: cid for k, cid in cur}
+    log.info(f"{len(prior_ids)} new-cell ids carried forward from the previous run")
+
 arcpy.management.MakeFeatureLayer(raw400, "hex400_lyr")
-arcpy.management.SelectLayerByLocation("hex400_lyr", "INTERSECT", boundary_fc)
+arcpy.management.SelectLayerByLocation("hex400_lyr", "INTERSECT", bound_fc)
 arcpy.management.CopyFeatures("hex400_lyr", f"{GDB}/{GRID}")
 arcpy.management.DeleteField(GRID, ["GRID_ID"])
 
 CELL_FIELDS = [("i", "LONG"), ("j", "LONG"), ("cell_key", "TEXT", 16), ("cell_id", "TEXT", 16),
                ("source", "TEXT", 8), ("x_coord", "DOUBLE"), ("y_coord", "DOUBLE"),
                ("area_ha", "DOUBLE"), ("geod_ha", "DOUBLE"), ("in_frac", "DOUBLE"),
+               ("in_trpa", "DOUBLE"), ("in_ltbmu", "DOUBLE"),
                ("land_frac", "DOUBLE"), ("land_ha", "DOUBLE"), ("state", "TEXT", 2)]
 
-def attribute_cells(fc, lat, key_prefix, index=None, new_prefix=None):
-    """Lattice indices, keys, ids, boundary and land fractions, state. index maps (i, j) -> delivered id."""
+def attribute_cells(fc, lat, key_prefix, index=None, new_prefix=None, prior=None):
+    """Lattice indices, keys, ids, boundary and land fractions, state.
+    index maps (i, j) -> delivered owl id; prior maps cell_key -> a new-cell id issued by an earlier run."""
     cols = [n for n, *_ in CELL_FIELDS]
+    prior = prior or {}
     with arcpy.da.UpdateCursor(fc, ["SHAPE@"] + cols) as cur:
         for r in cur:
             shp = r[0]
             c = shp.trueCentroid
             i, j = np.round(lat.indices(np.array([[c.X, c.Y]]))[0]).astype(int)
+            key = f"{key_prefix}{i:+05d}{j:+05d}"
             cid = index.get((int(i), int(j))) if index else None
+            source = "existing" if cid else "new"
+            if cid is None:
+                cid = prior.get(key)
             inside = shp.intersect(BOUND, 4).area
-            land = shp.intersect(LAND, 4).area
-            r[1:] = [int(i), int(j), f"{key_prefix}{i:+05d}{j:+05d}", cid, "existing" if cid else "new",
+            r[1:] = [int(i), int(j), key, cid, source,
                      c.X, c.Y, shp.area / HA, shp.getArea("GEODESIC", "HECTARES"),
-                     inside / shp.area, land / shp.area, land / HA,
+                     inside / shp.area, shp.intersect(TRPA, 4).area / shp.area, shp.intersect(LTBMU, 4).area / shp.area,
+                     shp.intersect(LAND, 4).area / shp.area, shp.intersect(LAND, 4).area / HA,
                      "NV" if NV.contains(arcpy.PointGeometry(c, SR)) else "CA"]
             cur.updateRow(r)
-    if new_prefix:   # new cells get sequential ids in row order, south to north then west to east
-        n = 0
-        with arcpy.da.UpdateCursor(fc, ["cell_id"], where_clause="cell_id IS NULL",
+    if new_prefix:   # cells never seen before get the next ids in row order, south to north then west to east
+        n = max([int(v[len(new_prefix):]) for v in prior.values() if str(v).startswith(new_prefix)] or [0])
+        with arcpy.da.UpdateCursor(fc, ["cell_key", "cell_id"], where_clause="cell_id IS NULL",
                                    sql_clause=(None, "ORDER BY j, i")) as cur:
             for r in cur:
                 n += 1
-                r[0] = f"{new_prefix}{n:04d}"
+                r[1] = f"{new_prefix}{n:04d}"
+                log.info(f"new cell {r[0]} -> {r[1]}")
                 cur.updateRow(r)
 
 add_fields(GRID, CELL_FIELDS)
-attribute_cells(GRID, lat, key_prefix="C", index=owl_index, new_prefix=TC["new_id_prefix"])
+attribute_cells(GRID, lat, key_prefix="C", index=owl_index, new_prefix=TC["new_id_prefix"], prior=prior_ids)
 
-cells = table(GRID, ["cell_key", "cell_id", "source", "state", "area_ha", "geod_ha", "in_frac", "land_frac", "land_ha"])
+cells = table(GRID, ["cell_key", "cell_id", "source", "state", "area_ha", "geod_ha", "in_frac", "in_trpa", "in_ltbmu", "land_frac", "land_ha"])
 print(pd.crosstab(cells["state"], cells["source"], margins=True).to_string())
+print(f"\\ncells outside the TRPA boundary (LTBMU only): {(cells.in_trpa == 0).sum()}   "
+      f"outside the LTBMU boundary (TRPA only): {(cells.in_ltbmu == 0).sum()}")
 print(f"\\ncells with land: {(cells.land_frac > TC['min_land_frac']).sum()}   all water: {(cells.land_frac <= TC['min_land_frac']).sum()}")
 print(f"cell area: {cells.area_ha.mean():.2f} ha projected, {cells.geod_ha.mean():.2f} ha geodesic ({cells.geod_ha.mean() * HA / AC:.1f} ac)")'''),
 
@@ -278,8 +306,8 @@ with arcpy.da.UpdateCursor(GRID, ["cell_key", "n_sites", "n_core99", "n_msim", "
         r[1:] = [int(c.sum()), int(c["core99"]), int(c["msim_other"]), int(c["aquatic"])] if c is not None else [0, 0, 0, 0]
         cur.updateRow(r)
 
-cells = table(GRID, ["cell_key", "cell_id", "source", "state", "area_ha", "geod_ha", "in_frac", "land_frac", "land_ha",
-                     "n_sites", "n_core99", "n_msim", "n_aquatic"])
+cells = table(GRID, ["cell_key", "cell_id", "source", "state", "area_ha", "geod_ha", "in_frac", "in_trpa", "in_ltbmu",
+                     "land_frac", "land_ha", "n_sites", "n_core99", "n_msim", "n_aquatic"])
 land = cells[cells.land_frac > TC["min_land_frac"]]
 terr = land.n_core99 + land.n_msim
 print(f"\\ncells with land: {len(land)}")
@@ -322,7 +350,7 @@ assert fine_res.max() < 0.01, "GenerateTessellation output does not sit on the d
 assert owl_on_fine.max() < TC["max_fit_residual_m"], "owl centres do not sit on the fine lattice"
 
 arcpy.management.MakeFeatureLayer(raw_fine, "fine_lyr")
-arcpy.management.SelectLayerByLocation("fine_lyr", "INTERSECT", boundary_fc)
+arcpy.management.SelectLayerByLocation("fine_lyr", "INTERSECT", bound_fc)
 arcpy.management.CopyFeatures("fine_lyr", f"{GDB}/{FINE}")
 arcpy.management.DeleteField(FINE, ["GRID_ID"])
 add_fields(FINE, CELL_FIELDS + [("on_owl_ctr", "SHORT"), ("owl_key", "TEXT", 16)])
@@ -468,6 +496,22 @@ for fc in (GRID, FINE):
 veg_long = pd.DataFrame(veg_long)
 log.info(f"vegetation attributes written to {GRID} and {FINE}; {len(veg_long):,} cell by WHRTYPE rows")'''),
 
+# ------------------------------------------------------------------ ownership
+("md", """## 6b. Ownership
+
+Percent of each cell's land by ownership class, from TRPA's parcel ownership layer (`OWNERSHIP_TYPE`: Federal, State, Local, Private), by Identity overlay in `src/ownership_overlay.py`. The parcels are dissolved by class, the grid is run through Identity with the ownership, then with the land polygon, then with the TRPA boundary, and every piece carries its cell, class, land flag, and TRPA flag. Piece areas are summed per cell and joined back. `own_fed_pct`, `own_state_pct`, `own_local_pct`, `own_priv_pct` are shares of the cell's land area; `own_other_pct` is land inside the TRPA boundary with no parcel or a blank class (roads, mostly); `own_nodata_pct` is land the parcel layer does not reach, the strip inside LTBMU but outside the TRPA boundary; `own_dom` is the largest class. Where stacked parcels make the classes sum past 100 percent the shares are rescaled and the cell counted. Cells with no land are null. `scripts/rerun_ownership.py` runs this section alone on the existing feature classes."""),
+
+("code", '''from src import ownership_overlay as OO
+own_fc = fetch("ownership", "ownership")
+land_fc = f"{WORK}/land"
+arcpy.management.CopyFeatures([LAND], land_fc)
+own_stats = OO.run([GRID, FINE], own_fc, TC["ownership_field"], dict(TC["ownership_classes"]), land_fc, boundary_fc,
+                   WORK, TC["min_land_frac"], add_fields, log)
+for fc, s in own_stats.items():
+    print(f"{fc}, land weighted share of Basin land over {s['cells_with_land']} cells: "
+          + ", ".join(f"{k} {v}%" for k, v in s.items() if k in (*TC["ownership_classes"], "other", "nodata"))
+          + f"; dominant class counts {s['cells_by_dominant']}; {s['cells_rescaled_for_overlap']} cells rescaled for overlap")'''),
+
 # ------------------------------------------------------------------ export
 ("md", """## 7. Exports
 
@@ -502,13 +546,18 @@ sc_tab[["Value", "class", "acres", "pct_of_frame"]].to_csv(O / f"seral_canopy_cl
 summary = {
     "generated": pd.Timestamp.today().strftime("%Y-%m-%d"),
     "crs": CRS, "datum_transformation": TC["datum_transformation"],
-    "boundary": TC["sources"]["boundary"], "basin_land_km2": round(LAND.area / 1e6, 1),
+    "boundary": TC["sources"]["boundary"], "ltbmu_boundary": TC["sources"]["ltbmu_boundary"],
+    "boundary_rule": "cells intersecting the union of the TRPA and LTBMU boundaries",
+    "trpa_km2": round(TRPA.area / 1e6, 1), "ltbmu_km2": round(LTBMU.area / 1e6, 1),
+    "ltbmu_outside_trpa_km2": round(LTBMU.difference(TRPA).area / 1e6, 1),
+    "basin_land_km2": round(LAND.area / 1e6, 1),
     "grid": {
         "name": GRID, "cell_ha": round(lat.cell_area_ha, 2), "cell_acres": round(float(cells.geod_ha.mean() * HA / AC), 1),
         "cell_ha_geodesic": round(float(cells.geod_ha.mean()), 2), "spacing_m": round(lat.spacing_m, 3),
         "total_cells": int(len(cells)), "existing_cells": int((cells.source == "existing").sum()),
         "new_cells": int((cells.source == "new").sum()), "nevada_new_cells": int(((cells.source == "new") & (cells.state == "NV")).sum()),
         "land_cells": int(len(land)), "occupied_cells": int((terr > 0).sum()), "empty_cells": int((terr == 0).sum()),
+        "cells_ltbmu_only": int((cells.in_trpa == 0).sum()), "cells_trpa_only": int((cells.in_ltbmu == 0).sum()),
         "fit_residual_median_m": round(float(np.median(res)), 4), "fit_residual_max_m": round(float(res.max()), 4),
         "iou_min": round(float(iou.min()), 4), "anisotropy": round(lat.anisotropy, 6),
         "anchor_xy": [ax, ay], "anchor_ij": [ai, aj], **{f"file_{k}": v for k, v in files[GRID].items()},
@@ -528,6 +577,7 @@ summary = {
         "seral_canopy_pct_of_frame": dict(zip(sc_tab["class"], sc_tab["pct_of_frame"].round(1))),
         "grid": veg_stats.get(GRID), "fine": veg_stats.get(FINE),
     },
+    "ownership": {"source": TC["sources"]["ownership"], "grid": own_stats.get(GRID), "fine": own_stats.get(FINE)},
     "frame_acres_configured": int(frame_ac), "target_plots": int(cfg["allocation"]["levels"]["full"]),
 }
 (O / "tessellation_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -541,9 +591,10 @@ Datum transformation applied to the WGS84 partner files on import: {TC['datum_tr
 {GRID}: extension of the California spotted owl grid over the whole Basin.
   cell area {lat.cell_area_ha:.3f} ha projected ({cells.geod_ha.mean():.2f} ha, {cells.geod_ha.mean() * HA / AC:.1f} ac geodesic)
   centre spacing {lat.spacing_m:.4f} m, flat top, GenerateTessellation HEXAGON anchored at ({ax:.3f}, {ay:.3f})
-  {len(cells)} cells intersect the TRPA boundary: {(cells.source == 'existing').sum()} delivered (cell_id kept), {(cells.source == 'new').sum()} new (cell_id {TC['new_id_prefix']}nnnn)
+  {len(cells)} cells intersect the TRPA or LTBMU boundary: {(cells.source == 'existing').sum()} delivered (cell_id kept), {(cells.source == 'new').sum()} new (cell_id {TC['new_id_prefix']}nnnn, sticky across reruns)
+  {(cells.in_trpa == 0).sum()} cells lie outside the TRPA boundary and inside LTBMU only; {(cells.in_ltbmu == 0).sum()} inside TRPA only
   fit residual over 8,087 delivered cells: max {res.max():.4f} m; IoU against delivered cells min {iou.min():.5f}
-  fields: cell_key (lattice index), cell_id, source, state, in_frac, land_frac, land_ha, n_sites, n_core99, n_msim, n_aquatic
+  fields: cell_key (lattice index), cell_id, source, state, in_frac (union), in_trpa, in_ltbmu, land_frac, land_ha, n_sites, n_core99, n_msim, n_aquatic
 
 {FINE}: sample design grid, one {frac_word} of the owl cell, {shape_type}, same anchor.
   cell area {fine_lat.cell_area_ha:.3f} ha ({fine_lat.cell_area_acres:.1f} ac), spacing {fine_lat.spacing_m:.4f} m
@@ -561,7 +612,15 @@ Vegetation fields on both grids, from the threshold analysis rasters (RRK 2023 C
                               shares of the frame area in the five seral stage and canopy classes (VP9)
   Full cell by WHRTYPE table: TahoeBasin_Hex_whrtype_by_cell_{STAMP}.csv; crosswalk: whrtype_crosswalk_{STAMP}.csv
 
-Boundary: {TC['sources']['boundary']}
+Ownership fields on both grids, from TRPA parcel ownership ({TC['sources']['ownership']}), share of the cell's land area:
+  own_fed_pct, own_state_pct, own_local_pct, own_priv_pct   Federal, State, Local, Private
+  own_other_pct               land inside the TRPA boundary in no parcel or with a blank class (roads, mostly)
+  own_nodata_pct              land the parcel layer does not reach: inside LTBMU but outside the TRPA boundary
+  own_dom                     largest class; null where the cell has no land
+
+Boundaries: cells kept if they intersect either of
+  TRPA  {TC['sources']['boundary']} ({TRPA.area / 1e6:,.1f} km2)
+  LTBMU {TC['sources']['ltbmu_boundary']} ({LTBMU.area / 1e6:,.1f} km2; USFS EDW administrative forest boundary 0519)
 """
 (O / f"TahoeBasin_Hex_handoff_{STAMP}.txt").write_text(handoff, encoding="utf-8")
 print(handoff)'''),

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forest Structure Monitoring</title>
+  <meta name="description" content="Dashboard for the Forest Structure monitoring program in the Lake Tahoe Basin: seral stage, canopy cover, and stand density of conifer forest by forest type, from Sierra Nevada Regional Resource Kit remote sensing products." />
+
+  <!--
+    Forest Structure monitoring dashboard, Tahoe Regional Planning Agency.
+    Embedded in the Dashboard card of a Monitoring Program page on
+    https://monitoring.laketahoeinfo.org/ so it carries no header or footer chrome of its
+    own. The host card supplies the green DASHBOARD header; the program name and overview
+    sit above it.
+
+    Data of record: the CSVs in ../output/ written by scripts/rerun_forest_structure.py.
+    The page fetches them at load (same origin on GitHub Pages) so the numbers here track
+    the analysis without hand copying. SNAPSHOT below is the fallback when the fetch
+    fails (for example when the file is opened from disk), captured from the
+    Sept. 23, 2026 rerun.
+
+    Map layers come from maps.trpa.org. The seral stage and stand density tile services
+    there still show the 2023 assessment as originally published; the charts reflect the
+    Sept. 2026 rerun with corrected canopy classes. The caption says so.
+  -->
+
+  <!-- Plotly.js and AG Grid must load BEFORE the ArcGIS SDK (UMD bundles register as AMD otherwise). -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+  <!-- Calcite Design System. Version must match the build bundled in the ArcGIS SDK release (4.31 pairs with 2.13). -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css" />
+
+  <!-- ArcGIS Maps SDK for JavaScript -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.31/"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --eip-blue:   #007DC3;
+      --eip-green:  #6EBE44;
+      --eip-orange: #F16022;
+      --eip-navy:   #0B1F41;
+      --lti-green:  #789440;   /* Monitoring Dashboard section accent, sampled from the host */
+      --ink:        #0B1F41;
+      --ink-2:      #3D4A5C;
+      --ink-muted:  #6B7280;
+      --line:       #DDE3EA;
+      --surface:    #FFFFFF;
+      --surface-2:  #F6F8FA;
+      --radius:     8px;
+      --font:       'Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --gutter:     16px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: var(--font); font-size: 15px; line-height: 1.55;
+      color: var(--ink); background: var(--surface);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--eip-blue); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0.25rem var(--gutter) 1rem; }
+    h2, h3 { margin: 0; line-height: 1.25; color: var(--ink); }
+    h2 { font-size: 1.15rem; font-weight: 700; }
+    h3 { font-size: 1rem; font-weight: 600; }
+    p { margin: 0 0 0.6rem; }
+    .muted { color: var(--ink-muted); }
+    .small { font-size: 0.85rem; }
+    .hidden { display: none !important; }
+
+    .section { padding: 0.9rem 0 0.4rem; }
+    .section + .section { border-top: 1px solid var(--line); }
+    .section-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--lti-green); margin-bottom: 0.15rem;
+    }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .section-head p { color: var(--ink-2); margin: 0.25rem 0 0; max-width: 780px; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin: 0.5rem 0 0.25rem; }
+    .tile { background: var(--surface-2); border-radius: var(--radius); padding: 0.7rem 0.85rem; border-left: 4px solid var(--tile-accent, var(--lti-green)); min-width: 0; }
+    .tile .v { font-size: 1.45rem; font-weight: 700; line-height: 1.15; }
+    .tile .v small { font-size: 0.8rem; font-weight: 500; color: var(--ink-muted); }
+    .tile .l { font-size: 0.78rem; color: var(--ink-2); margin-top: 0.15rem; }
+    .tile.pending { --tile-accent: #C9D1DB; }
+    .tile.pending .v { color: var(--ink-muted); font-weight: 500; font-size: 1.05rem; }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+    .grid-3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+    @media (min-width: 820px) {
+      .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .span-2 { grid-column: 1 / -1; }
+    }
+
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; min-width: 0; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+    .card-head h3 { flex: 1 1 auto; }
+    .card .caption { font-size: 0.8rem; color: var(--ink-muted); margin: 0.4rem 0 0; }
+    .card .source { font-size: 0.76rem; color: var(--ink-muted); margin: 0.3rem 0 0; }
+    .plot { width: 100%; min-height: 240px; }
+
+    .def { background: var(--surface-2); border-radius: var(--radius); padding: 0.75rem 0.9rem; font-size: 0.88rem; }
+    .def h3 { font-size: 0.92rem; margin-bottom: 0.3rem; }
+    .def p { margin: 0 0 0.35rem; color: var(--ink-2); }
+    .def p:last-child { margin-bottom: 0; }
+    .def table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.3rem; }
+    .def th, .def td { text-align: left; padding: 0.2rem 0.35rem 0.2rem 0; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+    .def th { font-weight: 600; color: var(--ink); }
+    .def td.num, .def th.num { text-align: right; padding-right: 0; }
+
+    .map-view { width: 100%; height: 460px; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); position: relative; }
+    .map-view .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 0.85rem; gap: 0.5rem; }
+
+    .empty {
+      display: flex; gap: 0.9rem; align-items: flex-start;
+      background: var(--surface-2); border: 1px dashed #C9D1DB; border-radius: var(--radius);
+      padding: 0.9rem 1rem; color: var(--ink-2); font-size: 0.9rem;
+    }
+    .empty calcite-icon { flex: 0 0 auto; color: var(--ink-muted); margin-top: 2px; }
+    .empty ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .empty li { margin-bottom: 0.2rem; }
+
+    .ag-theme-quartz {
+      --ag-font-family: var(--font); --ag-font-size: 13px;
+      --ag-header-background-color: var(--surface-2); --ag-border-color: var(--line);
+      --ag-row-border-color: var(--line); --ag-foreground-color: var(--ink); --ag-header-foreground-color: var(--ink);
+    }
+    .footer { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-muted); }
+    .footer .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+
+    @media (max-width: 599px) {
+      html, body { font-size: 14px; }
+      .map-view { height: 360px; }
+      .tile .v { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- ── AT A GLANCE ── -->
+    <section class="section" aria-labelledby="glance-h">
+      <div class="section-label">At a glance</div>
+      <div class="section-head">
+        <h2 id="glance-h">Structure of the Basin's conifer forest</h2>
+        <p>Forest structure describes how old a stand is, how much of the ground it shades, and how crowded it is. The program tracks three measures across the non-urban conifer forest of the Basin: seral stage, canopy cover, and stand density. All three come from 30-meter remote sensing products and are summarized by forest type, so each type is compared with the structure it evolved under rather than with a single basin-wide number.</p>
+      </div>
+      <div class="tiles" id="glance-tiles"></div>
+      <p class="small muted" id="glance-source" style="margin-top:0.5rem"></p>
+    </section>
+
+    <!-- ── MAP ── -->
+    <section class="section" aria-labelledby="map-h">
+      <div class="section-label">Assessed forest</div>
+      <div class="section-head">
+        <h2 id="map-h">Where forest structure is monitored</h2>
+        <p>The monitored extent is conifer forest outside designated wilderness and outside urban land use. Switch layers to see the forest types, the seral stage and canopy cover classes, and the stand density classes as mapped.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3 id="map-title">Forest types</h3>
+          <calcite-segmented-control scale="s" data-toggle="maplayer">
+            <calcite-segmented-control-item value="types" checked>Forest type</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="seral">Seral stage and canopy</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="density">Stand density</calcite-segmented-control-item>
+          </calcite-segmented-control>
+        </div>
+        <div class="map-view" id="map" role="region" aria-label="Map of assessed conifer forest in the Lake Tahoe Basin">
+          <div class="map-placeholder"><calcite-loader inline label="Loading map"></calcite-loader> Loading map</div>
+        </div>
+        <p class="caption" id="map-caption">Conifer forest by California Wildlife Habitat Relationships (WHR) type, grouped into the three TRPA forest types. Eastside pine and juniper are evaluated with Jeffrey pine; white fir and lodgepole pine are evaluated with Sierran mixed conifer. The map shows the full mapped type; the assessed extent excludes wilderness and urban land.</p>
+        <p class="source">Source: TRPA Vegetation Type, Forest Health Composition and Age, and Forest Health Stand Density map services, maps.trpa.org. The seral stage and stand density layers show the 2023 assessment as originally published; the charts below reflect the September 2026 rerun with corrected canopy classes.</p>
+      </div>
+    </section>
+
+    <!-- ── CHARTS ── -->
+    <section class="section" aria-labelledby="charts-h">
+      <div class="section-label">Current structure</div>
+      <div class="section-head">
+        <h2 id="charts-h">What the record shows</h2>
+        <p>Share of each forest type in the five seral stage and canopy cover classes, and the share of acres at or below the desired stand density for their type and stage. Both are from the 2023 assessment, which covers disturbance through 2022.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card span-2">
+          <div class="card-head">
+            <h3>Seral stage and canopy cover by forest type</h3>
+            <calcite-segmented-control scale="s" data-toggle="seral">
+              <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+            </calcite-segmented-control>
+          </div>
+          <div class="plot" id="seral-plot"></div>
+          <div class="hidden" id="seral-grid"></div>
+          <p class="caption">Percent of each forest type's assessed acres in each class. Seral stage follows quadratic mean diameter (early under 5 inches, mid 5 to 25 inches, late over 25 inches). Closed canopy is 40 percent cover or more in Jeffrey pine and 50 percent or more in Sierran mixed conifer and red fir. The table lists acres and the desired range for each class.</p>
+          <p class="source" data-source-line></p>
+        </div>
+        <div class="card span-2">
+          <div class="card-head">
+            <h3>Stand density by forest type and seral stage</h3>
+            <calcite-segmented-control scale="s" data-toggle="density">
+              <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+            </calcite-segmented-control>
+          </div>
+          <div class="plot" id="density-plot"></div>
+          <div class="hidden" id="density-grid"></div>
+          <p class="caption">Percent of assessed acres at or below the desired trees per acre and basal area for their forest type and seral stage. Early seral stands are nearly all within range but cover little ground; mid and late seral stands carry most of the acreage above the desired density.</p>
+          <p class="source" data-source-line></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── HOW IT IS MEASURED ── -->
+    <section class="section" aria-labelledby="method-h">
+      <div class="section-label">Monitoring approach</div>
+      <div class="section-head">
+        <h2 id="method-h">How forest structure is measured</h2>
+        <p>Wall-to-wall remote sensing at 30-meter resolution, summarized by forest type. Ground plots and LiDAR will calibrate the modeled products as they come online.</p>
+      </div>
+      <div class="grid-3">
+        <div class="def">
+          <h3>Source data</h3>
+          <p>Sierra Nevada Regional Resource Kit (California Wildfire and Forest Resilience Task Force, 2024), built on the F3 forest structure framework. 2023 vintage, covering disturbance through 2022. Vegetation types from the California Wildlife Habitat Relationships system.</p>
+          <p>Rasters are clipped to the TRPA boundary and to non-urban land use, then tabulated by forest type.</p>
+        </div>
+        <div class="def">
+          <h3>Seral stage and canopy cover</h3>
+          <p>Seral stage from quadratic mean diameter: early 0 to 5 in., mid 5 to 25 in., late over 25 in. Canopy cover is the vertical projection of tree crowns.</p>
+          <table>
+            <thead><tr><th>Forest type</th><th class="num">Closed canopy at</th></tr></thead>
+            <tbody>
+              <tr><td>Jeffrey pine</td><td class="num">40% cover</td></tr>
+              <tr><td>Sierran mixed conifer</td><td class="num">50% cover</td></tr>
+              <tr><td>Red fir</td><td class="num">50% cover</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="def">
+          <h3>Stand density</h3>
+          <p>Trees per acre (TPA) and basal area (square feet per acre), tested together against the desired density for each forest type and seral stage. An acre at or below both values is within the desired range.</p>
+          <table>
+            <thead><tr><th>Type</th><th class="num">Early</th><th class="num">Mid</th><th class="num">Late</th></tr></thead>
+            <tbody>
+              <tr><td>Jeffrey pine</td><td class="num">200 / 30</td><td class="num">70 / 80</td><td class="num">55 / 100</td></tr>
+              <tr><td>Mixed conifer</td><td class="num">300 / 40</td><td class="num">90 / 130</td><td class="num">75 / 180</td></tr>
+              <tr><td>Red fir</td><td class="num">300 / 50</td><td class="num">100 / 175</td><td class="num">80 / 250</td></tr>
+            </tbody>
+          </table>
+          <p class="small muted" style="margin-top:0.3rem">TPA / basal area</p>
+        </div>
+        <div class="def">
+          <h3>Assessed extent</h3>
+          <p>115,396 acres of conifer forest, about 56 percent of the Basin's land area. Excludes designated wilderness, urban land use (mixed-use, residential, and tourist), and non-conifer types. Of that, 111,424 acres carry seral stage data.</p>
+        </div>
+        <div class="def">
+          <h3>Forest types</h3>
+          <table>
+            <thead><tr><th>TRPA type</th><th>WHR types</th><th class="num">Acres</th></tr></thead>
+            <tbody>
+              <tr><td>Sierran mixed conifer</td><td>SMC, WFR, LPN</td><td class="num">70,909</td></tr>
+              <tr><td>Red fir</td><td>RFR</td><td class="num">23,037</td></tr>
+              <tr><td>Jeffrey pine</td><td>JPN, EPN, JUN</td><td class="num">21,450</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="def">
+          <h3>Frequency and partners</h3>
+          <p>Assessed each threshold evaluation cycle from the current Regional Resource Kit release. Developed with the Tahoe Fire and Fuels Team and peer reviewed by the Tahoe Science Advisory Council, which recommended pairing the modeling with on-the-ground monitoring.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PLOTS AND LIDAR ── -->
+    <section class="section" aria-labelledby="plots-h">
+      <div class="section-label">Field calibration</div>
+      <div class="section-head">
+        <h2 id="plots-h">Ground plots and LiDAR</h2>
+        <p>Modeled structure is only as good as its calibration. A basin-wide plot network is in design to measure trees per acre, basal area, diameter, and canopy cover on the ground and compare them with the remote sensing products that cover the whole forest.</p>
+      </div>
+      <div id="plots-body"></div>
+    </section>
+
+    <div class="footer">
+      <div><strong>About the program.</strong> The Forest Structure monitoring program tracks seral stage, canopy cover, and stand density under the Vegetation Preservation threshold category. It supports two threshold standards: Seral Stage and Canopy Cover, and Stand Density.</div>
+      <div class="links">
+        <a href="https://thresholds.laketahoeinfo.org/threshold/indicators/190" target="_blank" rel="noopener noreferrer">Threshold indicator: Seral Stage and Canopy Cover</a>
+        <a href="https://thresholds.laketahoeinfo.org/threshold/indicators/189" target="_blank" rel="noopener noreferrer">Threshold indicator: Stand Density</a>
+        <a href="https://storymaps.arcgis.com/stories/52d2c949764548dba1fa8a119152644b" target="_blank" rel="noopener noreferrer">StoryMap: Seral Stage and Canopy Cover</a>
+        <a href="https://storymaps.arcgis.com/stories/eb85ba5b7c624764be4f7a42331ea04c" target="_blank" rel="noopener noreferrer">StoryMap: Stand Density</a>
+        <a href="https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc" target="_blank" rel="noopener noreferrer">Forest Health Threshold Standards report</a>
+        <a href="https://github.com/trpa-agency/ForestHealth" target="_blank" rel="noopener noreferrer">Analysis repository</a>
+      </div>
+      <div style="margin-top:0.4rem" id="footer-vintage"></div>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    /* ───────────────────────── DATA ───────────────────────── */
+    // CSVs written by scripts/rerun_forest_structure.py. Fetched relative to this page.
+    const CSV = {
+      seral: '../output/seral_stage_with_classification.csv',
+      density: '../output/stand_density_forest_type_attainment_new.csv',
+    };
+    const ASSESSED_ACRES = 115396;   // report Table 1 extent; seral NoData accounts for the gap to the CSV totals
+
+    const TYPES = ['Jeffrey Pine', 'Sierran Mixed Conifer', 'Red Fir'];
+    const TYPE_LABEL = { 'Jeffrey Pine': 'Jeffrey pine', 'Sierran Mixed Conifer': 'Sierran mixed conifer', 'Red Fir': 'Red fir' };
+    const CLASSES = ['Early', 'Mid (open canopy)', 'Mid (closed canopy)', 'Late (open canopy)', 'Late (closed canopy)'];
+    const CLASS_LABEL = { 'Early': 'Early seral', 'Mid (open canopy)': 'Mid seral, open canopy', 'Mid (closed canopy)': 'Mid seral, closed canopy', 'Late (open canopy)': 'Late seral, open canopy', 'Late (closed canopy)': 'Late seral, closed canopy' };
+    const CLASS_COLOR = { 'Early': '#E8A33D', 'Mid (open canopy)': '#8CC5EA', 'Mid (closed canopy)': '#007DC3', 'Late (open canopy)': '#A3C76D', 'Late (closed canopy)': '#4A6118' };
+    const STAGES = ['Early', 'Mid', 'Late'];
+    const STAGE_COLOR = { Early: '#E8A33D', Mid: '#007DC3', Late: '#4A6118' };
+
+    // Fallback, captured from the Sept. 23, 2026 rerun. Same columns as the CSVs.
+    // seral: [type, class, desired range, current %, acres, type total acres]
+    // density: [type, stage, total acres, acres at or below desired density, percent]
+    const SNAPSHOT = {
+      captured: 'Sept. 23, 2026',
+      seral: [
+        ['Jeffrey Pine', 'Early', '5–15%', 3.37, 696.1, 20655.37],
+        ['Jeffrey Pine', 'Mid (closed canopy)', '5–10%', 30.12, 6221.5, 20655.37],
+        ['Jeffrey Pine', 'Mid (open canopy)', '25–30%', 32.12, 6634.04, 20655.37],
+        ['Jeffrey Pine', 'Late (open canopy)', '40–50%', 11.35, 2343.6, 20655.37],
+        ['Jeffrey Pine', 'Late (closed canopy)', '5–10%', 23.05, 4760.14, 20655.37],
+        ['Sierran Mixed Conifer', 'Early', '10–20%', 3.37, 2306.46, 68404.21],
+        ['Sierran Mixed Conifer', 'Mid (closed canopy)', '5–15%', 21.09, 14424.53, 68404.21],
+        ['Sierran Mixed Conifer', 'Mid (open canopy)', '15–20%', 37.02, 25326.55, 68404.21],
+        ['Sierran Mixed Conifer', 'Late (open canopy)', '25–35%', 18.67, 12772.36, 68404.21],
+        ['Sierran Mixed Conifer', 'Late (closed canopy)', '15–25%', 19.84, 13574.31, 68404.21],
+        ['Red Fir', 'Early', '10–20%', 2.2, 491.05, 22364.92],
+        ['Red Fir', 'Mid (closed canopy)', '15–25%', 12.48, 2792.17, 22364.92],
+        ['Red Fir', 'Mid (open canopy)', '15–25%', 36.52, 8168.34, 22364.92],
+        ['Red Fir', 'Late (open canopy)', '30–40%', 29.45, 6587.34, 22364.92],
+        ['Red Fir', 'Late (closed canopy)', '20–30%', 19.34, 4326.02, 22364.92],
+      ],
+      density: [
+        ['Jeffrey Pine', 'Early', 696.1, 696.1, 100.0],
+        ['Jeffrey Pine', 'Mid', 12855.53, 510.4, 3.97],
+        ['Jeffrey Pine', 'Late', 7103.74, 491.27, 6.92],
+        ['Sierran Mixed Conifer', 'Early', 2306.46, 2304.46, 99.91],
+        ['Sierran Mixed Conifer', 'Mid', 39751.08, 7613.02, 19.15],
+        ['Sierran Mixed Conifer', 'Late', 26346.67, 10255.07, 38.92],
+        ['Red Fir', 'Early', 491.05, 484.6, 98.69],
+        ['Red Fir', 'Mid', 10960.51, 4746.35, 43.3],
+        ['Red Fir', 'Late', 10913.36, 7359.71, 67.44],
+      ],
+    };
+
+    const DATA = {
+      // Plot network. Empty until the first field season is loaded.
+      // Expected shape per plot:
+      // { plotId: 'FS-001', forestType: 'Sierran Mixed Conifer', lat: 39.0, lon: -120.0,
+      //   established: 2027, lastVisit: 2027, tpa: 180, basalArea: 160, qmd: 14.2, canopyCover: 55 }
+      plots: [],
+    };
+
+    /* ───────────────────────── HELPERS ───────────────────────── */
+    const FONT = 'Lexend Deca, system-ui, sans-serif';
+    const INK = '#0B1F41';
+    const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const BASE_LAYOUT = {
+      font: { family: FONT, color: INK, size: 13 },
+      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      margin: { t: 36, r: 16, b: 48, l: 10 },
+      xaxis: { gridcolor: '#E6EAF0', zerolinecolor: '#C9D1DB', linecolor: '#C9D1DB' },
+      yaxis: { gridcolor: '#E6EAF0', showgrid: false, automargin: true, tickfont: { size: 12 } },
+      hoverlabel: { font: { family: FONT }, bgcolor: '#FFFFFF', bordercolor: '#C9D1DB' },
+      // Legend above the plot area so it never collides with the x-axis title.
+      legend: { orientation: 'h', y: 1.02, yanchor: 'bottom', x: 0, font: { size: 12 }, traceorder: 'normal' },
+    };
+    const PLOT_CONFIG = { responsive: true, displayModeBar: false, displaylogo: false };
+
+    function parseCsv(text) {
+      const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim().length);
+      const header = lines[0].split(',');
+      return lines.slice(1).map(l => { const cells = l.split(','); const o = {}; header.forEach((h, i) => o[h.trim()] = (cells[i] ?? '').trim()); return o; });
+    }
+
+    async function loadCsvs() {
+      const [seralText, densText] = await Promise.all([CSV.seral, CSV.density].map(u => fetch(u, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(`${u}: HTTP ${r.status}`); return r.text(); })));
+      const seral = parseCsv(seralText).map(r => ({ type: r['Forest Type'], cls: r['Seral Stage'], range: r['Desired % Range'], pct: +r['Current Area %'], acres: +r['Area (acres)'], typeAcres: +r['Total Area of Type (acres)'] }));
+      const density = parseCsv(densText).map(r => ({ type: r['Forest Type'], stage: r['Seral Stage'], total: +r['Total Acres'], meeting: +r['Acres Meeting Threshold'], pct: +r['Percent Meeting Threshold'] }));
+      if (seral.length !== 15 || density.length !== 9 || seral.some(r => Number.isNaN(r.acres)) || density.some(r => Number.isNaN(r.total))) throw new Error('CSV shape unexpected');
+      return { seral, density };
+    }
+
+    function fromSnapshot() {
+      return {
+        seral: SNAPSHOT.seral.map(([type, cls, range, pct, acres, typeAcres]) => ({ type, cls, range, pct, acres, typeAcres })),
+        density: SNAPSHOT.density.map(([type, stage, total, meeting, pct]) => ({ type, stage, total, meeting, pct })),
+      };
+    }
+
+    const grids = {};
+    function buildGrid(containerId, columnDefs, rowData, exportName) {
+      const container = document.getElementById(containerId);
+      if (grids[containerId]) return;
+      const toolbar = document.createElement('div');
+      toolbar.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:0.4rem';
+      const btn = document.createElement('calcite-button');
+      btn.setAttribute('appearance', 'outline'); btn.setAttribute('scale', 's'); btn.setAttribute('icon-start', 'download'); btn.textContent = 'Download CSV';
+      toolbar.append(btn);
+      const div = document.createElement('div'); div.className = 'ag-theme-quartz';
+      container.append(toolbar, div);
+      grids[containerId] = agGrid.createGrid(div, {
+        columnDefs, rowData,
+        defaultColDef: { sortable: true, filter: true, resizable: true, flex: 1, minWidth: 110 },
+        domLayout: 'autoHeight', suppressCellFocus: true,
+      });
+      btn.addEventListener('click', () => grids[containerId].exportDataAsCsv({ fileName: `${exportName}.csv` }));
+    }
+
+    function wireToggle(name, plotId, gridId, buildTable) {
+      document.querySelector(`[data-toggle="${name}"]`).addEventListener('calciteSegmentedControlChange', (e) => {
+        const view = e.target.selectedItem?.value || e.target.value;
+        const plot = document.getElementById(plotId), grid = document.getElementById(gridId);
+        if (view === 'table') { buildTable(); plot.classList.add('hidden'); grid.classList.remove('hidden'); }
+        else { grid.classList.add('hidden'); plot.classList.remove('hidden'); Plotly.Plots.resize(plot); }
+        notifyHeight();
+      });
+    }
+
+    /* ───────────────────────── RENDER ───────────────────────── */
+    let data = fromSnapshot();
+    let live = false;
+
+    function summarize(d) {
+      const seralAcres = TYPES.reduce((a, t) => a + (d.seral.find(r => r.type === t)?.typeAcres ?? 0), 0);
+      const byClass = {};
+      for (const c of CLASSES) byClass[c] = d.seral.filter(r => r.cls === c).reduce((a, r) => a + r.acres, 0);
+      const densTotal = d.density.reduce((a, r) => a + r.total, 0);
+      const densMeeting = d.density.reduce((a, r) => a + r.meeting, 0);
+      const largest = CLASSES.slice().sort((a, b) => byClass[b] - byClass[a])[0];
+      return { seralAcres, byClass, densTotal, densMeeting, largest };
+    }
+
+    function renderGlance() {
+      const s = summarize(data);
+      const pct = (a) => (a / s.seralAcres * 100);
+      const late = s.byClass['Late (open canopy)'] + s.byClass['Late (closed canopy)'];
+      const tiles = [
+        { v: `${fmt(ASSESSED_ACRES)} <small>acres</small>`, l: 'Non-urban conifer forest assessed, in three forest types' },
+        { v: `${pct(s.byClass[s.largest]).toFixed(0)}% <small>${esc(CLASS_LABEL[s.largest].toLowerCase())}</small>`, l: 'Largest structure class basin-wide' },
+        { v: `${pct(late).toFixed(0)}% <small>late seral</small>`, l: `Large-tree stands, open and closed canopy (${fmt(late)} acres)` },
+        { v: `${pct(s.byClass['Early']).toFixed(1)}% <small>early seral</small>`, l: `Regenerating stands under 5 in. diameter (${fmt(s.byClass['Early'])} acres)` },
+        { v: `${(s.densMeeting / s.densTotal * 100).toFixed(0)}% <small>within desired density</small>`, l: `Acres at or below the desired trees per acre and basal area (${fmt(s.densMeeting)} acres)` },
+        { v: DATA.plots.length ? fmt(DATA.plots.length) : 'In design', l: 'Ground calibration plots', pending: !DATA.plots.length },
+      ];
+      document.getElementById('glance-tiles').innerHTML = tiles.map(t => `<div class="tile${t.pending ? ' pending' : ''}"><div class="v">${t.v}</div><div class="l">${esc(t.l)}</div></div>`).join('');
+      document.getElementById('glance-source').textContent = `Figures are from the 2023 assessment (Sierra Nevada Regional Resource Kit, disturbance through 2022), ${live ? 'read from the analysis outputs at page load' : `from a snapshot captured ${SNAPSHOT.captured}`}. Class shares use the ${fmt(Math.floor(s.seralAcres))} assessed acres with seral stage data.`;
+    }
+
+    function renderSeral() {
+      const s = summarize(data);
+      const rowsY = [...TYPES.map(t => TYPE_LABEL[t]), 'All assessed forest'];
+      const traces = CLASSES.map(c => {
+        const vals = TYPES.map(t => data.seral.find(r => r.type === t && r.cls === c));
+        const basinAcres = s.byClass[c];
+        const x = [...vals.map(r => r.pct), basinAcres / s.seralAcres * 100];
+        const acres = [...vals.map(r => r.acres), basinAcres];
+        return {
+          type: 'bar', orientation: 'h', name: CLASS_LABEL[c], y: rowsY, x,
+          marker: { color: CLASS_COLOR[c], line: { width: 0 } },
+          text: x.map(v => v >= 6 ? `${v.toFixed(0)}%` : ''), textposition: 'inside', insidetextanchor: 'middle',
+          textfont: { size: 12, color: ['Mid (closed canopy)', 'Late (closed canopy)'].includes(c) ? '#FFFFFF' : INK },
+          customdata: acres,
+          hovertemplate: `<b>%{y}</b><br>${CLASS_LABEL[c]}: %{x:.1f}% · %{customdata:,.0f} acres<extra></extra>`,
+        };
+      });
+      Plotly.newPlot('seral-plot', traces, {
+        ...BASE_LAYOUT, barmode: 'stack', height: 320, bargap: 0.3,
+        xaxis: { ...BASE_LAYOUT.xaxis, range: [0, 100], ticksuffix: '%', title: { text: 'Share of assessed acres', font: { size: 12 } } },
+        yaxis: { ...BASE_LAYOUT.yaxis, autorange: 'reversed' },
+      }, PLOT_CONFIG);
+
+      wireToggle('seral', 'seral-plot', 'seral-grid', () => {
+        const tableRows = [
+          ...data.seral.map(r => ({ type: TYPE_LABEL[r.type], cls: CLASS_LABEL[r.cls], pct: r.pct, acres: r.acres, range: r.range, typeAcres: r.typeAcres })),
+          ...CLASSES.map(c => ({ type: 'All assessed forest', cls: CLASS_LABEL[c], pct: s.byClass[c] / s.seralAcres * 100, acres: s.byClass[c], range: '', typeAcres: s.seralAcres })),
+        ];
+        buildGrid('seral-grid', [
+          { field: 'type', headerName: 'Forest type', flex: 1.4, minWidth: 150 },
+          { field: 'cls', headerName: 'Class', flex: 1.6, minWidth: 180 },
+          { field: 'pct', headerName: 'Current %', type: 'rightAligned', valueFormatter: p => fmt(p.value, 1) },
+          { field: 'acres', headerName: 'Acres', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { field: 'range', headerName: 'Desired range', type: 'rightAligned', minWidth: 120 },
+          { field: 'typeAcres', headerName: 'Type acres', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+        ], tableRows, 'forest-structure-seral-stage-canopy-cover');
+      });
+    }
+
+    function renderDensity() {
+      const traces = STAGES.map(st => {
+        const rows = TYPES.map(t => data.density.find(r => r.type === t && r.stage === st));
+        return {
+          type: 'bar', name: `${st} seral`, x: TYPES.map(t => TYPE_LABEL[t]), y: rows.map(r => r.pct),
+          marker: { color: STAGE_COLOR[st], line: { width: 0 } },
+          text: rows.map(r => `${r.pct.toFixed(0)}%`), textposition: 'outside', textfont: { size: 11, color: INK }, cliponaxis: false,
+          customdata: rows.map(r => [r.meeting, r.total]),
+          hovertemplate: `<b>%{x}</b>, ${st.toLowerCase()} seral<br>%{y:.1f}% within desired density<br>%{customdata[0]:,.0f} of %{customdata[1]:,.0f} acres<extra></extra>`,
+        };
+      });
+      Plotly.newPlot('density-plot', traces, {
+        ...BASE_LAYOUT, barmode: 'group', height: 320, bargap: 0.3, bargroupgap: 0.08,
+        margin: { ...BASE_LAYOUT.margin, l: 48 },
+        xaxis: { ...BASE_LAYOUT.xaxis, showgrid: false },
+        yaxis: { ...BASE_LAYOUT.yaxis, showgrid: true, range: [0, 112], ticksuffix: '%', title: { text: 'Acres within desired density', font: { size: 12 } } },
+      }, PLOT_CONFIG);
+
+      wireToggle('density', 'density-plot', 'density-grid', () => {
+        const total = data.density.reduce((a, r) => a + r.total, 0), meeting = data.density.reduce((a, r) => a + r.meeting, 0);
+        const tableRows = [
+          ...data.density.map(r => ({ type: TYPE_LABEL[r.type], stage: `${r.stage} seral`, total: r.total, meeting: r.meeting, pct: r.pct })),
+          { type: 'All assessed forest', stage: 'All stages', total, meeting, pct: meeting / total * 100 },
+        ];
+        buildGrid('density-grid', [
+          { field: 'type', headerName: 'Forest type', flex: 1.4, minWidth: 150 },
+          { field: 'stage', headerName: 'Seral stage', minWidth: 120 },
+          { field: 'total', headerName: 'Assessed acres', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { field: 'meeting', headerName: 'Acres within desired density', type: 'rightAligned', minWidth: 150, valueFormatter: p => fmt(p.value) },
+          { field: 'pct', headerName: 'Percent', type: 'rightAligned', valueFormatter: p => fmt(p.value, 1) },
+        ], tableRows, 'forest-structure-stand-density');
+      });
+    }
+
+    function emptyState(title, bullets) {
+      return `<div class="empty"><calcite-icon icon="information" scale="m" aria-hidden="true"></calcite-icon><div><strong>${esc(title)}</strong><ul>${bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul></div></div>`;
+    }
+
+    function renderPlots() {
+      const host = document.getElementById('plots-body');
+      if (!DATA.plots.length) {
+        host.innerHTML = emptyState('No field plots have been measured yet. When the network is established, this section will show:', [
+          'A map of plot locations across the assessed forest, by forest type.',
+          'Plot-measured trees per acre, basal area, quadratic mean diameter, and canopy cover.',
+          'Agreement between plot measurements and the remote sensing products used above.',
+          'Establishment year, last visit, and remeasurement schedule, with a downloadable plot table.',
+        ]);
+        return;
+      }
+      host.innerHTML = '<div class="card"><div class="card-head"><h3>Calibration plots</h3></div><div id="plots-grid"></div></div>';
+      buildGrid('plots-grid', [
+        { field: 'plotId', headerName: 'Plot', minWidth: 90 },
+        { field: 'forestType', headerName: 'Forest type', flex: 1.5, minWidth: 160, valueFormatter: p => TYPE_LABEL[p.value] ?? p.value },
+        { field: 'tpa', headerName: 'Trees per acre', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+        { field: 'basalArea', headerName: 'Basal area (ft²/ac)', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+        { field: 'qmd', headerName: 'QMD (in.)', type: 'rightAligned', valueFormatter: p => fmt(p.value, 1) },
+        { field: 'canopyCover', headerName: 'Canopy cover (%)', type: 'rightAligned' },
+        { field: 'established', headerName: 'Established' },
+        { field: 'lastVisit', headerName: 'Last visit' },
+      ], DATA.plots, 'forest-structure-plots');
+    }
+
+    /* ───────────────────────── MAP ───────────────────────── */
+    const MAP_COPY = {
+      types: { title: 'Forest types', caption: 'Conifer forest by California Wildlife Habitat Relationships (WHR) type, grouped into the three TRPA forest types. Eastside pine and juniper are evaluated with Jeffrey pine; white fir and lodgepole pine are evaluated with Sierran mixed conifer. The map shows the full mapped type; the assessed extent excludes wilderness and urban land.' },
+      seral: { title: 'Seral stage and canopy cover classes', caption: 'Five classes from the 2023 assessment: early seral, mid seral open and closed canopy, late seral open and closed canopy. The assessed forest types draw over the full forest extent; urban land is masked.' },
+      density: { title: 'Stand density classes', caption: 'Each 30-meter cell classified as at or below the desired trees per acre and basal area for its forest type and seral stage, or above it, from the 2023 assessment. Urban land is masked.' },
+    };
+
+    function buildMap() {
+      const container = document.getElementById('map');
+      require(['esri/Map', 'esri/views/MapView', 'esri/layers/MapImageLayer', 'esri/layers/TileLayer', 'esri/widgets/Legend', 'esri/widgets/Home', 'esri/widgets/Expand', 'esri/widgets/Fullscreen'],
+        function (Map, MapView, MapImageLayer, TileLayer, Legend, Home, Expand, Fullscreen) {
+          const fill = (hex, a = 0.7) => ({ type: 'simple-fill', color: [...hex.match(/\w\w/g).map(h => parseInt(h, 16)), a], outline: { width: 0 } });
+          const types = new MapImageLayer({
+            url: 'https://maps.trpa.org/server/rest/services/Vegetation_Type/MapServer',
+            title: 'Assessed conifer forest',
+            sublayers: [{
+              id: 0, title: 'Forest type',
+              definitionExpression: "WHRTYPE IN ('JPN','EPN','SMC','WFR','LPN','RFR')",
+              renderer: {
+                type: 'unique-value', field: 'WHRTYPE',
+                uniqueValueInfos: [
+                  { value: 'JPN', label: 'Jeffrey pine', symbol: fill('E8A33D') },
+                  { value: 'EPN', label: 'Jeffrey pine (eastside pine)', symbol: fill('E8A33D', 0.45) },
+                  { value: 'SMC', label: 'Sierran mixed conifer', symbol: fill('007DC3') },
+                  { value: 'WFR', label: 'Sierran mixed conifer (white fir)', symbol: fill('007DC3', 0.45) },
+                  { value: 'LPN', label: 'Sierran mixed conifer (lodgepole pine)', symbol: fill('5FB0DE', 0.6) },
+                  { value: 'RFR', label: 'Red fir', symbol: fill('9C3E27') },
+                ],
+              },
+            }],
+          });
+          const seral = new TileLayer({ url: 'https://maps.trpa.org/server/rest/services/Forest_Health_Composition_Age/MapServer', title: 'Seral stage and canopy cover (2023 assessment)', visible: false, opacity: 0.85 });
+          const density = new TileLayer({ url: 'https://maps.trpa.org/server/rest/services/Forest_Health_Stand_Density/MapServer', title: 'Stand density (2023 assessment)', visible: false, opacity: 0.85 });
+          const layers = { types, seral, density };
+
+          const map = new Map({ basemap: 'topo-vector', layers: [density, seral, types] });
+          const view = new MapView({ container, map, center: [-120.03, 39.05], zoom: 10, constraints: { snapToZoom: false } });
+          view.ui.move('zoom', 'top-left');
+          view.ui.add(new Home({ view }), 'top-left');
+          view.ui.add(new Fullscreen({ view }), 'top-left');
+          view.when(() => {
+            const legend = new Legend({ view, layerInfos: [{ layer: types }, { layer: seral }, { layer: density }] });
+            if (window.innerWidth > 700) view.ui.add(legend, 'top-right');
+            else view.ui.add(new Expand({ view, content: legend, expanded: false, mode: 'drawer', expandIcon: 'legend', expandTooltip: 'Legend' }), 'top-right');
+            container.querySelector('.map-placeholder')?.remove();
+          }).catch(err => {
+            const ph = container.querySelector('.map-placeholder');
+            if (ph) ph.textContent = 'The map could not be loaded. The charts below cover the same extent.';
+            console.error('Map failed to load', err);
+          });
+          view.on('mouse-wheel', evt => { evt.stopPropagation(); });
+
+          document.querySelector('[data-toggle="maplayer"]').addEventListener('calciteSegmentedControlChange', (e) => {
+            const key = e.target.selectedItem?.value || e.target.value;
+            for (const k of Object.keys(layers)) layers[k].visible = (k === key);
+            document.getElementById('map-title').textContent = MAP_COPY[key].title;
+            document.getElementById('map-caption').textContent = MAP_COPY[key].caption;
+          });
+        });
+    }
+
+    /* ───────────────────────── IFRAME HEIGHT ───────────────────────── */
+    function notifyHeight() {
+      if (window.parent === window) return;
+      window.parent.postMessage({ type: 'forest-structure-monitoring:height', height: document.documentElement.scrollHeight }, '*');
+    }
+    new ResizeObserver(() => notifyHeight()).observe(document.body);
+
+    /* ───────────────────────── INIT ───────────────────────── */
+    (async function init() {
+      renderPlots();
+      buildMap();
+      try {
+        data = await loadCsvs();
+        live = true;
+      } catch (err) {
+        console.warn('Could not read analysis CSVs; using snapshot.', err);
+        data = fromSnapshot();
+      }
+      renderGlance();
+      renderSeral();
+      renderDensity();
+      const src = `Source: Forest Health threshold analysis (TRPA), Sierra Nevada Regional Resource Kit 2023 inputs, ${live ? 'read from the analysis outputs at page load' : `snapshot captured ${SNAPSHOT.captured}`}.`;
+      document.querySelectorAll('[data-source-line]').forEach(p => { p.textContent = src; });
+      document.getElementById('footer-vintage').textContent = `Assessment vintage: 2023 Regional Resource Kit, disturbance through 2022. Figures ${live ? 'read from the analysis repository at page load' : `from a snapshot captured ${SNAPSHOT.captured}`}. Plot data: none loaded.`;
+      notifyHeight();
+    })();
+  </script>
+</body>
+</html>

@@ -180,9 +180,18 @@ get recorded here and in `thresholds/_INDEX.md`.
    use the adopted 200-acre patch criterion instead of 40, write a summary CSV to `output/`.
 5. **Indicator pages.** Close `TODO` markers in `thresholds/` in this order: 189 and 190
    (8 each), 193 (14), 192 (13), 191 (25). Nothing with an open TODO gets published.
-6. **Monitoring dashboards.** Forest Structure and Fire Dynamics, once their program IDs on
-   `monitoring.laketahoeinfo.org` exist. Subalpine Conifer (program 83) is built. Load the
-   `trpa-monitoring-dashboard` skill first.
+6. **Monitoring dashboards. BUILT Oct. 2, 2026, not yet pointed to by the host.**
+   `monitoring/forest-structure.html`, `monitoring/fire-dynamics.html`, and a card index at
+   `monitoring/index.html` (the old threshold-status page moved to
+   `archive/monitoring_index_threshold_status.html`). Subalpine Conifer (program 83) was
+   built Sept. 17. Forest Structure reads the `output/` CSVs at load (same origin on Pages),
+   so it tracks the rerun without hand copying; Fire Dynamics queries `Fire/MapServer`
+   layers 3 and 6 live and carries the EIP treatment acres as a snapshot. Remaining: LT Info
+   program IDs for Forest Structure and Fire Dynamics do not exist yet (checked Oct. 2; the
+   programs list has 77 entries and only "EcObject Forest Monitoring", program 81, is
+   forest-related), and program 83's Dashboard card still says "No dashboard configured."
+   Verified locally with `python -m http.server`; not committed. Load the
+   `trpa-monitoring-dashboard` skill first for any further work.
 
 ### Track B: plot network, scoped to VP9 and VP10
 
@@ -230,9 +239,14 @@ get recorded here and in `thresholds/_INDEX.md`.
 
 These are real conflicts found by comparing the report, the StoryMap, and this repo.
 
-1. **WUI attainment.** Report says 62 percent. The StoryMap Looking Ahead section says
-   "71 percent of the WUI Defense Zone meets the desired flame length standard." One is
-   stale.
+1. **WUI attainment. EXPLAINED Oct. 2, 2026; still needs a StoryMap fix.** Report says
+   62 percent. The StoryMap Looking Ahead section says "71 percent of the WUI Defense Zone
+   meets the desired flame length standard." Neither is stale; they use different frames.
+   The live `Fire/MapServer/3` layer (Fire Severity Probability by Management Zone) gives
+   the Defense Zone as mapped, urban footprint included: 48,241 low of 68,048 acres, which
+   is 70.9 percent. The report uses the wildland portion only (the `nonurban` raster,
+   divergence 8): 28,045 of 44,920 acres, 62 percent. The StoryMap should say which frame
+   it means; the adopted standard is the 44,920-acre frame.
 2. **Landscape Fire Dynamics results.** Report says 8.9 percent, 14,176 acres, patches
    ≥200 acres. The StoryMap says "about 19,900 acres (11% of Tahoe's forests)" and
    describes patches "larger than 40 acres" with flame lengths above 8 feet — a different
@@ -320,6 +334,18 @@ These are real conflicts found by comparing the report, the StoryMap, and this r
    Overrepresented, red fir mid closed is Underrepresented, and red fir late closed is
    Underrepresented. Published surfaces (report, StoryMap, indicator pages) still carry the
    old framing.
+
+10. **OPEN, found Oct. 2, 2026 — public feature layers on maps.trpa.org carry the
+    superseded run.** `Vegetation/FeatureServer/3` (Composition) sums to mid closed 79,295
+    acres against mid open 26,612 on a 177,540-acre frame, which is the transposed result
+    on a larger-than-assessed extent; `Vegetation/FeatureServer/4` (Stand Density
+    Classified) gives Over Target 76,377 / Under Target 63,631 on 140,008 acres, matching
+    none of the committed runs. The `Forest_Health_Composition_Age` and
+    `Forest_Health_Stand_Density` tile services behind the threshold web maps are the same
+    vintage. Republish all four from the rerun products once `MTB-Edits` merges. The
+    monitoring dashboards display the tile services with a caption saying they show the
+    2023 assessment as published and take no numbers from them. Also noted: the
+    `Fire/MapServer/6` perimeter layer ends at 2020, so the Caldor Fire is absent from it.
 
 ---
 

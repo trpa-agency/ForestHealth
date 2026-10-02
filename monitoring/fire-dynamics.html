@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fire Dynamics Monitoring</title>
+  <meta name="description" content="Dashboard for the Fire Dynamics monitoring program in the Lake Tahoe Basin: modeled fire severity by management zone, the wildland urban interface defense zone, fuel reduction treatments, and wildfire history." />
+
+  <!--
+    Fire Dynamics monitoring dashboard, Tahoe Regional Planning Agency.
+    Embedded in the Dashboard card of a Monitoring Program page on
+    https://monitoring.laketahoeinfo.org/ so it carries no header or footer chrome of its
+    own. The host card supplies the green DASHBOARD header; the program name and overview
+    sit above it.
+
+    Live data, queried at load from maps.trpa.org:
+      Fire/MapServer/3  Fire Severity Probability by Management Zone (acres by zone and class)
+      Fire/MapServer/6  Fire History (CAL FIRE statewide perimeters; currently through 2020)
+    SNAPSHOT below is the fallback when a query fails, captured Oct. 2, 2026.
+
+    Snapshot only: fuel treatment acres by year and treatment zone, as reported to the EIP
+    Project Tracker. The LT Info accomplishments web service is not reachable cross-origin,
+    so the values are carried in the page with their reporting range.
+
+    Frames differ between products. The management zone layer covers about 201,000 acres
+    including wilderness and the urban footprint of the WUI Defense Zone; the threshold
+    evaluation of the Defense Zone uses its wildland portion only (44,920 acres). The page
+    says so where it matters.
+  -->
+
+  <!-- Plotly.js and AG Grid must load BEFORE the ArcGIS SDK (UMD bundles register as AMD otherwise). -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+
+  <!-- Calcite Design System. Version must match the build bundled in the ArcGIS SDK release (4.31 pairs with 2.13). -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css" />
+
+  <!-- ArcGIS Maps SDK for JavaScript -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.31/"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --eip-blue:   #007DC3;
+      --eip-green:  #6EBE44;
+      --eip-orange: #F16022;
+      --eip-navy:   #0B1F41;
+      --lti-green:  #789440;
+      --ink:        #0B1F41;
+      --ink-2:      #3D4A5C;
+      --ink-muted:  #6B7280;
+      --line:       #DDE3EA;
+      --surface:    #FFFFFF;
+      --surface-2:  #F6F8FA;
+      --radius:     8px;
+      --font:       'Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --gutter:     16px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      font-family: var(--font); font-size: 15px; line-height: 1.55;
+      color: var(--ink); background: var(--surface);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--eip-blue); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0.25rem var(--gutter) 1rem; }
+    h2, h3 { margin: 0; line-height: 1.25; color: var(--ink); }
+    h2 { font-size: 1.15rem; font-weight: 700; }
+    h3 { font-size: 1rem; font-weight: 600; }
+    p { margin: 0 0 0.6rem; }
+    .muted { color: var(--ink-muted); }
+    .small { font-size: 0.85rem; }
+    .hidden { display: none !important; }
+
+    .section { padding: 0.9rem 0 0.4rem; }
+    .section + .section { border-top: 1px solid var(--line); }
+    .section-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--lti-green); margin-bottom: 0.15rem;
+    }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .section-head p { color: var(--ink-2); margin: 0.25rem 0 0; max-width: 780px; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin: 0.5rem 0 0.25rem; }
+    .tile { background: var(--surface-2); border-radius: var(--radius); padding: 0.7rem 0.85rem; border-left: 4px solid var(--tile-accent, var(--lti-green)); min-width: 0; }
+    .tile .v { font-size: 1.45rem; font-weight: 700; line-height: 1.15; }
+    .tile .v small { font-size: 0.8rem; font-weight: 500; color: var(--ink-muted); }
+    .tile .l { font-size: 0.78rem; color: var(--ink-2); margin-top: 0.15rem; }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+    .grid-3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+    @media (min-width: 820px) {
+      .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .span-2 { grid-column: 1 / -1; }
+    }
+
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; min-width: 0; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+    .card-head h3 { flex: 1 1 auto; }
+    .card .caption { font-size: 0.8rem; color: var(--ink-muted); margin: 0.4rem 0 0; }
+    .card .source { font-size: 0.76rem; color: var(--ink-muted); margin: 0.3rem 0 0; }
+    .plot { width: 100%; min-height: 240px; }
+
+    .def { background: var(--surface-2); border-radius: var(--radius); padding: 0.75rem 0.9rem; font-size: 0.88rem; }
+    .def h3 { font-size: 0.92rem; margin-bottom: 0.3rem; }
+    .def p { margin: 0 0 0.35rem; color: var(--ink-2); }
+    .def p:last-child { margin-bottom: 0; }
+
+    .map-view { width: 100%; height: 460px; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); position: relative; }
+    .map-view .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 0.85rem; gap: 0.5rem; }
+
+    .ag-theme-quartz {
+      --ag-font-family: var(--font); --ag-font-size: 13px;
+      --ag-header-background-color: var(--surface-2); --ag-border-color: var(--line);
+      --ag-row-border-color: var(--line); --ag-foreground-color: var(--ink); --ag-header-foreground-color: var(--ink);
+    }
+    .footer { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-muted); }
+    .footer .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+
+    @media (max-width: 599px) {
+      html, body { font-size: 14px; }
+      .map-view { height: 360px; }
+      .tile .v { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- ── AT A GLANCE ── -->
+    <section class="section" aria-labelledby="glance-h">
+      <div class="section-label">At a glance</div>
+      <div class="section-head">
+        <h2 id="glance-h">How fire is likely to behave in the Basin's forests</h2>
+        <p>Fire is part of how Tahoe forests work. The program tracks whether the fire the Basin would experience today still performs that role: the severity at which the landscape is likely to burn under severe fire weather, conditions in the wildland urban interface (WUI) where firefighters must be able to work, the fuel reduction that changes those conditions, and the fires that actually occur.</p>
+      </div>
+      <div class="tiles" id="glance-tiles"></div>
+      <p class="small muted" id="glance-source" style="margin-top:0.5rem"></p>
+    </section>
+
+    <!-- ── MAP ── -->
+    <section class="section" aria-labelledby="map-h">
+      <div class="section-label">Fire on the landscape</div>
+      <div class="section-head">
+        <h2 id="map-h">Where severity risk and past fires sit</h2>
+        <p>Modeled fire severity by forest management zone, with wildfire perimeters and the vegetation burn severity of the 2021 Caldor Fire.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3 id="map-title">Most likely fire severity</h3>
+          <calcite-segmented-control scale="s" data-toggle="maplayer">
+            <calcite-segmented-control-item value="severity" checked>Modeled severity</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="history">Fire perimeters</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="caldor">Caldor burn severity</calcite-segmented-control-item>
+          </calcite-segmented-control>
+        </div>
+        <div class="map-view" id="map" role="region" aria-label="Map of modeled fire severity and fire history in the Lake Tahoe Basin">
+          <div class="map-placeholder"><calcite-loader inline label="Loading map"></calcite-loader> Loading map</div>
+        </div>
+        <p class="caption" id="map-caption">Each area is colored by the fire severity class with the highest modeled probability under 90th percentile fire weather: low, moderate, or high. Management zone boundaries follow the USFS Lake Tahoe Basin Management Unit zones used in the Multi-Jurisdictional Fuel Reduction and Wildfire Prevention Strategy.</p>
+        <p class="source">Source: TRPA Fire map service, maps.trpa.org. Severity from the Sierra Nevada Regional Resource Kit functional fire products; perimeters from the CAL FIRE statewide fire history dataset; Caldor burn severity from USFS post-fire mapping.</p>
+      </div>
+    </section>
+
+    <!-- ── CHARTS ── -->
+    <section class="section" aria-labelledby="charts-h">
+      <div class="section-label">Current conditions</div>
+      <div class="section-head">
+        <h2 id="charts-h">What the record shows</h2>
+        <p>Modeled severity by management zone, fuel reduction accomplished by year, and the named wildfires that have reached the Basin.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card span-2">
+          <div class="card-head">
+            <h3>Modeled fire severity by management zone</h3>
+            <calcite-segmented-control scale="s" data-toggle="severity">
+              <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+            </calcite-segmented-control>
+          </div>
+          <div class="plot" id="severity-plot"></div>
+          <div class="hidden" id="severity-grid"></div>
+          <p class="caption" id="severity-caption"></p>
+          <p class="source" data-source-line="severity"></p>
+        </div>
+        <div class="card span-2">
+          <div class="card-head">
+            <h3>Fuel reduction treatments by year and treatment zone</h3>
+            <calcite-segmented-control scale="s" data-toggle="treatments">
+              <calcite-segmented-control-item value="chart" checked icon-start="graph-bar">Chart</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="table" icon-start="table">Table</calcite-segmented-control-item>
+            </calcite-segmented-control>
+          </div>
+          <div class="plot" id="treatments-plot"></div>
+          <div class="hidden" id="treatments-grid"></div>
+          <p class="caption" id="treatments-caption"></p>
+          <p class="source" data-source-line="treatments"></p>
+        </div>
+        <div class="card span-2">
+          <div class="card-head">
+            <h3>Named wildfires reaching the Basin since 1980</h3>
+          </div>
+          <div id="fires-grid"></div>
+          <p class="caption" id="fires-caption"></p>
+          <p class="source" data-source-line="fires"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── HOW IT IS MEASURED ── -->
+    <section class="section" aria-labelledby="method-h">
+      <div class="section-label">Monitoring approach</div>
+      <div class="section-head">
+        <h2 id="method-h">How fire dynamics are measured</h2>
+        <p>Modeled fire behavior for the whole landscape, observed fire outcomes where fires occur, and treatment accomplishments reported by the agencies that do the work.</p>
+      </div>
+      <div class="grid-3">
+        <div class="def">
+          <h3>Fire behavior modeling</h3>
+          <p>Fire hazard and severity are modeled across the Basin under 90th percentile fire weather using the Pyrologix Wildfire Exposure Simulation Tool, delivered through the Sierra Nevada Regional Resource Kit (2023 vintage). Each 30-meter cell gets a probability of burning at low, moderate, or high severity; the class with the highest probability is mapped.</p>
+        </div>
+        <div class="def">
+          <h3>Landscape fire</h3>
+          <p>Across all vegetation types outside urban areas, designated wilderness, and water (157,843 acres), the program tracks the share of land likely to burn at high severity in contiguous patches of 200 acres or more. Large high-severity patches remove seed sources and expose soil in ways small patches do not.</p>
+        </div>
+        <div class="def">
+          <h3>WUI Defense Zone</h3>
+          <p>The Defense Zone extends roughly a quarter mile from community edges and is where firefighters must be able to engage a fire directly. Its wildland portion outside urban land use is 44,920 acres. The program tracks the share predicted to burn as surface fire, with flame lengths short enough for direct attack, under 90th percentile weather.</p>
+        </div>
+        <div class="def">
+          <h3>Management zones</h3>
+          <p>Modeled severity is summarized by the forest management zones of the Multi-Jurisdictional Fuel Reduction and Wildfire Prevention Strategy: WUI Defense Zone, WUI Threat Zone, General Forest, and the Desolation, Granite Chief, and Mt. Rose wilderness areas.</p>
+        </div>
+        <div class="def">
+          <h3>Fire history and burn severity</h3>
+          <p>Wildfire perimeters from the CAL FIRE statewide fire history dataset, updated yearly. Post-fire vegetation burn severity for large fires, such as the 2021 Caldor Fire, from USFS mapping. Observed severity is how the modeled products will be checked over time.</p>
+        </div>
+        <div class="def">
+          <h3>Treatments</h3>
+          <p>Acres of forest fuels treated, as reported by Tahoe Fire and Fuels Team agencies to the EIP Project Tracker, by treatment zone. Treatment is the main lever that moves modeled severity, so the two are read together.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div><strong>About the program.</strong> The Fire Dynamics monitoring program tracks modeled and observed fire behavior under the Vegetation Preservation threshold category. It supports two threshold standards: Landscape Fire Dynamics and Wildland Urban Interface Defense Zone Fire Dynamics.</div>
+      <div class="links">
+        <a href="https://thresholds.laketahoeinfo.org/threshold/indicators/192" target="_blank" rel="noopener noreferrer">Threshold indicator: Landscape Fire Dynamics</a>
+        <a href="https://thresholds.laketahoeinfo.org/threshold/indicators/193" target="_blank" rel="noopener noreferrer">Threshold indicator: WUI Defense Zone Fire Dynamics</a>
+        <a href="https://storymaps.arcgis.com/stories/c71cbbac37bc41399cab16b4767b9034" target="_blank" rel="noopener noreferrer">StoryMap: WUI Fire Dynamics</a>
+        <a href="https://storymaps.arcgis.com/stories/24a244191f6842c5ab44bc09e228cf6b" target="_blank" rel="noopener noreferrer">StoryMap: Landscape Fire Dynamics</a>
+        <a href="https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc" target="_blank" rel="noopener noreferrer">Forest Health Threshold Standards report</a>
+        <a href="https://eip.laketahoeinfo.org/" target="_blank" rel="noopener noreferrer">EIP Project Tracker</a>
+      </div>
+      <div style="margin-top:0.4rem" id="footer-vintage"></div>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    /* ───────────────────────── DATA ───────────────────────── */
+    const FIRE_SERVICE = 'https://maps.trpa.org/server/rest/services/Fire/MapServer';
+    const SEVERITY_LAYER = 3;
+    const HISTORY_LAYER = 6;
+    const CALDOR_LAYER = 5;
+    // Bounding box around the Tahoe Basin (WGS84) for the fire history query. Fires that cross the
+    // box but burn mostly outside the Basin are included and labeled with their total size.
+    const BASIN_ENVELOPE = '-120.21,38.84,-119.84,39.31';
+
+    const SEVERITIES = ['Low Severity', 'Moderate Severity', 'High Severity'];
+    const SEV_LABEL = { 'Low Severity': 'Low', 'Moderate Severity': 'Moderate', 'High Severity': 'High' };
+    const SEV_COLOR = { 'Low Severity': '#007DC3', 'Moderate Severity': '#E8A33D', 'High Severity': '#9C3E27' };
+    const ZONE_ORDER = ['WUI Defense Zone', 'WUI Threat Zone', 'General Forest', 'Desolation Wilderness', 'Mt. Rose Wilderness', 'Granite Chief Wilderness', 'Not zoned'];
+
+    const TZONES = ['Defense Zone', 'Threat Zone', 'General Forest', 'Urban Core'];
+    const TZONE_COLOR = { 'Defense Zone': '#F16022', 'Threat Zone': '#007DC3', 'General Forest': '#4A6118', 'Urban Core': '#B5A64C' };
+
+    // CAL FIRE fire history cause codes.
+    const CAUSE = { 1: 'Lightning', 2: 'Equipment use', 3: 'Smoking', 4: 'Campfire', 5: 'Debris burning', 6: 'Railroad', 7: 'Arson', 8: 'Playing with fire', 9: 'Miscellaneous', 10: 'Vehicle', 11: 'Power line', 12: 'Firefighter training', 13: 'Non-firefighter training', 14: 'Unknown', 15: 'Structure', 16: 'Aircraft', 17: 'Volcanic', 18: 'Escaped prescribed burn', 19: 'Campfire (illegal)' };
+    const AGENCY = { USF: 'USDA Forest Service', CDF: 'CAL FIRE', CCO: 'Contract county', NPS: 'National Park Service', BLM: 'Bureau of Land Management', NOP: 'Not protected' };
+
+    // Fallback captured Oct. 2, 2026 from the same services.
+    const SNAPSHOT = {
+      captured: 'Oct. 2, 2026',
+      // [zone, severity class, acres]
+      severity: [
+        ['General Forest', 'Low Severity', 44627.9], ['General Forest', 'Moderate Severity', 3228.4], ['General Forest', 'High Severity', 15336.6],
+        ['WUI Defense Zone', 'Low Severity', 48240.5], ['WUI Defense Zone', 'Moderate Severity', 5752.9], ['WUI Defense Zone', 'High Severity', 14054.2],
+        ['WUI Threat Zone', 'Low Severity', 31870.7], ['WUI Threat Zone', 'Moderate Severity', 2824.4], ['WUI Threat Zone', 'High Severity', 11095.5],
+        ['Desolation Wilderness', 'Low Severity', 15821.1], ['Desolation Wilderness', 'Moderate Severity', 1988.9], ['Desolation Wilderness', 'High Severity', 3517.9],
+        ['Mt. Rose Wilderness', 'Low Severity', 2075.0], ['Mt. Rose Wilderness', 'Moderate Severity', 112.1], ['Mt. Rose Wilderness', 'High Severity', 388.8],
+        ['Granite Chief Wilderness', 'Low Severity', 31.7], ['Granite Chief Wilderness', 'Moderate Severity', 3.5], ['Granite Chief Wilderness', 'High Severity', 12.6],
+        ['Not zoned', 'Low Severity', 360.4], ['Not zoned', 'Moderate Severity', 28.5], ['Not zoned', 'High Severity', 46.9],
+      ],
+      // [name, year, total acres, agency, cause code]
+      fires: [
+        ['Emerald', 2016, 175, 'USF', 9], ['Cascade', 2014, 22, 'USF', 4], ['Angora', 2007, 3070, 'USF', 4], ['Washoe', 2007, 20, 'USF', 9],
+        ['Cathedral', 2006, 23, 'USF', 7], ['Royal', 2003, 339, 'USF', 5], ['Kiva', 2002, 63, 'USF', 5], ['Gondola', 2002, 643, 'USF', 3],
+        ['Pioneer 2', 2002, 23, 'USF', 9], ['Martis', 2001, 14127, 'CDF', 4], ['Kingsbury', 2001, 15, 'USF', 8], ['', 1996, 3802, 'USF', 8],
+        ['Sugar Pine', 1995, 32, 'USF', 5], ['Meeks', 1995, 76, 'USF', 5], ['Cascade', 1994, 34, 'USF', 9], ['', 1984, 316, 'USF', 9],
+        ['Glenbrook', 1984, 48, 'USF', 5], ['', 1983, 44, 'USF', 1], ['', 1981, 5138, 'USF', 1],
+      ],
+      historyThrough: 2020,
+    };
+
+    // Acres of forest fuels treated, as reported to the EIP Project Tracker (performance measure
+    // "Acres of forest fuels treated", by treatment zone). Carried in the page because the
+    // accomplishments web service is not reachable from this origin. Reporting through 2024.
+    const TREATMENTS = {
+      reportedThrough: 2024,
+      years: Array.from({ length: 18 }, (_, i) => 2007 + i),
+      acres: {
+        'Defense Zone':   { 2008: 9, 2009: 2804.1, 2010: 1239.46, 2011: 648.4, 2012: 3956.54, 2013: 1102.56, 2014: 1601.72, 2015: 1893.92, 2016: 2874.25, 2017: 1552.28, 2018: 1484.26, 2019: 3154.63, 2020: 2432.6, 2021: 989.97, 2022: 1564.55, 2023: 910.47, 2024: 3197.92 },
+        'Threat Zone':    { 2017: 37, 2018: 150, 2019: 596, 2020: 1, 2021: 43.2, 2022: 340, 2023: 131.74, 2024: 885.5 },
+        'General Forest': { 2007: 0, 2008: 10, 2009: 3, 2010: 2.5, 2011: 0, 2012: 2, 2018: 120, 2019: 120, 2020: 0, 2023: 8, 2024: 15 },
+        'Urban Core':     { 2011: 30, 2012: 70.75, 2013: 20, 2014: 89, 2015: 11.4, 2016: 5.04, 2017: 3.9, 2018: 23.1, 2019: 11, 2020: 31.5, 2021: 43, 2022: 21, 2023: 110, 2024: 122 },
+      },
+    };
+
+    /* ───────────────────────── HELPERS ───────────────────────── */
+    const FONT = 'Lexend Deca, system-ui, sans-serif';
+    const INK = '#0B1F41';
+    const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const titleCase = (s) => String(s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    const BASE_LAYOUT = {
+      font: { family: FONT, color: INK, size: 13 },
+      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      margin: { t: 36, r: 16, b: 48, l: 10 },
+      xaxis: { gridcolor: '#E6EAF0', zerolinecolor: '#C9D1DB', linecolor: '#C9D1DB' },
+      yaxis: { gridcolor: '#E6EAF0', showgrid: false, automargin: true, tickfont: { size: 12 } },
+      hoverlabel: { font: { family: FONT }, bgcolor: '#FFFFFF', bordercolor: '#C9D1DB' },
+      // Legend above the plot area so it never collides with the x-axis title.
+      legend: { orientation: 'h', y: 1.02, yanchor: 'bottom', x: 0, font: { size: 12 }, traceorder: 'normal' },
+    };
+    const PLOT_CONFIG = { responsive: true, displayModeBar: false, displaylogo: false };
+
+    async function queryJson(layer, params) {
+      const resp = await fetch(`${FIRE_SERVICE}/${layer}/query?${new URLSearchParams({ f: 'json', returnGeometry: 'false', ...params })}`);
+      const json = await resp.json();
+      if (json.error) throw new Error(json.error.message);
+      return json;
+    }
+
+    async function loadSeverity() {
+      const json = await queryJson(SEVERITY_LAYER, {
+        where: '1=1', groupByFieldsForStatistics: 'ManagementZone,MostLikelyFireSeverity',
+        outStatistics: JSON.stringify([{ statisticType: 'sum', onStatisticField: 'Acres', outStatisticFieldName: 'acres' }]),
+      });
+      const rows = json.features.map(f => ({ zone: f.attributes.ManagementZone?.trim() || 'Not zoned', sev: f.attributes.MostLikelyFireSeverity, acres: f.attributes.acres }));
+      if (!rows.length || rows.some(r => !SEVERITIES.includes(r.sev))) throw new Error('Severity rows unexpected');
+      return rows;
+    }
+
+    async function loadFires() {
+      const [rows, maxYear] = await Promise.all([
+        queryJson(HISTORY_LAYER, {
+          where: "YEAR_ >= '1980'", geometry: BASIN_ENVELOPE, geometryType: 'esriGeometryEnvelope', inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+          outFields: 'FIRE_NAME,YEAR_,GIS_ACRES,AGENCY,CAUSE', orderByFields: 'YEAR_ DESC',
+        }).then(j => j.features.map(f => ({ name: titleCase(f.attributes.FIRE_NAME), year: +f.attributes.YEAR_, acres: f.attributes.GIS_ACRES, agency: f.attributes.AGENCY, cause: f.attributes.CAUSE }))),
+        queryJson(HISTORY_LAYER, { where: "YEAR_ IS NOT NULL AND YEAR_ <> ''", outStatistics: JSON.stringify([{ statisticType: 'max', onStatisticField: 'YEAR_', outStatisticFieldName: 'y' }]) })
+          .then(j => +j.features[0].attributes.y).catch(() => null),
+      ]);
+      return { rows, historyThrough: maxYear };
+    }
+
+    const grids = {};
+    function buildGrid(containerId, columnDefs, rowData, exportName) {
+      const container = document.getElementById(containerId);
+      if (grids[containerId]) return;
+      const toolbar = document.createElement('div');
+      toolbar.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:0.4rem';
+      const btn = document.createElement('calcite-button');
+      btn.setAttribute('appearance', 'outline'); btn.setAttribute('scale', 's'); btn.setAttribute('icon-start', 'download'); btn.textContent = 'Download CSV';
+      toolbar.append(btn);
+      const div = document.createElement('div'); div.className = 'ag-theme-quartz';
+      container.append(toolbar, div);
+      grids[containerId] = agGrid.createGrid(div, {
+        columnDefs, rowData,
+        defaultColDef: { sortable: true, filter: true, resizable: true, flex: 1, minWidth: 110 },
+        domLayout: 'autoHeight', suppressCellFocus: true,
+      });
+      btn.addEventListener('click', () => grids[containerId].exportDataAsCsv({ fileName: `${exportName}.csv` }));
+    }
+
+    function wireToggle(name, plotId, gridId, buildTable) {
+      document.querySelector(`[data-toggle="${name}"]`).addEventListener('calciteSegmentedControlChange', (e) => {
+        const view = e.target.selectedItem?.value || e.target.value;
+        const plot = document.getElementById(plotId), grid = document.getElementById(gridId);
+        if (view === 'table') { buildTable(); plot.classList.add('hidden'); grid.classList.remove('hidden'); }
+        else { grid.classList.add('hidden'); plot.classList.remove('hidden'); Plotly.Plots.resize(plot); }
+        notifyHeight();
+      });
+    }
+
+    /* ───────────────────────── RENDER ───────────────────────── */
+    let severity = SNAPSHOT.severity.map(([zone, sev, acres]) => ({ zone, sev, acres }));
+    let fires = { rows: SNAPSHOT.fires.map(([name, year, acres, agency, cause]) => ({ name, year, acres, agency, cause })), historyThrough: SNAPSHOT.historyThrough };
+    let liveSeverity = false, liveFires = false;
+
+    function zoneTable(rows) {
+      const zones = [...new Set(rows.map(r => r.zone))].sort((a, b) => (ZONE_ORDER.indexOf(a) + 1 || 99) - (ZONE_ORDER.indexOf(b) + 1 || 99));
+      return zones.map(z => {
+        const bySev = {}; for (const s of SEVERITIES) bySev[s] = rows.filter(r => r.zone === z && r.sev === s).reduce((a, r) => a + r.acres, 0);
+        const total = SEVERITIES.reduce((a, s) => a + bySev[s], 0);
+        return { zone: z, ...bySev, total };
+      });
+    }
+
+    function renderGlance() {
+      const zt = zoneTable(severity);
+      const total = zt.reduce((a, z) => a + z.total, 0);
+      const low = zt.reduce((a, z) => a + z['Low Severity'], 0);
+      const high = zt.reduce((a, z) => a + z['High Severity'], 0);
+      const dz = zt.find(z => z.zone === 'WUI Defense Zone');
+      const treated = Object.values(TREATMENTS.acres).reduce((a, byYear) => a + Object.values(byYear).reduce((x, y) => x + y, 0), 0);
+      const recent = fires.rows.slice().filter(f => f.name).sort((a, b) => b.year - a.year || b.acres - a.acres)[0];
+      const tiles = [
+        { v: `${fmt(total)} <small>acres</small>`, l: 'Land with modeled fire severity, across all management zones' },
+        { v: `${(low / total * 100).toFixed(0)}% <small>low severity</small>`, l: `Most likely to burn at low severity (${fmt(low)} acres)` },
+        { v: `${(high / total * 100).toFixed(0)}% <small>high severity</small>`, l: `Most likely to burn at high severity (${fmt(high)} acres)` },
+        { v: dz ? `${(dz['Low Severity'] / dz.total * 100).toFixed(0)}% <small>of Defense Zone</small>` : '—', l: dz ? `WUI Defense Zone most likely to burn at low severity, zone as mapped (${fmt(dz.total)} acres)` : 'WUI Defense Zone' },
+        { v: `${fmt(treated)} <small>acres treated</small>`, l: `Forest fuels treated and reported to the EIP, 2007 to ${TREATMENTS.reportedThrough}` },
+        { v: fires.rows.length ? `${fmt(fires.rows.length)} <small>wildfires</small>` : '—', l: `Fires reaching the Basin since 1980 in the perimeter record${recent ? `; most recent named fire: ${recent.name} (${recent.year})` : ''}` },
+      ];
+      document.getElementById('glance-tiles').innerHTML = tiles.map(t => `<div class="tile"><div class="v">${t.v}</div><div class="l">${esc(t.l)}</div></div>`).join('');
+      document.getElementById('glance-source').textContent = `Modeled severity ${liveSeverity ? 'queried live' : `from a snapshot captured ${SNAPSHOT.captured}`} from the TRPA Fire map service (Regional Resource Kit, 2023 vintage). The management zone layer includes wilderness and the urban footprint of the WUI Defense Zone; the threshold evaluation of the Defense Zone uses its 44,920-acre wildland portion. Fire perimeters ${liveFires ? 'queried live' : 'from a snapshot'}; the perimeter record currently extends through ${fires.historyThrough ?? 'the last published season'}.`;
+    }
+
+    function renderSeverity() {
+      const zt = zoneTable(severity).filter(z => z.total >= 1000);
+      const traces = SEVERITIES.map(s => ({
+        type: 'bar', orientation: 'h', name: `${SEV_LABEL[s]} severity`, y: zt.map(z => z.zone), x: zt.map(z => z[s] / z.total * 100),
+        marker: { color: SEV_COLOR[s], line: { width: 0 } },
+        text: zt.map(z => { const p = z[s] / z.total * 100; return p >= 6 ? `${p.toFixed(0)}%` : ''; }), textposition: 'inside', insidetextanchor: 'middle',
+        textfont: { size: 12, color: s === 'Moderate Severity' ? INK : '#FFFFFF' },
+        customdata: zt.map(z => [z[s], z.total]),
+        hovertemplate: `<b>%{y}</b><br>${SEV_LABEL[s]} severity most likely on %{x:.1f}%<br>%{customdata[0]:,.0f} of %{customdata[1]:,.0f} acres<extra></extra>`,
+      }));
+      Plotly.newPlot('severity-plot', traces, {
+        ...BASE_LAYOUT, barmode: 'stack', height: 90 + zt.length * 44, bargap: 0.3,
+        xaxis: { ...BASE_LAYOUT.xaxis, range: [0, 100], ticksuffix: '%', title: { text: 'Share of zone acres', font: { size: 12 } } },
+        yaxis: { ...BASE_LAYOUT.yaxis, autorange: 'reversed' },
+      }, PLOT_CONFIG);
+      const dz = zt.find(z => z.zone === 'WUI Defense Zone'), gf = zt.find(z => z.zone === 'General Forest');
+      document.getElementById('severity-caption').textContent = `Share of each zone where low, moderate, or high severity fire is the most likely outcome under 90th percentile fire weather. ${dz && gf ? `High severity is most likely on ${(dz['High Severity'] / dz.total * 100).toFixed(0)} percent of the WUI Defense Zone as mapped and ${(gf['High Severity'] / gf.total * 100).toFixed(0)} percent of General Forest.` : ''} Areas under 1,000 acres are listed in the table only.`;
+
+      wireToggle('severity', 'severity-plot', 'severity-grid', () => {
+        const all = zoneTable(severity);
+        const tot = { zone: 'All zones', total: all.reduce((a, z) => a + z.total, 0) };
+        for (const s of SEVERITIES) tot[s] = all.reduce((a, z) => a + z[s], 0);
+        buildGrid('severity-grid', [
+          { field: 'zone', headerName: 'Management zone', flex: 1.6, minWidth: 170 },
+          { field: 'Low Severity', headerName: 'Low (acres)', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { field: 'Moderate Severity', headerName: 'Moderate (acres)', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { field: 'High Severity', headerName: 'High (acres)', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { field: 'total', headerName: 'Total acres', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+          { headerName: 'High (%)', type: 'rightAligned', valueGetter: p => p.data['High Severity'] / p.data.total * 100, valueFormatter: p => fmt(p.value, 1) },
+        ], [...all, tot], 'fire-dynamics-severity-by-zone');
+      });
+    }
+
+    function renderTreatments() {
+      const years = TREATMENTS.years;
+      const traces = TZONES.map(z => ({
+        type: 'bar', name: z, x: years.map(String), y: years.map(y => TREATMENTS.acres[z][y] ?? 0),
+        marker: { color: TZONE_COLOR[z], line: { width: 0 } },
+        hovertemplate: `<b>%{x}</b><br>${z}: %{y:,.0f} acres<extra></extra>`,
+      }));
+      Plotly.newPlot('treatments-plot', traces, {
+        ...BASE_LAYOUT, barmode: 'stack', height: 340, bargap: 0.25, hovermode: 'x unified',
+        margin: { ...BASE_LAYOUT.margin, l: 56, b: 72 },
+        xaxis: { ...BASE_LAYOUT.xaxis, showgrid: false, type: 'category', tickangle: -45, tickfont: { size: 11 } },
+        yaxis: { ...BASE_LAYOUT.yaxis, showgrid: true, tickformat: ',d', title: { text: 'Acres treated', font: { size: 12 } } },
+      }, PLOT_CONFIG);
+      const totalByZone = TZONES.map(z => [z, Object.values(TREATMENTS.acres[z]).reduce((a, b) => a + b, 0)]);
+      const grand = totalByZone.reduce((a, [, v]) => a + v, 0);
+      const dzShare = (totalByZone.find(([z]) => z === 'Defense Zone')[1] / grand * 100).toFixed(0);
+      document.getElementById('treatments-caption').textContent = `Acres of forest fuels treated each year by treatment zone, as reported by partner agencies to the EIP Project Tracker. The Defense Zone accounts for ${dzShare} percent of reported treatment since 2007. Reported acres lag the field season, so the most recent years may rise as agencies complete reporting.`;
+
+      wireToggle('treatments', 'treatments-plot', 'treatments-grid', () => {
+        const rows = years.map(y => { const o = { year: y }; let t = 0; for (const z of TZONES) { o[z] = TREATMENTS.acres[z][y] ?? 0; t += o[z]; } o.total = t; return o; });
+        buildGrid('treatments-grid', [
+          { field: 'year', headerName: 'Year', minWidth: 90 },
+          ...TZONES.map(z => ({ field: z, headerName: `${z} (acres)`, type: 'rightAligned', valueFormatter: p => fmt(p.value) })),
+          { field: 'total', headerName: 'Total acres', type: 'rightAligned', valueFormatter: p => fmt(p.value) },
+        ], rows, 'fire-dynamics-fuel-treatments');
+      });
+    }
+
+    function renderFires() {
+      const rows = fires.rows.map(f => ({ name: f.name || 'Unnamed', year: f.year, acres: f.acres, agency: AGENCY[f.agency] ?? f.agency ?? '—', cause: CAUSE[f.cause] ?? (f.cause == null ? '—' : String(f.cause)) }));
+      buildGrid('fires-grid', [
+        { field: 'name', headerName: 'Fire', flex: 1.4, minWidth: 140 },
+        { field: 'year', headerName: 'Year', minWidth: 90, sort: 'desc' },
+        { field: 'acres', headerName: 'Fire size (acres)', type: 'rightAligned', minWidth: 140, valueFormatter: p => fmt(p.value) },
+        { field: 'agency', headerName: 'Protecting agency', flex: 1.3, minWidth: 160 },
+        { field: 'cause', headerName: 'Cause', flex: 1.2, minWidth: 140 },
+      ], rows, 'fire-dynamics-wildfires-since-1980');
+      document.getElementById('fires-caption').textContent = `Wildfire perimeters since 1980 that intersect the Basin. Fire size is the whole perimeter, so fires that started outside the Basin, such as the 2001 Martis Fire, show their full extent. The perimeter record currently runs through ${fires.historyThrough ?? 'the last published season'}; the 2021 Caldor Fire, which burned about 221,800 acres in total and crossed into the south Basin, appears in the burn severity map layer above.`;
+    }
+
+    /* ───────────────────────── MAP ───────────────────────── */
+    const MAP_COPY = {
+      severity: { title: 'Most likely fire severity', caption: 'Each area is colored by the fire severity class with the highest modeled probability under 90th percentile fire weather: low, moderate, or high. Management zone boundaries follow the USFS Lake Tahoe Basin Management Unit zones used in the Multi-Jurisdictional Fuel Reduction and Wildfire Prevention Strategy.' },
+      history: { title: 'Wildfire perimeters', caption: 'Perimeters of recorded wildfires from the CAL FIRE statewide fire history dataset, 1878 to the last published season. The table below lists fires since 1980 that reach the Basin.' },
+      caldor: { title: 'Caldor Fire vegetation burn severity, 2021', caption: 'Post-fire vegetation burn severity for the Caldor Fire, from unburned or very low through high. Observed severity in fires that occur is how the modeled severity products are checked over time.' },
+    };
+
+    function buildMap() {
+      const container = document.getElementById('map');
+      require(['esri/Map', 'esri/views/MapView', 'esri/layers/MapImageLayer', 'esri/widgets/Legend', 'esri/widgets/Home', 'esri/widgets/Expand', 'esri/widgets/Fullscreen'],
+        function (Map, MapView, MapImageLayer, Legend, Home, Expand, Fullscreen) {
+          const fire = new MapImageLayer({
+            url: FIRE_SERVICE,
+            title: 'Fire',
+            sublayers: [
+              { id: CALDOR_LAYER, title: 'Caldor Fire vegetation burn severity (2021)', visible: false, opacity: 0.85 },
+              { id: HISTORY_LAYER, title: 'Wildfire perimeters', visible: false,
+                renderer: { type: 'simple', label: 'Recorded wildfire perimeter', symbol: { type: 'simple-fill', color: [241, 96, 34, 0.25], outline: { color: [156, 62, 39, 1], width: 1.2 } } } },
+              { id: SEVERITY_LAYER, title: 'Most likely fire severity', visible: true, opacity: 0.8,
+                renderer: {
+                  type: 'unique-value', field: 'MostLikelyFireSeverity',
+                  uniqueValueInfos: [
+                    { value: 'Low Severity', label: 'Low severity', symbol: { type: 'simple-fill', color: [0, 125, 195, 0.75], outline: { width: 0 } } },
+                    { value: 'Moderate Severity', label: 'Moderate severity', symbol: { type: 'simple-fill', color: [232, 163, 61, 0.8], outline: { width: 0 } } },
+                    { value: 'High Severity', label: 'High severity', symbol: { type: 'simple-fill', color: [156, 62, 39, 0.8], outline: { width: 0 } } },
+                  ],
+                } },
+            ],
+          });
+          const map = new Map({ basemap: 'topo-vector', layers: [fire] });
+          const view = new MapView({ container, map, center: [-120.03, 39.05], zoom: 10, constraints: { snapToZoom: false } });
+          view.ui.move('zoom', 'top-left');
+          view.ui.add(new Home({ view }), 'top-left');
+          view.ui.add(new Fullscreen({ view }), 'top-left');
+          view.when(() => {
+            const legend = new Legend({ view, layerInfos: [{ layer: fire }] });
+            if (window.innerWidth > 700) view.ui.add(legend, 'top-right');
+            else view.ui.add(new Expand({ view, content: legend, expanded: false, mode: 'drawer', expandIcon: 'legend', expandTooltip: 'Legend' }), 'top-right');
+            container.querySelector('.map-placeholder')?.remove();
+          }).catch(err => {
+            const ph = container.querySelector('.map-placeholder');
+            if (ph) ph.textContent = 'The map could not be loaded. The charts below cover the same information.';
+            console.error('Map failed to load', err);
+          });
+          view.on('mouse-wheel', evt => { evt.stopPropagation(); });
+
+          const byKey = { severity: SEVERITY_LAYER, history: HISTORY_LAYER, caldor: CALDOR_LAYER };
+          document.querySelector('[data-toggle="maplayer"]').addEventListener('calciteSegmentedControlChange', (e) => {
+            const key = e.target.selectedItem?.value || e.target.value;
+            for (const [k, id] of Object.entries(byKey)) fire.findSublayerById(id).visible = (k === key);
+            // Keep perimeters drawn over the Caldor severity so the fire's outline stays legible.
+            if (key === 'caldor') fire.findSublayerById(HISTORY_LAYER).visible = true;
+            document.getElementById('map-title').textContent = MAP_COPY[key].title;
+            document.getElementById('map-caption').textContent = MAP_COPY[key].caption;
+          });
+        });
+    }
+
+    /* ───────────────────────── IFRAME HEIGHT ───────────────────────── */
+    function notifyHeight() {
+      if (window.parent === window) return;
+      window.parent.postMessage({ type: 'fire-dynamics-monitoring:height', height: document.documentElement.scrollHeight }, '*');
+    }
+    new ResizeObserver(() => notifyHeight()).observe(document.body);
+
+    /* ───────────────────────── INIT ───────────────────────── */
+    (async function init() {
+      buildMap();
+      renderTreatments();
+      const [sevResult, fireResult] = await Promise.allSettled([loadSeverity(), loadFires()]);
+      if (sevResult.status === 'fulfilled') { severity = sevResult.value; liveSeverity = true; } else console.warn('Severity query failed; using snapshot.', sevResult.reason);
+      if (fireResult.status === 'fulfilled') { fires = fireResult.value; liveFires = true; } else console.warn('Fire history query failed; using snapshot.', fireResult.reason);
+      renderGlance();
+      renderSeverity();
+      renderFires();
+      document.querySelector('[data-source-line="severity"]').textContent = `Source: TRPA Fire map service, Fire Severity Probability by Management Zone, ${liveSeverity ? 'queried at page load' : `snapshot captured ${SNAPSHOT.captured}`}. Severity from the Sierra Nevada Regional Resource Kit (2023 vintage).`;
+      document.querySelector('[data-source-line="treatments"]').textContent = `Source: EIP Project Tracker, acres of forest fuels treated by treatment zone, as reported through ${TREATMENTS.reportedThrough}. Carried in this page; refresh from the tracker when the next reporting year closes.`;
+      document.querySelector('[data-source-line="fires"]').textContent = `Source: TRPA Fire map service, Fire History (CAL FIRE statewide perimeters), ${liveFires ? 'queried at page load' : `snapshot captured ${SNAPSHOT.captured}`}.`;
+      document.getElementById('footer-vintage').textContent = `Modeled severity: Regional Resource Kit 2023, ${liveSeverity ? 'queried live from maps.trpa.org' : `snapshot captured ${SNAPSHOT.captured}`}. Fire perimeters through ${fires.historyThrough ?? 'the last published season'}. Treatments reported through ${TREATMENTS.reportedThrough}.`;
+      notifyHeight();
+    })();
+  </script>
+</body>
+</html>

@@ -40,90 +40,135 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
+    /* Tokens sampled from monitoring.laketahoeinfo.org on Oct. 4, 2026 (program 83 and the
+       programs list): Lexend Deca 16px/1.4, card text #333, labels #3d3d3d on #efefef, card
+       headers and buttons #789440, page titles #3e72b0, links #337ab7, muted text #8a8a8a,
+       card border #efefef at 4px radius, card body #f7f7f7, AG Grid header #666 on 14px. */
     :root {
-      --eip-blue:   #007DC3;
-      --eip-green:  #6EBE44;
-      --eip-orange: #F16022;
-      --eip-navy:   #0B1F41;
-      --lti-green:  #789440;   /* Monitoring Dashboard section accent, sampled from the host */
-      --ink:        #0B1F41;
-      --ink-2:      #3D4A5C;
-      --ink-muted:  #6B7280;
-      --line:       #DDE3EA;
-      --surface:    #FFFFFF;
-      --surface-2:  #F6F8FA;
-      --radius:     8px;
-      --font:       'Lexend Deca', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --lti-green:      #789440;
+      --lti-green-dark: #61783a;
+      --lti-primary:    #3e72b0;
+      --lti-link:       #337ab7;
+      --lti-orange:     #e49937;
+      --lti-navy:       #2f3f56;
+      --gray-50:  #fafafa;
+      --gray-100: #efefef;
+      --gray-200: #dcdcdc;
+      --gray-300: #bdbdbd;
+      --gray-500: #7c7c7c;
+      --gray-600: #656565;
+      --gray-900: #3d3d3d;
+      --ink:        #333333;
+      --ink-2:      #3d3d3d;
+      --ink-muted:  #8a8a8a;
+      --line:       #efefef;
+      --line-2:     rgba(0, 0, 0, 0.15);
+      --surface:    #ffffff;
+      --surface-2:  #f7f7f7;
+      --radius:     4px;
+      --font:       'Lexend Deca', sans-serif;
       --gutter:     16px;
+      /* Calcite components (segmented controls, buttons, loaders) take the host green. */
+      --calcite-ui-brand: #789440; --calcite-ui-brand-hover: #61783a; --calcite-ui-brand-press: #4e6230;
+      --calcite-color-brand: #789440; --calcite-color-brand-hover: #61783a; --calcite-color-brand-press: #4e6230;
+      --calcite-sans-family: 'Lexend Deca', sans-serif;
+      --calcite-ui-text-1: #333333; --calcite-ui-text-2: #3d3d3d; --calcite-ui-text-3: #656565;
+      --calcite-color-text-1: #333333; --calcite-color-text-2: #3d3d3d; --calcite-color-text-3: #656565;
     }
     * { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0;
-      font-family: var(--font); font-size: 15px; line-height: 1.55;
-      color: var(--ink); background: var(--surface);
+      font-family: var(--font); font-size: 16px; line-height: 1.4;
+      color: var(--ink); background: var(--surface-2);   /* matches the host card body (#f7f7f7) the embed sits in */
       -webkit-font-smoothing: antialiased;
     }
-    a { color: var(--eip-blue); }
+    a { color: var(--lti-link); }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0.25rem var(--gutter) 1rem; }
-    h2, h3 { margin: 0; line-height: 1.25; color: var(--ink); }
-    h2 { font-size: 1.15rem; font-weight: 700; }
+    h2, h3 { margin: 0; line-height: 1.3; color: var(--gray-900); }
+    h2 { font-size: 1.125rem; font-weight: 600; }
     h3 { font-size: 1rem; font-weight: 600; }
     p { margin: 0 0 0.6rem; }
     .muted { color: var(--ink-muted); }
-    .small { font-size: 0.85rem; }
+    .small { font-size: 0.875rem; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .hidden { display: none !important; }
 
-    .section { padding: 0.9rem 0 0.4rem; }
-    .section + .section { border-top: 1px solid var(--line); }
+    .section { padding: 1rem 0 0.5rem; }
+    .section + .section { border-top: 1px solid var(--line-2); }
     .section-label {
-      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      font-size: 0.875rem; font-weight: 700; text-transform: uppercase;
       color: var(--lti-green); margin-bottom: 0.15rem;
     }
-    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
-    .section-head p { color: var(--ink-2); margin: 0.25rem 0 0; max-width: 780px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .section-head p { color: var(--ink); margin: 0.25rem 0 0; max-width: 780px; }
 
     .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin: 0.5rem 0 0.25rem; }
-    .tile { background: var(--surface-2); border-radius: var(--radius); padding: 0.7rem 0.85rem; border-left: 4px solid var(--tile-accent, var(--lti-green)); min-width: 0; }
-    .tile .v { font-size: 1.45rem; font-weight: 700; line-height: 1.15; }
-    .tile .v small { font-size: 0.8rem; font-weight: 500; color: var(--ink-muted); }
-    .tile .l { font-size: 0.78rem; color: var(--ink-2); margin-top: 0.15rem; }
-    .tile.pending { --tile-accent: #C9D1DB; }
+    .tile { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--tile-accent, var(--lti-green)); border-radius: var(--radius); padding: 0.7rem 0.85rem; min-width: 0; }
+    .tile .v { font-size: 1.4rem; font-weight: 700; line-height: 1.15; color: var(--gray-900); }
+    .tile .v small { font-size: 0.8rem; font-weight: 500; color: var(--gray-600); }
+    .tile .l { font-size: 0.8rem; color: var(--gray-600); margin-top: 0.15rem; }
+    .tile.pending { --tile-accent: var(--gray-300); }
     .tile.pending .v { color: var(--ink-muted); font-weight: 500; font-size: 1.05rem; }
 
     .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
-    @media (min-width: 820px) { .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .span-2 { grid-column: 1 / -1; } }
+    .grid-3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+    @media (min-width: 820px) {
+      .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .span-2 { grid-column: 1 / -1; }
+    }
 
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1rem; min-width: 0; }
-    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
-    .card-head h3 { flex: 1 1 auto; }
-    .card .caption { font-size: 0.8rem; color: var(--ink-muted); margin: 0.4rem 0 0; }
-    .card .source { font-size: 0.76rem; color: var(--ink-muted); margin: 0.3rem 0 0; }
-    .plot { width: 100%; min-height: 240px; }
+    /* Cards follow the host: #efefef label bar (its h3.popover-header) over a white body. */
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 0 0.75rem; min-width: 0; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; background: var(--gray-100); color: var(--gray-900); padding: 0.5rem 1rem; border-radius: var(--radius) var(--radius) 0 0; margin: 0 0 0.6rem; }
+    .card-head h3 { flex: 1 1 auto; font-size: 1rem; font-weight: 600; color: var(--gray-900); }
+    .card > :not(.card-head) { margin-left: 1rem; margin-right: 1rem; }
+    .card .caption { font-size: 0.85rem; color: var(--gray-600); margin: 0.5rem 1rem 0; }
+    .card .source { font-size: 0.8rem; color: var(--ink-muted); margin: 0.3rem 1rem 0; }
+    .plot { width: auto; min-height: 240px; }   /* auto, not 100%: the card gives it side margins */
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.85rem; color: var(--ink); margin: 0 1rem 0.25rem; }
+    .chart-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .chart-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; flex: 0 0 auto; }
 
-    .map-view { width: 100%; height: 440px; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); position: relative; }
-    .map-view .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 0.85rem; gap: 0.5rem; }
+    .def { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 0 0.75rem; font-size: 0.9rem; }
+    .def h3 { background: var(--gray-100); color: var(--gray-900); font-size: 0.95rem; padding: 0.5rem 1rem; margin: 0 0 0.5rem; border-radius: var(--radius) var(--radius) 0 0; }
+    .def p { margin: 0 1rem 0.35rem; color: var(--ink); }
+    .def p:last-child { margin-bottom: 0; }
+    .def table { width: calc(100% - 2rem); margin: 0.3rem 1rem 0; border-collapse: collapse; font-size: 0.82rem; }
+    .def th, .def td { text-align: left; padding: 0.25rem 0.35rem 0.25rem 0; border-bottom: 1px solid var(--line-2); color: var(--ink); }
+    .def th { font-weight: 600; color: var(--gray-900); }
+    .def td.num, .def th.num { text-align: right; padding-right: 0; }
+    .def .small { margin-top: 0.3rem; }
+
+    .map-view { width: auto; height: 460px; border-radius: var(--radius); overflow: hidden; background: var(--gray-50); position: relative; border: 1px solid var(--line-2); }
+    .map-view .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); font-size: 0.875rem; gap: 0.5rem; }
 
     .empty {
       display: flex; gap: 0.9rem; align-items: flex-start;
-      background: var(--surface-2); border: 1px dashed #C9D1DB; border-radius: var(--radius);
-      padding: 0.9rem 1rem; color: var(--ink-2); font-size: 0.9rem;
+      background: var(--gray-50); border: 1px dashed var(--gray-300); border-radius: var(--radius);
+      padding: 0.9rem 1rem; color: var(--ink); font-size: 0.9rem;
     }
     .empty calcite-icon { flex: 0 0 auto; color: var(--ink-muted); margin-top: 2px; }
     .empty ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
     .empty li { margin-bottom: 0.2rem; }
 
+    /* AG Grid: 14px cells like the host's programs table, with the #efefef label-bar header used elsewhere in the embed,
+       alternating #fafafa rows, 15 percent black row borders, 4px wrapper radius. */
     .ag-theme-quartz {
-      --ag-font-family: var(--font); --ag-font-size: 13px;
-      --ag-header-background-color: var(--surface-2); --ag-border-color: var(--line);
-      --ag-row-border-color: var(--line); --ag-foreground-color: var(--ink); --ag-header-foreground-color: var(--ink);
+      --ag-font-family: var(--font); --ag-font-size: 14px;
+      --ag-header-background-color: #efefef; --ag-header-foreground-color: #3d3d3d;
+      --ag-foreground-color: #181d1f; --ag-background-color: #ffffff; --ag-odd-row-background-color: #fafafa;
+      --ag-border-color: rgba(0, 0, 0, 0.1); --ag-row-border-color: rgba(0, 0, 0, 0.15);
+      --ag-wrapper-border-radius: 4px; --ag-header-height: 40px; --ag-row-height: 40px;
+      --ag-header-column-resize-handle-color: rgba(0, 0, 0, 0.15);
+      --ag-icon-font-color-header: #656565; --ag-header-cell-hover-background-color: #e3e3e3; --ag-header-font-weight: 600;
     }
-    .footer { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-muted); }
+    .footer { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line-2); font-size: 0.875rem; color: var(--gray-600); }
     .footer .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
 
     @media (max-width: 599px) {
-      html, body { font-size: 14px; }
-      .map-view { height: 340px; }
+      html, body { font-size: 15px; }
+      .map-view { height: 360px; }
       .tile .v { font-size: 1.25rem; }
     }
   </style>
@@ -282,21 +327,25 @@
     };
 
     /* ───────────────────────── HELPERS ───────────────────────── */
-    const FONT = 'Lexend Deca, system-ui, sans-serif';
-    const INK = '#0B1F41';
-    const BLUE = '#007DC3';
+    const FONT = 'Lexend Deca, sans-serif';
+    const INK = '#333333';
+    const BLUE = '#3e72b0';   // LT Info --primary
     const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
     const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const BASE_LAYOUT = {
       font: { family: FONT, color: INK, size: 13 },
       paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
       margin: { t: 8, r: 70, b: 40, l: 10 },
-      xaxis: { gridcolor: '#E6EAF0', zerolinecolor: '#C9D1DB', linecolor: '#C9D1DB', tickformat: ',d', title: { text: 'Acres', font: { size: 12 } } },
-      yaxis: { gridcolor: '#E6EAF0', showgrid: false, automargin: true, autorange: 'reversed', tickfont: { size: 12 } },
-      hoverlabel: { font: { family: FONT }, bgcolor: '#FFFFFF', bordercolor: '#C9D1DB' },
+      xaxis: { gridcolor: '#dcdcdc', zerolinecolor: '#bdbdbd', linecolor: '#bdbdbd', automargin: true, tickformat: ',d', title: { text: 'Acres', font: { size: 12 } } },
+      yaxis: { gridcolor: '#dcdcdc', showgrid: false, automargin: true, autorange: 'reversed', tickfont: { size: 12 } },
+      hoverlabel: { font: { family: FONT }, bgcolor: '#FFFFFF', bordercolor: '#bdbdbd' },
       bargap: 0.35,
+      uniformtext: { minsize: 9, mode: 'hide' },   // outside labels hide rather than overlap when narrow
     };
     const PLOT_CONFIG = { responsive: true, displayModeBar: false, displaylogo: false };
+    // Break long category labels onto two lines when the viewport is narrow.
+    const narrow = () => document.documentElement.clientWidth < 640;
+    const wrapLabel = (s) => { if (!narrow() || s.length <= 14) return s; const i = s.lastIndexOf(' ', Math.ceil(s.length / 2) + 3); return i > 0 ? s.slice(0, i) + '<br>' + s.slice(i + 1) : s; };
 
     async function sumBy(field) {
       const params = new URLSearchParams({
@@ -342,7 +391,7 @@
       const total = rows.reduce((a, r) => a + r.acres, 0);
       const trace = {
         type: 'bar', orientation: 'h',
-        y: rows.map(r => r.label), x: rows.map(r => r.acres),
+        y: rows.map(r => wrapLabel(r.label)), x: rows.map(r => r.acres),
         marker: { color, line: { width: 0 } }, width: 0.55,
         text: rows.map(r => `${fmt(r.acres)} ac · ${(r.acres / total * 100).toFixed(r.acres / total < 0.01 ? 1 : 0)}%`),
         textposition: 'outside', textfont: { size: 11, color: INK }, cliponaxis: false,
@@ -495,12 +544,12 @@
               renderer: {
                 type: 'unique-value',
                 field: 'REGIONAL_DOMINANCE_TYPE_1',
-                defaultSymbol: { type: 'simple-fill', color: [0, 125, 195, 0.55], outline: { width: 0 } },
+                defaultSymbol: { type: 'simple-fill', color: [62, 114, 176, 0.55], outline: { width: 0 } },
                 defaultLabel: 'Subalpine conifer mix',
                 uniqueValueInfos: [
-                  { value: 'WB', label: 'Whitebark pine', symbol: { type: 'simple-fill', color: [241, 96, 34, 0.75], outline: { width: 0 } } },
-                  { value: 'WW', label: 'Western white pine', symbol: { type: 'simple-fill', color: [74, 97, 24, 0.75], outline: { width: 0 } } },
-                  { value: 'MH', label: 'Mountain hemlock', symbol: { type: 'simple-fill', color: [181, 166, 76, 0.85], outline: { width: 0 } } },
+                  { value: 'WB', label: 'Whitebark pine', symbol: { type: 'simple-fill', color: [228, 153, 55, 0.8], outline: { width: 0 } } },
+                  { value: 'WW', label: 'Western white pine', symbol: { type: 'simple-fill', color: [24, 140, 22, 0.75], outline: { width: 0 } } },
+                  { value: 'MH', label: 'Mountain hemlock', symbol: { type: 'simple-fill', color: [205, 171, 7, 0.85], outline: { width: 0 } } },
                 ],
               },
             }],

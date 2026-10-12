@@ -1,0 +1,61 @@
+whr_type,whr_name,need_code,need_class,acres
+RFR,Red Fir,1,High vegetation severity only,250.64
+RFR,Red Fir,3,High vegetation and high soil severity,0.89
+RFR,Red Fir,5,High vegetation severity, beyond 150 m of seed,488.60
+RFR,Red Fir,7,High vegetation and soil severity, beyond 150 m of seed,11.34
+WFR,White Fir,1,High vegetation severity only,1.33
+WFR,White Fir,3,High vegetation and high soil severity,0.00
+WFR,White Fir,5,High vegetation severity, beyond 150 m of seed,0.00
+WFR,White Fir,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+MCP,Montane Chaparral,1,High vegetation severity only,157.23
+MCP,Montane Chaparral,3,High vegetation and high soil severity,1.11
+MCP,Montane Chaparral,5,High vegetation severity, beyond 150 m of seed,110.75
+MCP,Montane Chaparral,7,High vegetation and soil severity, beyond 150 m of seed,3.11
+SCN,Subalpine Conifer,1,High vegetation severity only,94.30
+SCN,Subalpine Conifer,3,High vegetation and high soil severity,0.00
+SCN,Subalpine Conifer,5,High vegetation severity, beyond 150 m of seed,107.64
+SCN,Subalpine Conifer,7,High vegetation and soil severity, beyond 150 m of seed,0.22
+BAR,Barren,1,High vegetation severity only,6.00
+BAR,Barren,3,High vegetation and high soil severity,0.00
+BAR,Barren,5,High vegetation severity, beyond 150 m of seed,3.56
+BAR,Barren,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+WTM,Wet Meadow,1,High vegetation severity only,0.22
+WTM,Wet Meadow,3,High vegetation and high soil severity,0.00
+WTM,Wet Meadow,5,High vegetation severity, beyond 150 m of seed,0.00
+WTM,Wet Meadow,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+URB,Urban,1,High vegetation severity only,2.89
+URB,Urban,3,High vegetation and high soil severity,0.00
+URB,Urban,5,High vegetation severity, beyond 150 m of seed,0.89
+URB,Urban,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+MHC,Montane Hardwood-Conifer,1,High vegetation severity only,2.67
+MHC,Montane Hardwood-Conifer,3,High vegetation and high soil severity,0.00
+MHC,Montane Hardwood-Conifer,5,High vegetation severity, beyond 150 m of seed,0.22
+MHC,Montane Hardwood-Conifer,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+JPN,Jeffrey Pine,1,High vegetation severity only,348.72
+JPN,Jeffrey Pine,3,High vegetation and high soil severity,2.89
+JPN,Jeffrey Pine,5,High vegetation severity, beyond 150 m of seed,348.05
+JPN,Jeffrey Pine,7,High vegetation and soil severity, beyond 150 m of seed,32.69
+LPN,Lodgepole Pine,1,High vegetation severity only,40.48
+LPN,Lodgepole Pine,3,High vegetation and high soil severity,0.00
+LPN,Lodgepole Pine,5,High vegetation severity, beyond 150 m of seed,42.03
+LPN,Lodgepole Pine,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+SMC,Sierran Mixed Conifer,1,High vegetation severity only,985.88
+SMC,Sierran Mixed Conifer,3,High vegetation and high soil severity,36.70
+SMC,Sierran Mixed Conifer,5,High vegetation severity, beyond 150 m of seed,1576.78
+SMC,Sierran Mixed Conifer,7,High vegetation and soil severity, beyond 150 m of seed,136.77
+SGB,Sagebrush,1,High vegetation severity only,0.22
+SGB,Sagebrush,3,High vegetation and high soil severity,0.00
+SGB,Sagebrush,5,High vegetation severity, beyond 150 m of seed,0.00
+SGB,Sagebrush,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+EPN,Eastside Pine,1,High vegetation severity only,1.78
+EPN,Eastside Pine,3,High vegetation and high soil severity,0.00
+EPN,Eastside Pine,5,High vegetation severity, beyond 150 m of seed,0.00
+EPN,Eastside Pine,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+ASP,Aspen,1,High vegetation severity only,2.89
+ASP,Aspen,3,High vegetation and high soil severity,0.00
+ASP,Aspen,5,High vegetation severity, beyond 150 m of seed,0.00
+ASP,Aspen,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+ADS,ADS,1,High vegetation severity only,4.67
+ADS,ADS,3,High vegetation and high soil severity,0.00
+ADS,ADS,5,High vegetation severity, beyond 150 m of seed,0.89
+ADS,ADS,7,High vegetation and soil severity, beyond 150 m of seed,0.00

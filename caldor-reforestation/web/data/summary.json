@@ -1,0 +1,2683 @@
+{
+ "generated": "2026-10-11",
+ "fire": "Caldor Fire, 2021 (CA-ENF-024030)",
+ "perimeter_acres": 221905.26808193696,
+ "basin_acres": 9930.57362587128,
+ "cell_m": 30,
+ "seed_distance_threshold_m": 150,
+ "seed_distance_bands_m": [
+  50,
+  100,
+  120,
+  150,
+  200,
+  300
+ ],
+ "patch_size_classes_acres": [
+  10,
+  100,
+  200
+ ],
+ "seed_source": {
+  "canopy_cover_min_pct": 25,
+  "require_conifer_type": true,
+  "include_outside_perimeter": true
+ },
+ "crosstab": [
+  {
+   "veg": 0,
+   "veg_class": "0",
+   "soil": 1,
+   "soil_class": "Unburned / Very Low",
+   "acres": 0.9
+  },
+  {
+   "veg": 0,
+   "veg_class": "0",
+   "soil": 2,
+   "soil_class": "Low",
+   "acres": 0.2
+  },
+  {
+   "veg": 0,
+   "veg_class": "0",
+   "soil": 3,
+   "soil_class": "Moderate",
+   "acres": 0.0
+  },
+  {
+   "veg": 0,
+   "veg_class": "0",
+   "soil": 4,
+   "soil_class": "High",
+   "acres": 0.0
+  },
+  {
+   "veg": 1,
+   "veg_class": "Unburned / Very Low",
+   "soil": 1,
+   "soil_class": "Unburned / Very Low",
+   "acres": 1216.3
+  },
+  {
+   "veg": 1,
+   "veg_class": "Unburned / Very Low",
+   "soil": 2,
+   "soil_class": "Low",
+   "acres": 946.5
+  },
+  {
+   "veg": 1,
+   "veg_class": "Unburned / Very Low",
+   "soil": 3,
+   "soil_class": "Moderate",
+   "acres": 49.4
+  },
+  {
+   "veg": 1,
+   "veg_class": "Unburned / Very Low",
+   "soil": 4,
+   "soil_class": "High",
+   "acres": 9.8
+  },
+  {
+   "veg": 2,
+   "veg_class": "Low",
+   "soil": 1,
+   "soil_class": "Unburned / Very Low",
+   "acres": 100.1
+  },
+  {
+   "veg": 2,
+   "veg_class": "Low",
+   "soil": 2,
+   "soil_class": "Low",
+   "acres": 1271.9
+  },
+  {
+   "veg": 2,
+   "veg_class": "Low",
+   "soil": 3,
+   "soil_class": "Moderate",
+   "acres": 101.9
+  },
+  {
+   "veg": 2,
+   "veg_class": "Low",
+   "soil": 4,
+   "soil_class": "High",
+   "acres": 2.4
+  },
+  {
+   "veg": 3,
+   "veg_class": "Moderate",
+   "soil": 1,
+   "soil_class": "Unburned / Very Low",
+   "acres": 16.5
+  },
+  {
+   "veg": 3,
+   "veg_class": "Moderate",
+   "soil": 2,
+   "soil_class": "Low",
+   "acres": 876.0
+  },
+  {
+   "veg": 3,
+   "veg_class": "Moderate",
+   "soil": 3,
+   "soil_class": "Moderate",
+   "acres": 306.2
+  },
+  {
+   "veg": 3,
+   "veg_class": "Moderate",
+   "soil": 4,
+   "soil_class": "High",
+   "acres": 0.7
+  },
+  {
+   "veg": 4,
+   "veg_class": "High",
+   "soil": 1,
+   "soil_class": "Unburned / Very Low",
+   "acres": 8.9
+  },
+  {
+   "veg": 4,
+   "veg_class": "High",
+   "soil": 2,
+   "soil_class": "Low",
+   "acres": 916.3
+  },
+  {
+   "veg": 4,
+   "veg_class": "High",
+   "soil": 3,
+   "soil_class": "Moderate",
+   "acres": 3815.2
+  },
+  {
+   "veg": 4,
+   "veg_class": "High",
+   "soil": 4,
+   "soil_class": "High",
+   "acres": 227.1
+  }
+ ],
+ "veg_acres": {
+  "0": 1.1,
+  "Unburned / Very Low": 2221.9,
+  "Low": 1476.3,
+  "Moderate": 1199.4,
+  "High": 4967.4
+ },
+ "high_veg_all_acres": 4967.4,
+ "need_frame": {
+  "prefire_forest_only": true,
+  "canopy_cover_min_pct": 25
+ },
+ "soil_acres": {
+  "Unburned / Very Low": 1342.6,
+  "Low": 4010.9,
+  "Moderate": 4272.6,
+  "High": 240.0
+ },
+ "need": [
+  {
+   "code": 1,
+   "label": "High vegetation severity only",
+   "acres": 1899.9
+  },
+  {
+   "code": 3,
+   "label": "High vegetation and high soil severity",
+   "acres": 41.6
+  },
+  {
+   "code": 5,
+   "label": "High vegetation severity, beyond 150 m of seed",
+   "acres": 2679.4
+  },
+  {
+   "code": 7,
+   "label": "High vegetation and soil severity, beyond 150 m of seed",
+   "acres": 184.1
+  }
+ ],
+ "need_totals": {
+  "high_veg": 4805.1,
+  "high_veg_high_soil": 225.7,
+  "high_veg_far": 2863.6,
+  "all_three": 184.1
+ },
+ "need_by_band": [
+  {
+   "code": 1,
+   "band": 1,
+   "band_label": "0-50 m",
+   "acres": 421.9
+  },
+  {
+   "code": 1,
+   "band": 2,
+   "band_label": "50-100 m",
+   "acres": 857.6
+  },
+  {
+   "code": 1,
+   "band": 3,
+   "band_label": "100-120 m",
+   "acres": 223.1
+  },
+  {
+   "code": 1,
+   "band": 4,
+   "band_label": "120-150 m",
+   "acres": 397.4
+  },
+  {
+   "code": 1,
+   "band": 5,
+   "band_label": "150-200 m",
+   "acres": 0.0
+  },
+  {
+   "code": 1,
+   "band": 6,
+   "band_label": "200-300 m",
+   "acres": 0.0
+  },
+  {
+   "code": 1,
+   "band": 7,
+   "band_label": ">300 m",
+   "acres": 0.0
+  },
+  {
+   "code": 3,
+   "band": 1,
+   "band_label": "0-50 m",
+   "acres": 1.3
+  },
+  {
+   "code": 3,
+   "band": 2,
+   "band_label": "50-100 m",
+   "acres": 18.7
+  },
+  {
+   "code": 3,
+   "band": 3,
+   "band_label": "100-120 m",
+   "acres": 6.7
+  },
+  {
+   "code": 3,
+   "band": 4,
+   "band_label": "120-150 m",
+   "acres": 14.9
+  },
+  {
+   "code": 3,
+   "band": 5,
+   "band_label": "150-200 m",
+   "acres": 0.0
+  },
+  {
+   "code": 3,
+   "band": 6,
+   "band_label": "200-300 m",
+   "acres": 0.0
+  },
+  {
+   "code": 3,
+   "band": 7,
+   "band_label": ">300 m",
+   "acres": 0.0
+  },
+  {
+   "code": 5,
+   "band": 1,
+   "band_label": "0-50 m",
+   "acres": 0.0
+  },
+  {
+   "code": 5,
+   "band": 2,
+   "band_label": "50-100 m",
+   "acres": 0.0
+  },
+  {
+   "code": 5,
+   "band": 3,
+   "band_label": "100-120 m",
+   "acres": 0.0
+  },
+  {
+   "code": 5,
+   "band": 4,
+   "band_label": "120-150 m",
+   "acres": 0.0
+  },
+  {
+   "code": 5,
+   "band": 5,
+   "band_label": "150-200 m",
+   "acres": 440.6
+  },
+  {
+   "code": 5,
+   "band": 6,
+   "band_label": "200-300 m",
+   "acres": 815.5
+  },
+  {
+   "code": 5,
+   "band": 7,
+   "band_label": ">300 m",
+   "acres": 1423.3
+  },
+  {
+   "code": 7,
+   "band": 1,
+   "band_label": "0-50 m",
+   "acres": 0.0
+  },
+  {
+   "code": 7,
+   "band": 2,
+   "band_label": "50-100 m",
+   "acres": 0.0
+  },
+  {
+   "code": 7,
+   "band": 3,
+   "band_label": "100-120 m",
+   "acres": 0.0
+  },
+  {
+   "code": 7,
+   "band": 4,
+   "band_label": "120-150 m",
+   "acres": 0.0
+  },
+  {
+   "code": 7,
+   "band": 5,
+   "band_label": "150-200 m",
+   "acres": 16.2
+  },
+  {
+   "code": 7,
+   "band": 6,
+   "band_label": "200-300 m",
+   "acres": 47.1
+  },
+  {
+   "code": 7,
+   "band": 7,
+   "band_label": ">300 m",
+   "acres": 120.8
+  }
+ ],
+ "dist_bands": [
+  {
+   "band": 1,
+   "label": "0-50 m",
+   "high_veg": 423.2,
+   "high_veg_high_soil": 1.3
+  },
+  {
+   "band": 2,
+   "label": "50-100 m",
+   "high_veg": 876.2,
+   "high_veg_high_soil": 18.7
+  },
+  {
+   "band": 3,
+   "label": "100-120 m",
+   "high_veg": 229.7,
+   "high_veg_high_soil": 6.7
+  },
+  {
+   "band": 4,
+   "label": "120-150 m",
+   "high_veg": 412.3,
+   "high_veg_high_soil": 14.9
+  },
+  {
+   "band": 5,
+   "label": "150-200 m",
+   "high_veg": 456.8,
+   "high_veg_high_soil": 16.2
+  },
+  {
+   "band": 6,
+   "label": "200-300 m",
+   "high_veg": 862.7,
+   "high_veg_high_soil": 47.1
+  },
+  {
+   "band": 7,
+   "label": ">300 m",
+   "high_veg": 1544.1,
+   "high_veg_high_soil": 120.8
+  }
+ ],
+ "dist_stats": {
+  "mean_m": 255.8,
+  "max_m": 1075.4
+ },
+ "patch_size_classes": [
+  {
+   "cls": 1,
+   "label": "0-10 acres",
+   "acres": 158.8
+  },
+  {
+   "cls": 2,
+   "label": "10-100 acres",
+   "acres": 95.9
+  },
+  {
+   "cls": 3,
+   "label": "100-200 acres",
+   "acres": 168.6
+  },
+  {
+   "cls": 4,
+   "label": ">200 acres",
+   "acres": 4544.2
+  }
+ ],
+ "patches": [
+  {
+   "patch_id": 10,
+   "acres_total": 4313.6,
+   "acres_basin": 4313.6,
+   "size_class": 4,
+   "depth_max_m": 785.0,
+   "dist_seed_mean_m": 277.0,
+   "acres_high_soil": 220.8,
+   "acres_far": 2845.3,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 91,
+   "acres_total": 300.5,
+   "acres_basin": 225.1,
+   "size_class": 4,
+   "depth_max_m": 153.0,
+   "dist_seed_mean_m": 127.0,
+   "acres_high_soil": 5.3,
+   "acres_far": 64.7,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 343,
+   "acres_total": 168.6,
+   "acres_basin": 168.6,
+   "size_class": 3,
+   "depth_max_m": 120.0,
+   "dist_seed_mean_m": 106.0,
+   "acres_high_soil": 0.2,
+   "acres_far": 28.5,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 8,
+   "acres_total": 25.8,
+   "acres_basin": 25.8,
+   "size_class": 2,
+   "depth_max_m": 67.0,
+   "dist_seed_mean_m": 56.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 66,
+   "acres_total": 21.6,
+   "acres_basin": 21.6,
+   "size_class": 2,
+   "depth_max_m": 108.0,
+   "dist_seed_mean_m": 66.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 427,
+   "acres_total": 15.6,
+   "acres_basin": 15.6,
+   "size_class": 2,
+   "depth_max_m": 67.0,
+   "dist_seed_mean_m": 73.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.2,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 159,
+   "acres_total": 12.0,
+   "acres_basin": 12.0,
+   "size_class": 2,
+   "depth_max_m": 90.0,
+   "dist_seed_mean_m": 55.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 45,
+   "acres_total": 10.7,
+   "acres_basin": 10.7,
+   "size_class": 2,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 70.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 114,
+   "acres_total": 10.2,
+   "acres_basin": 10.2,
+   "size_class": 2,
+   "depth_max_m": 67.0,
+   "dist_seed_mean_m": 86.0,
+   "acres_high_soil": 0.7,
+   "acres_far": 0.4,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 7,
+   "acres_total": 9.6,
+   "acres_basin": 9.6,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 51.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 135,
+   "acres_total": 9.1,
+   "acres_basin": 9.1,
+   "size_class": 1,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 96.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.4,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 295,
+   "acres_total": 8.0,
+   "acres_basin": 8.0,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 63.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 47,
+   "acres_total": 6.9,
+   "acres_basin": 6.9,
+   "size_class": 1,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 63.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 311,
+   "acres_total": 6.4,
+   "acres_basin": 6.4,
+   "size_class": 1,
+   "depth_max_m": 67.0,
+   "dist_seed_mean_m": 48.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 142,
+   "acres_total": 4992.8,
+   "acres_basin": 5.6,
+   "size_class": 4,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 65.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.4,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 139,
+   "acres_total": 6.9,
+   "acres_basin": 5.3,
+   "size_class": 1,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 310,
+   "acres_total": 4.4,
+   "acres_basin": 4.4,
+   "size_class": 1,
+   "depth_max_m": 67.0,
+   "dist_seed_mean_m": 52.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 54,
+   "acres_total": 4.2,
+   "acres_basin": 4.2,
+   "size_class": 1,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 49.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 426,
+   "acres_total": 4.2,
+   "acres_basin": 4.2,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 56.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 2,
+   "acres_total": 3.8,
+   "acres_basin": 3.8,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 40.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 41,
+   "acres_total": 3.8,
+   "acres_basin": 3.8,
+   "size_class": 1,
+   "depth_max_m": 60.0,
+   "dist_seed_mean_m": 54.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 327,
+   "acres_total": 3.6,
+   "acres_basin": 3.6,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 34.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 118,
+   "acres_total": 2.7,
+   "acres_basin": 2.7,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 40.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 70,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 54.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 99,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 61.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 110,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 55.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 111,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 63.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 115,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 55.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 284,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 63.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 315,
+   "acres_total": 2.4,
+   "acres_basin": 2.4,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 45.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 285,
+   "acres_total": 2.2,
+   "acres_basin": 2.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 61.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 49,
+   "acres_total": 2.0,
+   "acres_basin": 2.0,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 39.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 96,
+   "acres_total": 2.0,
+   "acres_basin": 2.0,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 77.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 101,
+   "acres_total": 2.0,
+   "acres_basin": 2.0,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 104,
+   "acres_total": 1.8,
+   "acres_basin": 1.8,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 46.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 146,
+   "acres_total": 1.8,
+   "acres_basin": 1.8,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 53.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 84,
+   "acres_total": 1.6,
+   "acres_basin": 1.6,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 46.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 89,
+   "acres_total": 1.6,
+   "acres_basin": 1.6,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 34.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 138,
+   "acres_total": 1.6,
+   "acres_basin": 1.6,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 48.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 25,
+   "acres_total": 1.3,
+   "acres_basin": 1.3,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 47.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 34,
+   "acres_total": 1.3,
+   "acres_basin": 1.3,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 32.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 37,
+   "acres_total": 1.3,
+   "acres_basin": 1.3,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 52.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 64,
+   "acres_total": 1.3,
+   "acres_basin": 1.3,
+   "size_class": 1,
+   "depth_max_m": 42.0,
+   "dist_seed_mean_m": 51.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 71,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 38.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 88,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 41.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 119,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 35.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 126,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 68.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 388,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 44.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 452,
+   "acres_total": 1.1,
+   "acres_basin": 1.1,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 49.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 17,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 39.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 30,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 83.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 40,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 50.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 48,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 97.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 85,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 120,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 41.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 302,
+   "acres_total": 0.9,
+   "acres_basin": 0.9,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 23,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 71.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 27,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 74.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 32,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 40.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 52,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 44.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 58,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 51.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 61,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 103.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 87,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 136,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 48.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 157,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 34.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 275,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 38.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 282,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 65.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 283,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 44.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 303,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 336,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 50.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 347,
+   "acres_total": 0.7,
+   "acres_basin": 0.7,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 48.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 9,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 11,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 13,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 76.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 14,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 15,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 76.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 28,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 35,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 42,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 73,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 90,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 139.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 107,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 64.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 122,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 131,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 163,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 55.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 183,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 55.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 300,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 305,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 348,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 414,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 431,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 36.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 482,
+   "acres_total": 0.4,
+   "acres_basin": 0.4,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 135.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 1,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 3,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 4,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 5,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 6,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 12,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 16,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 18,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 19,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 20,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 67.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 21,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 124.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 22,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 24,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 26,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 29,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 31,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 33,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 36,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 38,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 67.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 39,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 43,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 44,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 46,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 50,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 51,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 53,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 85.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 55,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 56,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 67.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 57,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 59,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 60,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 62,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 63,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 65,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 67,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 68,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 69,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 72,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 78,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 82,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 92,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 95,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 97,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 98,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 100,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 106,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 112,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 113,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 117,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 127.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 129,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 134,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 143,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 179,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 60.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 201,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 124.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 236,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 237,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 259,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 270,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 294,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 296,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 301,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 304,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 42.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 320,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 321,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 326,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 331,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Private"
+  },
+  {
+   "patch_id": 346,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 349,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  },
+  {
+   "patch_id": 379,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 124.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Unknown"
+  },
+  {
+   "patch_id": 421,
+   "acres_total": 0.2,
+   "acres_basin": 0.2,
+   "size_class": 1,
+   "depth_max_m": 30.0,
+   "dist_seed_mean_m": 30.0,
+   "acres_high_soil": 0.0,
+   "acres_far": 0.0,
+   "owner_major": "Federal"
+  }
+ ],
+ "patch_count_basin": 162,
+ "by_owner": [
+  {
+   "owner": "Federal",
+   "code": 1,
+   "acres": 1853.7
+  },
+  {
+   "owner": "Federal",
+   "code": 3,
+   "acres": 41.4
+  },
+  {
+   "owner": "Federal",
+   "code": 5,
+   "acres": 2678.3
+  },
+  {
+   "owner": "Federal",
+   "code": 7,
+   "acres": 184.1
+  },
+  {
+   "owner": "Local",
+   "code": 1,
+   "acres": 1.8
+  },
+  {
+   "owner": "Local",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "owner": "Local",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "owner": "Local",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "owner": "Private",
+   "code": 1,
+   "acres": 32.7
+  },
+  {
+   "owner": "Private",
+   "code": 3,
+   "acres": 0.2
+  },
+  {
+   "owner": "Private",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "owner": "Private",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "owner": "Unknown",
+   "code": 1,
+   "acres": 11.8
+  },
+  {
+   "owner": "Unknown",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "owner": "Unknown",
+   "code": 5,
+   "acres": 1.1
+  },
+  {
+   "owner": "Unknown",
+   "code": 7,
+   "acres": 0.0
+  }
+ ],
+ "by_whr": [
+  {
+   "type": "RFR",
+   "name": "Red Fir",
+   "code": 1,
+   "acres": 250.6
+  },
+  {
+   "type": "RFR",
+   "name": "Red Fir",
+   "code": 3,
+   "acres": 0.9
+  },
+  {
+   "type": "RFR",
+   "name": "Red Fir",
+   "code": 5,
+   "acres": 488.6
+  },
+  {
+   "type": "RFR",
+   "name": "Red Fir",
+   "code": 7,
+   "acres": 11.3
+  },
+  {
+   "type": "WFR",
+   "name": "White Fir",
+   "code": 1,
+   "acres": 1.3
+  },
+  {
+   "type": "WFR",
+   "name": "White Fir",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "WFR",
+   "name": "White Fir",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "type": "WFR",
+   "name": "White Fir",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "MCP",
+   "name": "Montane Chaparral",
+   "code": 1,
+   "acres": 157.2
+  },
+  {
+   "type": "MCP",
+   "name": "Montane Chaparral",
+   "code": 3,
+   "acres": 1.1
+  },
+  {
+   "type": "MCP",
+   "name": "Montane Chaparral",
+   "code": 5,
+   "acres": 110.8
+  },
+  {
+   "type": "MCP",
+   "name": "Montane Chaparral",
+   "code": 7,
+   "acres": 3.1
+  },
+  {
+   "type": "SCN",
+   "name": "Subalpine Conifer",
+   "code": 1,
+   "acres": 94.3
+  },
+  {
+   "type": "SCN",
+   "name": "Subalpine Conifer",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "SCN",
+   "name": "Subalpine Conifer",
+   "code": 5,
+   "acres": 107.6
+  },
+  {
+   "type": "SCN",
+   "name": "Subalpine Conifer",
+   "code": 7,
+   "acres": 0.2
+  },
+  {
+   "type": "BAR",
+   "name": "Barren",
+   "code": 1,
+   "acres": 6.0
+  },
+  {
+   "type": "BAR",
+   "name": "Barren",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "BAR",
+   "name": "Barren",
+   "code": 5,
+   "acres": 3.6
+  },
+  {
+   "type": "BAR",
+   "name": "Barren",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "WTM",
+   "name": "Wet Meadow",
+   "code": 1,
+   "acres": 0.2
+  },
+  {
+   "type": "WTM",
+   "name": "Wet Meadow",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "WTM",
+   "name": "Wet Meadow",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "type": "WTM",
+   "name": "Wet Meadow",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "URB",
+   "name": "Urban",
+   "code": 1,
+   "acres": 2.9
+  },
+  {
+   "type": "URB",
+   "name": "Urban",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "URB",
+   "name": "Urban",
+   "code": 5,
+   "acres": 0.9
+  },
+  {
+   "type": "URB",
+   "name": "Urban",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "MHC",
+   "name": "Montane Hardwood-Conifer",
+   "code": 1,
+   "acres": 2.7
+  },
+  {
+   "type": "MHC",
+   "name": "Montane Hardwood-Conifer",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "MHC",
+   "name": "Montane Hardwood-Conifer",
+   "code": 5,
+   "acres": 0.2
+  },
+  {
+   "type": "MHC",
+   "name": "Montane Hardwood-Conifer",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "JPN",
+   "name": "Jeffrey Pine",
+   "code": 1,
+   "acres": 348.7
+  },
+  {
+   "type": "JPN",
+   "name": "Jeffrey Pine",
+   "code": 3,
+   "acres": 2.9
+  },
+  {
+   "type": "JPN",
+   "name": "Jeffrey Pine",
+   "code": 5,
+   "acres": 348.0
+  },
+  {
+   "type": "JPN",
+   "name": "Jeffrey Pine",
+   "code": 7,
+   "acres": 32.7
+  },
+  {
+   "type": "LPN",
+   "name": "Lodgepole Pine",
+   "code": 1,
+   "acres": 40.5
+  },
+  {
+   "type": "LPN",
+   "name": "Lodgepole Pine",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "LPN",
+   "name": "Lodgepole Pine",
+   "code": 5,
+   "acres": 42.0
+  },
+  {
+   "type": "LPN",
+   "name": "Lodgepole Pine",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "SMC",
+   "name": "Sierran Mixed Conifer",
+   "code": 1,
+   "acres": 985.9
+  },
+  {
+   "type": "SMC",
+   "name": "Sierran Mixed Conifer",
+   "code": 3,
+   "acres": 36.7
+  },
+  {
+   "type": "SMC",
+   "name": "Sierran Mixed Conifer",
+   "code": 5,
+   "acres": 1576.8
+  },
+  {
+   "type": "SMC",
+   "name": "Sierran Mixed Conifer",
+   "code": 7,
+   "acres": 136.8
+  },
+  {
+   "type": "SGB",
+   "name": "Sagebrush",
+   "code": 1,
+   "acres": 0.2
+  },
+  {
+   "type": "SGB",
+   "name": "Sagebrush",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "SGB",
+   "name": "Sagebrush",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "type": "SGB",
+   "name": "Sagebrush",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "EPN",
+   "name": "Eastside Pine",
+   "code": 1,
+   "acres": 1.8
+  },
+  {
+   "type": "EPN",
+   "name": "Eastside Pine",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "EPN",
+   "name": "Eastside Pine",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "type": "EPN",
+   "name": "Eastside Pine",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "ASP",
+   "name": "Aspen",
+   "code": 1,
+   "acres": 2.9
+  },
+  {
+   "type": "ASP",
+   "name": "Aspen",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "ASP",
+   "name": "Aspen",
+   "code": 5,
+   "acres": 0.0
+  },
+  {
+   "type": "ASP",
+   "name": "Aspen",
+   "code": 7,
+   "acres": 0.0
+  },
+  {
+   "type": "ADS",
+   "name": "ADS",
+   "code": 1,
+   "acres": 4.7
+  },
+  {
+   "type": "ADS",
+   "name": "ADS",
+   "code": 3,
+   "acres": 0.0
+  },
+  {
+   "type": "ADS",
+   "name": "ADS",
+   "code": 5,
+   "acres": 0.9
+  },
+  {
+   "type": "ADS",
+   "name": "ADS",
+   "code": 7,
+   "acres": 0.0
+  }
+ ]
+}

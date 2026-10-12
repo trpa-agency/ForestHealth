@@ -1,0 +1,17 @@
+ownership,need_code,need_class,acres
+Federal,1,High vegetation severity only,1853.66
+Federal,3,High vegetation and high soil severity,41.37
+Federal,5,High vegetation severity, beyond 150 m of seed,2678.30
+Federal,7,High vegetation and soil severity, beyond 150 m of seed,184.14
+Local,1,High vegetation severity only,1.78
+Local,3,High vegetation and high soil severity,0.00
+Local,5,High vegetation severity, beyond 150 m of seed,0.00
+Local,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+Private,1,High vegetation severity only,32.69
+Private,3,High vegetation and high soil severity,0.22
+Private,5,High vegetation severity, beyond 150 m of seed,0.00
+Private,7,High vegetation and soil severity, beyond 150 m of seed,0.00
+Unknown,1,High vegetation severity only,11.79
+Unknown,3,High vegetation and high soil severity,0.00
+Unknown,5,High vegetation severity, beyond 150 m of seed,1.11
+Unknown,7,High vegetation and soil severity, beyond 150 m of seed,0.00

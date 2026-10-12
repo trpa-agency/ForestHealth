@@ -1,0 +1,7 @@
+# Scratch geodatabase, fetched REST responses, logs. Regenerate with scripts/reforestation_need.py.
+/data/
+/logs/
+*.gdb/
+*.lock
+__pycache__/
+*.pyc

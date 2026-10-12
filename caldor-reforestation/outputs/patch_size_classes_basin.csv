@@ -1,0 +1,5 @@
+size_class,patch_size,acres_in_basin
+1,0-10 acres,158.79
+2,10-100 acres,95.85
+3,100-200 acres,168.58
+4,>200 acres,4544.19

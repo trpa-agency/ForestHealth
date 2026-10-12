@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="eip">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Caldor Reforestation Need - TRPA</title>
+  <meta name="description" content="Where might we need to replant trees in the Tahoe Basin part of the 2021 Caldor Fire: high vegetation and soil burn severity overlap, high severity patch sizes, and distance from surviving seed sources." />
+  <link rel="icon" type="image/x-icon" href="https://trpa-agency.github.io/maps/assets/favicon.ico" />
+
+  <!--
+    Caldor reforestation need, Tahoe Regional Planning Agency, Forest Health program.
+    Single file. Reads web/data/summary.json and the GeoJSON beside it, produced by
+    scripts/reforestation_need.py (see CLAUDE.md in this folder for the method).
+
+    Load order matters: Plotly and AG Grid (UMD) before the ArcGIS SDK, whose AMD loader
+    would otherwise swallow them.
+  -->
+  <script type="module" src="https://js.arcgis.com/calcite-components/5.0"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/5.0/calcite.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@33.3.2/dist/ag-grid-community.min.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.31/"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Fallback tokens (EIP layer of trpa-tokens.css). The shared stylesheet linked below
+       overrides them when it loads, so one tool carries the same values as the rest of
+       maps.trpa.gov. */
+    :root {
+      --eip-green: #6EBE44; --eip-blue: #007DC3; --eip-orange: #F16022; --eip-navy: #0B1F41;
+      --eip-green-light: #E8F5E0; --eip-blue-light: #E0F0FA; --eip-orange-light: #FDE8DC;
+      --eip-blue-text: #0068A8; --eip-alert-text: #B5430E;
+      --white: #FFFFFF; --gray-bg: #F4F6F9; --gray-border: #DDE3EA; --gray-text: #5A6577; --gray-muted: #8A93A3;
+      --brand-primary: var(--eip-blue); --brand-primary-text: var(--eip-blue-text); --brand-dark: var(--eip-navy);
+      --brand-accent: var(--eip-orange); --brand-accent-text: var(--eip-alert-text); --brand-text: var(--eip-navy);
+      --brand-font: 'Lexend Deca', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --brand-radius: 10px; --brand-shadow: 0 2px 10px rgba(11, 31, 65, 0.16);
+      --status-danger: #B3261E; --status-success: #2F6B13;
+      --calcite-color-brand: var(--eip-blue-text); --calcite-color-brand-hover: var(--eip-navy); --calcite-font-family: var(--brand-font);
+    }
+  </style>
+  <link rel="stylesheet" href="https://trpa-agency.github.io/maps/assets/trpa-tokens.css" />
+  <style>
+    :root {
+      /* Severity classes, shared by the vegetation and soil layers. */
+      --sev1: #DCE9F5; --sev2: #8FBBE0; --sev3: #F3B64B; --sev4: #B3261E;
+      /* Replanting need. */
+      --need-veg: #F16022; --need-soil: #B3261E; --need-far: #7B3F9E; --need-all: #0B1F41;
+      --seed: #6EBE44;
+      --shadow: var(--brand-shadow); --font: var(--brand-font);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    html, body { height: 100%; font-family: var(--font); color: var(--eip-navy); background: var(--gray-bg); overflow: hidden; }
+    body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; font-size: 14px; }
+    a { color: var(--eip-blue-text); }
+    :focus-visible { outline: 2px solid var(--eip-blue); outline-offset: 2px; }
+    h1, h2, h3 { font-weight: 700; }
+    calcite-button { --calcite-button-corner-radius: 999px; }
+
+    /* ── Header (agency shell) ── */
+    #appHeader { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: 0.45rem 1rem; background: var(--white); border-bottom: 1px solid var(--gray-border); box-shadow: 0 1px 4px rgba(11,31,65,0.06); z-index: 20; }
+    .hdr-brand { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+    .hdr-brand img { height: 36px; width: auto; }
+    .htitle { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+    .hagency { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--eip-blue-text); }
+    .hname { font-size: 0.98rem; font-weight: 700; color: var(--eip-navy); margin: 0; }
+    .hdr-back { font-size: 0.72rem; font-weight: 600; color: var(--gray-text); text-decoration: none; border-left: 1px solid var(--gray-border); padding-left: 0.7rem; white-space: nowrap; }
+    .hdr-back:hover { color: var(--eip-blue-text); }
+    .hdr-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+    .beta-chip { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--eip-alert-text); border: 1px solid var(--eip-alert-text); border-radius: 999px; padding: 0.1rem 0.5rem; }
+
+    /* ── Body: side panel + map column ── */
+    #appBody { flex: 1 1 auto; display: flex; min-height: 0; }
+    #sidePanel { flex: 0 0 clamp(320px, 27vw, 400px); background: var(--white); border-right: 1px solid var(--gray-border); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    #panelScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.9rem 1rem 1.2rem; display: flex; flex-direction: column; gap: 1.1rem; }
+    #panelFooter { flex: 0 0 auto; padding: 0.5rem 1rem 0.7rem; border-top: 1px solid var(--gray-border); font-size: 0.72rem; color: var(--gray-text); line-height: 1.45; }
+    body.panel-collapsed #sidePanel { display: none; }
+    #panelToggle { flex: 0 0 18px; border: none; border-right: 1px solid var(--gray-border); background: var(--white); cursor: pointer; color: var(--gray-muted); padding: 0; }
+    #panelToggle:hover { background: var(--gray-bg); color: var(--eip-blue); }
+    #mapCol { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+    #mapWrap { flex: 1 1 auto; position: relative; min-height: 180px; }
+    #viewDiv { position: absolute; inset: 0; }
+    #mapNote { position: absolute; left: 12px; bottom: 28px; max-width: 420px; background: rgba(255,255,255,0.94); border-radius: 8px; padding: 0.45rem 0.7rem; font-size: 0.74rem; line-height: 1.45; color: var(--eip-navy); box-shadow: var(--shadow); pointer-events: none; }
+    #mapNote b { color: var(--eip-blue-text); }
+
+    /* ── Bottom drawer: charts, table, method ── */
+    #drawer { flex: 0 0 auto; height: 320px; background: var(--white); border-top: 1px solid var(--gray-border); display: flex; flex-direction: column; min-height: 0; transition: height 160ms; }
+    body.drawer-collapsed #drawer { height: 42px; }
+    body.drawer-collapsed #drawerBody { display: none; }
+    #drawerBar { flex: 0 0 42px; display: flex; align-items: center; gap: 0.3rem; padding: 0 0.75rem; border-bottom: 1px solid var(--gray-border); }
+    #drawerBar .tabs { display: flex; gap: 0.15rem; }
+    #drawerBar .tabs button { border: none; background: none; cursor: pointer; font-family: var(--font); font-size: 0.78rem; font-weight: 600; color: var(--gray-text); padding: 0.55rem 0.7rem; border-bottom: 2px solid transparent; }
+    #drawerBar .tabs button.active { color: var(--eip-blue-text); border-bottom-color: var(--eip-blue); }
+    #drawerBar .spacer { flex: 1; }
+    #drawerBody { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .dpane { height: 100%; display: none; }
+    .dpane.active { display: block; }
+    .charts { height: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; padding: 0.6rem 0.75rem; overflow: auto; }
+    .dpane.charts.active { display: grid; }
+    .chart-card { background: var(--white); border: 1px solid var(--gray-border); border-radius: 8px; padding: 0.5rem 0.6rem 0.2rem; display: flex; flex-direction: column; min-height: 0; }
+    .chart-card h3 { font-size: 0.76rem; font-weight: 700; color: var(--eip-navy); margin-bottom: 0.1rem; }
+    .chart-card .sub { font-size: 0.68rem; color: var(--gray-text); line-height: 1.35; }
+    .chart-card .plot { flex: 1 1 auto; min-height: 150px; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 0.25rem 0.7rem; font-size: 0.68rem; color: var(--gray-text); margin: 0.15rem 0; }
+    .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 0.3rem; vertical-align: -1px; }
+    #gridWrap { height: 100%; display: flex; flex-direction: column; }
+    #gridTools { flex: 0 0 auto; display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.75rem; font-size: 0.74rem; color: var(--gray-text); }
+    #patchGrid { flex: 1 1 auto; min-height: 0; }
+    .method { height: 100%; overflow: auto; padding: 0.8rem 1rem 1rem; columns: 2; column-gap: 2rem; font-size: 0.8rem; line-height: 1.55; color: var(--eip-navy); }
+    .method h3 { font-size: 0.8rem; margin: 0 0 0.25rem; break-after: avoid; }
+    .method p { margin-bottom: 0.6rem; }
+    .method ul { margin: 0 0 0.6rem 1.1rem; }
+    .method.sources li { margin-bottom: 0.35rem; break-inside: avoid; }
+
+    /* ── Panel pieces ── */
+    .panel-sec { display: flex; flex-direction: column; gap: 0.55rem; }
+    .sec-title { display: flex; align-items: center; gap: 0.45rem; margin: 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gray-text); }
+    .sec-title::after { content: ""; flex: 1; height: 1px; background: var(--gray-border); }
+    .sec-help { font-size: 0.76rem; line-height: 1.45; color: var(--gray-text); }
+    .question { display: flex; flex-direction: column; gap: 0.3rem; }
+    .question button { text-align: left; border: 1.5px solid var(--gray-border); background: #fff; border-radius: 10px; padding: 0.5rem 0.7rem; cursor: pointer; font-family: var(--font); color: var(--eip-navy); display: flex; flex-direction: column; gap: 0.1rem; transition: all 120ms; }
+    .question button b { font-size: 0.82rem; }
+    .question button span { font-size: 0.7rem; color: var(--gray-text); line-height: 1.35; }
+    .question button.active { border-color: var(--eip-blue); background: var(--eip-blue-light); }
+    .question button:hover { border-color: var(--eip-blue); }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+    .stat { background: var(--gray-bg); border-radius: 8px; padding: 0.5rem 0.65rem; border-left: 3px solid var(--c, var(--eip-blue)); }
+    .stat .v { font-size: 1.25rem; font-weight: 700; line-height: 1.1; color: var(--eip-navy); font-variant-numeric: tabular-nums; }
+    .stat .v small { font-size: 0.7rem; font-weight: 600; color: var(--gray-text); margin-left: 0.15rem; }
+    .stat .k { font-size: 0.68rem; color: var(--gray-text); line-height: 1.3; margin-top: 0.15rem; }
+    .layer-row { display: flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; line-height: 1.25; }
+    .layer-row .lbl { flex: 1 1 auto; min-width: 0; }
+    .layer-row .swatch { flex: 0 0 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(11,31,65,0.25); }
+    .legend { display: flex; flex-direction: column; gap: 0.28rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.74rem; }
+    .legend-item .box { flex: 0 0 20px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.12); }
+    .legend-item .n { margin-left: auto; color: var(--gray-text); font-variant-numeric: tabular-nums; font-size: 0.7rem; }
+    .seg { display: flex; border-radius: 999px; overflow: hidden; border: 1px solid var(--gray-border); }
+    .seg button { flex: 1; border: none; background: #fff; cursor: pointer; font-family: var(--font); min-height: 30px; font-size: 0.74rem; font-weight: 600; color: var(--gray-text); padding: 0.3rem 0.3rem; transition: all 120ms; }
+    .seg button.active { background: var(--eip-blue-text); color: #fff; font-weight: 700; }
+    .field-label { font-size: 0.74rem; font-weight: 600; color: var(--gray-text); }
+    .notice { font-size: 0.72rem; line-height: 1.45; color: var(--eip-navy); background: var(--eip-blue-light); border-radius: 8px; padding: 0.4rem 0.6rem; }
+    .notice.warn { background: var(--eip-orange-light); }
+    #loadNote { font-size: 0.78rem; color: var(--gray-text); }
+
+    @media (max-width: 860px) {
+      #appBody { flex-direction: column; overflow-y: auto; }
+      #sidePanel { flex: 0 0 auto; border-right: none; border-bottom: 1px solid var(--gray-border); }
+      #panelScroll { overflow: visible; }
+      #panelToggle { display: none; }
+      #mapCol { flex: 0 0 auto; }
+      #mapWrap { height: 60vh; }
+      #drawer { height: auto; }
+      .charts { grid-template-columns: 1fr; height: auto; }
+      .chart-card .plot { min-height: 200px; }
+      .method { columns: 1; }
+      #mapNote { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="appHeader">
+    <div class="hdr-brand">
+      <a href="https://www.trpa.gov" title="Tahoe Regional Planning Agency"><img src="https://trpa-agency.github.io/maps/assets/TRPALogo_COLOR.png" alt="Tahoe Regional Planning Agency logo" /></a>
+      <div class="htitle">
+        <span class="hagency">Tahoe Regional Planning Agency &middot; Forest Health</span>
+        <h1 class="hname">Caldor Fire: Where Might We Need to Replant?</h1>
+      </div>
+      <a class="hdr-back" href="https://maps.trpa.gov/">&larr; TRPA Maps</a>
+    </div>
+    <div class="hdr-right">
+      <span class="beta-chip">Draft</span>
+      <calcite-button id="btnDrawer" icon-start="graph-bar" appearance="outline" scale="s">Charts and table</calcite-button>
+    </div>
+  </header>
+
+  <div id="appBody">
+    <aside id="sidePanel" aria-label="Analysis controls">
+      <div id="panelScroll">
+
+        <section class="panel-sec">
+          <h2 class="sec-title">Question</h2>
+          <div class="question" role="radiogroup" aria-label="Which question to show on the map">
+            <button role="radio" aria-checked="true" class="active" data-q="overlap"><b>Where do high vegetation and soil severity line up?</b><span>High vegetation burn severity, with the pixels where soil burn severity was also high.</span></button>
+            <button role="radio" aria-checked="false" data-q="patches"><b>How big are the high severity patches?</b><span>Connected patches of high vegetation severity, sized across the whole fire, shown inside the Basin.</span></button>
+            <button role="radio" aria-checked="false" data-q="seed"><b>Which pixels are far from a seed source?</b><span>Distance from the nearest surviving conifer stand. Beyond the cutoff, natural regeneration is unlikely.</span></button>
+            <button role="radio" aria-checked="false" data-q="priority"><b>Where do all three stack up?</b><span>High vegetation severity, high soil severity, and beyond the seed distance cutoff: the strongest case for planting.</span></button>
+          </div>
+        </section>
+
+        <section class="panel-sec">
+          <h2 class="sec-title">Inside the Basin</h2>
+          <div class="stat-grid" id="stats">
+            <div class="stat" style="--c: var(--sev4)"><div class="v" id="stHighVeg">&mdash;</div><div class="k">Acres of pre-fire forest burned at high vegetation severity</div></div>
+            <div class="stat" style="--c: var(--need-soil)"><div class="v" id="stHighBoth">&mdash;</div><div class="k">Acres where soil burn severity was also high</div></div>
+            <div class="stat" style="--c: var(--need-far)"><div class="v" id="stFar">&mdash;</div><div class="k" id="stFarLabel">Acres of high severity beyond 150 m of a seed source</div></div>
+            <div class="stat" style="--c: var(--need-all)"><div class="v" id="stAll">&mdash;</div><div class="k">Acres meeting all three</div></div>
+          </div>
+          <p class="sec-help" id="frameNote">Loading the analysis&hellip;</p>
+        </section>
+
+        <section class="panel-sec" id="cutoffSec">
+          <h2 class="sec-title">Seed distance cutoff</h2>
+          <div class="seg" id="cutoffSeg" role="radiogroup" aria-label="Seed source distance cutoff"></div>
+          <p class="sec-help">Euclidean distance to the nearest pixel that burned at low or very low severity, held at least 25 percent canopy cover in 2020, and is a conifer type. Stands outside the fire count. 150 m follows Haffey and others (2018); other cutoffs reuse the same distance bands.</p>
+        </section>
+
+        <section class="panel-sec">
+          <h2 class="sec-title">Legend</h2>
+          <div class="legend" id="legend"></div>
+        </section>
+
+        <section class="panel-sec">
+          <h2 class="sec-title">Context layers</h2>
+          <div class="layer-row"><calcite-switch id="tgSoil" scale="s" label="Soil burn severity"></calcite-switch><span class="swatch" style="background:var(--sev3)"></span><span class="lbl">Soil burn severity (BAER)</span></div>
+          <div class="layer-row"><calcite-switch id="tgVeg" scale="s" label="Vegetation burn severity"></calcite-switch><span class="swatch" style="background:var(--sev2)"></span><span class="lbl">Vegetation burn severity, all classes</span></div>
+          <div class="layer-row"><calcite-switch id="tgSeed" scale="s" label="Seed sources"></calcite-switch><span class="swatch" style="background:var(--seed)"></span><span class="lbl">Surviving seed sources</span></div>
+          <div class="layer-row"><calcite-switch id="tgPatches" scale="s" label="Patch outlines"></calcite-switch><span class="swatch" style="background:#fff;border-color:var(--eip-navy)"></span><span class="lbl">High severity patch outlines</span></div>
+        </section>
+
+        <section class="panel-sec">
+          <h2 class="sec-title">Sources</h2>
+          <p class="sec-help">Vegetation burn severity and soil burn severity (BAER BARC4, Sept. 14, 2021) from the TRPA Fire map service. Pre-fire canopy cover from the California Forest Observatory, summer 2020. Vegetation types from the Sierra Nevada Regional Resource Kit CWHR layer. Ownership from TRPA parcels. 30 m grid, NAD83 UTM 10N.</p>
+          <div class="notice warn" id="caveat">Draft analysis for planning discussion. Severity is as mapped in 2021; it does not reflect salvage, planting, or regeneration since.</div>
+        </section>
+      </div>
+      <div id="panelFooter"><span id="loadNote">Loading&hellip;</span></div>
+    </aside>
+    <button id="panelToggle" title="Hide or show the panel" aria-label="Hide or show the panel"><calcite-icon icon="chevrons-left" scale="s"></calcite-icon></button>
+
+    <div id="mapCol">
+      <div id="mapWrap">
+        <div id="viewDiv"></div>
+        <div id="mapNote"><b id="mapNoteTitle">High vegetation severity</b><span id="mapNoteText"></span></div>
+      </div>
+
+      <section id="drawer" aria-label="Charts, patch table, and method">
+        <div id="drawerBar">
+          <div class="tabs" role="tablist">
+            <button role="tab" class="active" data-pane="charts" aria-selected="true">Charts</button>
+            <button role="tab" data-pane="patches" aria-selected="false">Patches</button>
+            <button role="tab" data-pane="method" aria-selected="false">Method</button>
+            <button role="tab" data-pane="sources" aria-selected="false">Sources</button>
+          </div>
+          <div class="spacer"></div>
+          <calcite-button id="btnCollapse" icon-start="chevron-down" appearance="transparent" scale="s" title="Collapse"></calcite-button>
+        </div>
+        <div id="drawerBody">
+          <div class="dpane charts active" id="pane-charts">
+            <div class="chart-card"><h3>Vegetation severity by soil severity</h3><div class="sub">Acres inside the Basin. Each bar is a vegetation severity class, split by soil burn severity.</div><div class="plot" id="chCross"></div></div>
+            <div class="chart-card"><h3>Distance from a seed source</h3><div class="sub">Acres of high vegetation severity by distance band, split by soil severity. The dashed line is the cutoff.</div><div class="plot" id="chDist"></div></div>
+            <div class="chart-card"><h3>High severity acres by patch size</h3><div class="sub">Patch size is measured across the whole fire; acres are the part inside the Basin.</div><div class="plot" id="chPatch"></div></div>
+            <div class="chart-card"><h3>Need by ownership</h3><div class="sub">High vegetation severity acres by parcel ownership type.</div><div class="plot" id="chOwner"></div></div>
+            <div class="chart-card"><h3>Need by vegetation type</h3><div class="sub">High vegetation severity acres by pre-fire CWHR type.</div><div class="plot" id="chWhr"></div></div>
+            <div class="chart-card"><h3>What the cutoff changes</h3><div class="sub">Acres of high severity beyond each candidate cutoff, with and without high soil severity.</div><div class="plot" id="chCutoff"></div></div>
+          </div>
+          <div class="dpane" id="pane-patches">
+            <div id="gridWrap">
+              <div id="gridTools"><span id="gridNote"></span><span style="flex:1"></span><calcite-button id="csvBtn" icon-start="download" appearance="outline" scale="s">CSV</calcite-button></div>
+              <div id="patchGrid"></div>
+            </div>
+          </div>
+          <div class="dpane" id="pane-method">
+            <div class="method">
+              <h3>Frame</h3>
+              <p>The 2021 Caldor Fire incident perimeter clipped to the TRPA boundary, on a 30 m grid in NAD83 UTM Zone 10N. Every acre figure on this page is inside the Basin unless it says otherwise. Replanting need is only asked of pixels that were forest before the fire: a conifer vegetation type, or at least 25 percent canopy cover in summer 2020. Chaparral and barren ground that burned at high severity appear in the severity chart but not in the need figures.</p>
+              <h3>Severity</h3>
+              <p>Vegetation burn severity is the four class product published on the TRPA Fire map service (unburned or very low, low, moderate, high). Soil burn severity is the Burned Area Emergency Response team's final map of Sept. 14, 2021. "High" is class 4 of each. The overlap is the pixelwise intersection.</p>
+              <h3>Patches</h3>
+              <p>Patches are eight connected groups of high vegetation severity pixels, delineated across the whole fire so a patch that crosses the Basin boundary keeps its full size. Size classes break at 10, 100, and 200 acres. The 200 acre break is TRPA's adopted Landscape Fire Dynamics standard, which limits modeled high severity patches of 200 acres or more to less than five percent of the landscape outside urban areas and wilderness; the threshold report explains that large patches "eliminate seed sources and can permanently convert forest stands to shrub fields" while patches under 200 acres still support habitat diversity. The 10 and 100 acre breaks follow PSW-GTR-270, which flags patches over about 100 acres as at risk of regeneration failure. Patch depth is the distance from the nearest pixel that is not high severity, which says how far the interior sits from any edge.</p>
+              <h3>Seed sources and distance</h3>
+              <p>A seed source pixel burned at unburned or very low or low severity (or lies outside the perimeter), carried at least 25 percent canopy cover in summer 2020, and is a conifer CWHR type. Moderate severity does not count. Distance is Euclidean distance to the nearest seed source pixel, computed over the perimeter plus 600 m so the fire edge and the Basin boundary do not truncate it.</p>
+              <p>The 150 m cutoff comes from Haffey and others (2018, Fire Ecology), who found that areas more than 150 m from a seed source were much less likely to regenerate after large high severity fires in Southwest ponderosa pine. TRPA's Forest Health Threshold Standards report uses 120 m, the figure PSW-GTR-278 calls the managers' rule of thumb for mixed conifer, and both are offered in the selector. Sierra Nevada studies (Welch, Safford, and Young 2016; Stewart and others 2021) show the same steep decline with distance, with most seed falling within about 70 to 280 m of the source depending on species.</p>
+              <h3>Limits</h3>
+              <ul>
+                <li>Severity is as mapped in 2021. Salvage, planting, and natural regeneration since are not reflected.</li>
+                <li>The published vegetation severity layer does not say which RAVG metric it is (composite burn index, basal area loss, or canopy cover loss); "high" differs slightly among them.</li>
+                <li>Ownership comes from parcels; roads and unparceled land show as Unknown.</li>
+              </ul>
+              <p>Planting guidance: USDA Forest Service PSW-GTR-278, Interventions to Restore Wildfire-Altered Forests in California (Long and others 2023), and PSW-GTR-270, Postfire Restoration Framework for National Forests in California (Meyer, Long, and Safford 2021), which flags high severity patches over about 100 acres as at risk of regeneration failure.</p>
+              <p>Pipeline: <code>scripts/reforestation_need.py</code> in <a href="https://github.com/trpa-agency/ForestHealth/tree/main/caldor-reforestation" target="_blank" rel="noopener">trpa-agency/ForestHealth</a>. Summary tables are in <code>outputs/</code>.</p>
+            </div>
+          </div>
+          <div class="dpane" id="pane-sources">
+            <div class="method sources">
+              <h3>Seed source distance</h3>
+              <ul>
+                <li>Haffey, C., T.D. Sisk, C.D. Allen, A.E. Thode, and E.Q. Margolis. 2018. Limits to ponderosa pine regeneration following large high-severity forest fires in the United States Southwest. Fire Ecology 14(1):143-163. <a href="https://doi.org/10.4996/fireecology.140114316" target="_blank" rel="noopener">doi:10.4996/fireecology.140114316</a>. Source of the 150 m cutoff: areas more than 150 m from a seed source "are much less likely" to regenerate.</li>
+                <li>Welch, K.R., H.D. Safford, and T.P. Young. 2016. Predicting conifer establishment post wildfire in mixed conifer forests of the North American Mediterranean-climate zone. Ecosphere 7(12):e01609. <a href="https://doi.org/10.1002/ecs2.1609" target="_blank" rel="noopener">doi:10.1002/ecs2.1609</a>. 1,490 plots on 14 California fires; seedling density fell with every distance class from 0 to 30 m out past 200 m.</li>
+                <li>Stewart, J.A.E., and others. 2021. Effects of postfire climate and seed availability on postfire conifer regeneration. Ecological Applications 31(3):e02280. <a href="https://doi.org/10.1002/eap.2280" target="_blank" rel="noopener">doi:10.1002/eap.2280</a>. Dispersal kernels: 95 percent of seed within about 68 to 284 m of the source, by species group.</li>
+                <li>Shive, K.L., and others. 2018. From the stand scale to the landscape scale: predicting the spatial patterns of forest regeneration after disturbance. Ecological Applications 28(6):1626-1639. <a href="https://doi.org/10.1002/eap.1756" target="_blank" rel="noopener">doi:10.1002/eap.1756</a>. The POSCRPT model.</li>
+                <li>Stevens-Rumann, C.S., and P. Morgan. 2019. Tree regeneration following wildfires in the western US: a review. Fire Ecology 15:15. <a href="https://doi.org/10.1186/s42408-019-0032-1" target="_blank" rel="noopener">doi:10.1186/s42408-019-0032-1</a>.</li>
+              </ul>
+              <h3>Reforestation guidance</h3>
+              <ul>
+                <li>Long, J.W., D. Walsh, M. Coppoletta, R.E. Tompkins, M.D. Meyer, C. Isbell, G.N. Bohlman, and M.P. North. 2023. Interventions to restore wildfire-altered forests in California. Gen. Tech. Rep. PSW-GTR-278. USDA Forest Service, Pacific Southwest Research Station. <a href="https://doi.org/10.2737/PSW-GTR-278" target="_blank" rel="noopener">doi:10.2737/PSW-GTR-278</a>. Reviews seed distance thresholds of 60, 120, and 200 m and notes that 120 m "seems to have become a rule of thumb for managers."</li>
+                <li>Meyer, M.D., J.W. Long, and H.D. Safford, eds. 2021. Postfire restoration framework for national forests in California. Gen. Tech. Rep. PSW-GTR-270. <a href="https://research.fs.usda.gov/treesearch/62871" target="_blank" rel="noopener">Treesearch 62871</a>. Chapter 4 flags high severity patches over about 100 acres as at risk of regeneration failure; patch classes of under 10, 10 to 100, 100 to 250, and over 250 acres.</li>
+                <li>North, M.P., and others. 2019. Tamm Review: Reforestation for resilience in dry western U.S. forests. Forest Ecology and Management 432:209-224. <a href="https://doi.org/10.1016/j.foreco.2018.09.007" target="_blank" rel="noopener">doi:10.1016/j.foreco.2018.09.007</a>.</li>
+              </ul>
+              <h3>TRPA threshold standard</h3>
+              <ul>
+                <li>Tahoe Regional Planning Agency. 2026. Forest Health Threshold Standards Update, Landscape Fire Dynamics standard: high severity patches of 200 acres or more on less than five percent of the assessed landscape. <a href="https://thresholds.laketahoeinfo.org/threshold/indicators/192" target="_blank" rel="noopener">Threshold indicator 192</a>, <a href="https://storymaps.arcgis.com/stories/24a244191f6842c5ab44bc09e228cf6b" target="_blank" rel="noopener">StoryMap</a>, and the <a href="https://trpa.app.box.com/s/9wksrvupifkzhrvtc6tlbltonnjijyfc" target="_blank" rel="noopener">full report</a>. The report's rationale: large patches eliminate seed sources and can convert forest to shrub fields, natural regeneration typically fails beyond about 120 m from a live seed tree, and the Caldor Fire burned roughly 5,000 acres in large high severity patches that matched the modeled hazard.</li>
+              </ul>
+              <h3>Caldor Fire restoration</h3>
+              <ul>
+                <li>USDA Forest Service, Lake Tahoe Basin Management Unit. Caldor Fire Restoration Project, Environmental Assessment. Decision signed Mar. 27, 2026. <a href="https://www.fs.usda.gov/r05/laketahoebasin/projects/65228" target="_blank" rel="noopener">Project page</a> and <a href="https://usfs-public.app.box.com/v/PinyonPublic/folder/235777475555" target="_blank" rel="noopener">project documents</a>.</li>
+                <li>Lake Tahoe EIP Project Tracker: <a href="https://www.laketahoeinfo.org/Project/Detail/4392" target="_blank" rel="noopener">Caldor Fire restoration project record</a>.</li>
+              </ul>
+              <h3>Data</h3>
+              <ul>
+                <li>Vegetation and soil burn severity: <a href="https://maps.trpa.org/server/rest/services/Fire/MapServer" target="_blank" rel="noopener">TRPA Fire map service</a>, layers 4 and 5. Soil burn severity is the BAER final BARC4 map of Sept. 14, 2021.</li>
+                <li>Pre-fire canopy cover: California Forest Observatory, summer 2020, via the <a href="https://wildfiretaskforce.org/regional-resource-kits/" target="_blank" rel="noopener">Sierra Nevada Regional Resource Kit</a>. Vegetation types: Regional Resource Kit CWHR layer, April 2023.</li>
+                <li>Ownership: TRPA parcel ownership layer, maps.trpa.org.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+    /* ───────────────────────── CONSTANTS ───────────────────────── */
+    const DATA = 'web/data/';
+    const SEV_COLOR = { 1: '#DCE9F5', 2: '#8FBBE0', 3: '#F3B64B', 4: '#B3261E' };
+    const SEV_NAME = { 1: 'Unburned / very low', 2: 'Low', 3: 'Moderate', 4: 'High' };
+    const NEED = { veg: '#F16022', soil: '#B3261E', far: '#7B3F9E', all: '#0B1F41' };
+    const SEED = '#6EBE44';
+    const PATCH_RAMP = ['#FDE8DC', '#F9C9AE', '#F4A47C', '#F16022', '#C44A12', '#8A2E07', '#4A1703'];
+    const DIST_RAMP = ['#E0F0FA', '#B6DBF1', '#86C3E6', '#4FA6D8', '#007DC3', '#004F80', '#0B1F41'];
+    const FONT = "'Lexend Deca', system-ui, sans-serif";
+    const INK = '#0B1F41';
+    const PLOT_CONFIG = { responsive: true, displayModeBar: false, displaylogo: false };
+    const BASE_LAYOUT = {
+      font: { family: FONT, color: INK, size: 11 }, paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      margin: { t: 6, r: 8, b: 34, l: 44 }, showlegend: false, hovermode: 'x unified', barmode: 'stack',
+      xaxis: { gridcolor: '#E3E8EF', linecolor: '#C9D2DE', automargin: true, tickfont: { size: 10 } },
+      yaxis: { gridcolor: '#E3E8EF', zerolinecolor: '#C9D2DE', automargin: true, tickfont: { size: 10 }, title: { text: 'acres', font: { size: 10 } } },
+      hoverlabel: { font: { family: FONT, size: 11 }, bgcolor: '#fff', bordercolor: '#C9D2DE' },
+    };
+    const fmt = (n, d = 0) => (n == null || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
+    const pct = (a, b) => b ? `${fmt(100 * a / b, a / b < 0.1 ? 1 : 0)}%` : '—';
+    const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    /* ───────────────────────── STATE ───────────────────────── */
+    let S = null;                 // summary.json
+    let bands = [];               // distance band upper edges
+    let cutoff = 150;             // active seed distance cutoff (m)
+    let question = 'overlap';
+    const layers = {};            // GeoJSONLayers by key
+    let view = null;
+    let gridApi = null;
+    const REDRAW = [];
+
+    // Band index (1-based) is "beyond cutoff c" when band > bandsAtOrBelow(c).
+    const bandsAtOrBelow = (c) => bands.findIndex(e => e === c) + 1;
+    const isFar = (band, c) => band > bandsAtOrBelow(c);
+
+    /* ───────────────────────── SUMMARY METRICS ───────────────────────── */
+    function totals(c) {
+      // need_by_band rows: {code, band, acres}; code 3/7 carry high soil.
+      let highVeg = 0, both = 0, far = 0, all = 0;
+      for (const r of S.need_by_band) {
+        const soil = r.code === 3 || r.code === 7;
+        const f = isFar(r.band, c);
+        highVeg += r.acres; if (soil) both += r.acres; if (f) far += r.acres; if (soil && f) all += r.acres;
+      }
+      return { highVeg, both, far, all };
+    }
+
+    function renderStats() {
+      const t = totals(cutoff);
+      document.getElementById('stHighVeg').innerHTML = `${fmt(t.highVeg)}<small>${pct(t.highVeg, S.basin_acres)} of the footprint</small>`;
+      document.getElementById('stHighBoth').innerHTML = `${fmt(t.both)}<small>${pct(t.both, t.highVeg)} of high</small>`;
+      document.getElementById('stFar').innerHTML = `${fmt(t.far)}<small>${pct(t.far, t.highVeg)} of high</small>`;
+      document.getElementById('stFarLabel').textContent = `Acres of high severity beyond ${cutoff} m of a seed source`;
+      document.getElementById('stAll').innerHTML = `${fmt(t.all)}<small>${pct(t.all, t.highVeg)} of high</small>`;
+      const allHigh = S.high_veg_all_acres;
+      const forestNote = (allHigh && S.need_frame && S.need_frame.prefire_forest_only) ? ` High vegetation severity covers ${fmt(allHigh)} acres in all; the ${fmt(allHigh - t.highVeg)} acres that were chaparral, barren, or otherwise unforested before the fire are left out of the replanting figures.` : '';
+      document.getElementById('frameNote').textContent = `The Caldor Fire burned about ${fmt(S.perimeter_acres)} acres; ${fmt(S.basin_acres)} of them lie inside the TRPA boundary.${forestNote} ${S.patch_count_basin} high severity patches touch the Basin; mean distance from a seed source on high severity forest pixels is ${fmt(S.dist_stats.mean_m)} m.`;
+    }
+
+    /* ───────────────────────── MAP ───────────────────────── */
+    const MAP_COPY = {
+      overlap: { title: 'High vegetation severity, by soil severity', text: ' Orange: vegetation burned at high severity. Dark red: soil burn severity was high there too, so the site lost both its trees and its soil cover.' },
+      patches: { title: 'High severity patches by size', text: ' Each patch is colored by its total size across the fire. Click a patch for its acres, depth, and share beyond the seed cutoff.' },
+      seed: { title: 'Distance from a surviving seed source', text: ' High severity pixels colored by distance band. Darker is farther. Turn on seed sources to see the stands the distance is measured from.' },
+      priority: { title: 'Where all three stack up', text: ' Navy: high vegetation severity, high soil severity, and beyond the cutoff. Purple: beyond the cutoff only. Red: high soil only. Orange: high vegetation severity alone.' },
+    };
+
+    function fill(color, alpha = 0.85, outline = 0) { return { type: 'simple-fill', color: hexToRgba(color, alpha), outline: { width: outline, color: outline ? [11, 31, 65, 0.6] : [0, 0, 0, 0] } }; }
+    function hexToRgba(hex, a) { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255, a]; }
+
+    // Renderers are rebuilt when the question or cutoff changes. The need layer carries
+    // soil_high (0/1) and dist_band (1..n), so every view is an Arcade expression over them.
+    function needRenderer() {
+      const k = bandsAtOrBelow(cutoff);
+      if (question === 'overlap') return {
+        type: 'unique-value', field: 'soil_high',
+        uniqueValueInfos: [
+          { value: 0, label: 'High vegetation severity', symbol: fill(NEED.veg) },
+          { value: 1, label: 'High vegetation and high soil severity', symbol: fill(NEED.soil) },
+        ],
+      };
+      if (question === 'seed') return {
+        type: 'unique-value', field: 'dist_band',
+        uniqueValueInfos: [...Array(bands.length + 1)].map((_, i) => ({ value: i + 1, label: bandLabel(i + 1), symbol: fill(DIST_RAMP[Math.min(i, DIST_RAMP.length - 1)]) })),
+      };
+      if (question === 'priority') return {
+        type: 'unique-value',
+        valueExpression: `var far = IIf($feature.dist_band > ${k}, 1, 0); return Text($feature.soil_high) + Text(far);`,
+        uniqueValueInfos: [
+          { value: '00', label: 'High vegetation severity only', symbol: fill(NEED.veg, 0.7) },
+          { value: '10', label: 'Plus high soil severity', symbol: fill(NEED.soil, 0.8) },
+          { value: '01', label: `Plus beyond ${cutoff} m of seed`, symbol: fill(NEED.far, 0.85) },
+          { value: '11', label: 'All three', symbol: fill(NEED.all, 0.92) },
+        ],
+      };
+      return null;
+    }
+    function patchRenderer() {
+      return {
+        type: 'unique-value', field: 'size_class',
+        uniqueValueInfos: S.patch_size_classes.map((c, i) => ({ value: c.cls, label: c.label, symbol: fill(PATCH_RAMP[Math.min(i, PATCH_RAMP.length - 1)], 0.85, 0.4) })),
+      };
+    }
+    const bandLabel = (b) => (S.dist_bands.find(d => d.band === b) || {}).label || `band ${b}`;
+
+    function buildMap() {
+      require(['esri/Map', 'esri/views/MapView', 'esri/layers/GeoJSONLayer', 'esri/widgets/Home', 'esri/widgets/ScaleBar', 'esri/widgets/BasemapToggle'],
+        (Map, MapView, GeoJSONLayer, Home, ScaleBar, BasemapToggle) => {
+          const sevRenderer = (field) => ({ type: 'unique-value', field, uniqueValueInfos: [1, 2, 3, 4].map(v => ({ value: v, label: SEV_NAME[v], symbol: fill(SEV_COLOR[v], 0.75) })) });
+          layers.perimeter = new GeoJSONLayer({ url: DATA + 'perimeter.geojson', title: 'Caldor Fire perimeter', renderer: { type: 'simple', symbol: { type: 'simple-fill', color: [0, 0, 0, 0], outline: { color: [179, 38, 30, 0.9], width: 1.6, style: 'short-dash' } } }, popupEnabled: false });
+          layers.frame = new GeoJSONLayer({ url: DATA + 'frame_basin.geojson', title: 'Caldor Fire inside the TRPA boundary', renderer: { type: 'simple', symbol: { type: 'simple-fill', color: [0, 0, 0, 0], outline: { color: [11, 31, 65, 0.9], width: 2 } } }, popupEnabled: false });
+          layers.veg = new GeoJSONLayer({ url: DATA + 'veg_severity.geojson', title: 'Vegetation burn severity', renderer: sevRenderer('gridcode'), visible: false, opacity: 0.9, popupTemplate: { title: 'Vegetation burn severity', content: '{expression/sev}', expressionInfos: [{ name: 'sev', expression: `Decode($feature.gridcode, 1, 'Unburned / very low', 2, 'Low', 3, 'Moderate', 4, 'High', 'Unmapped')` }] } });
+          layers.soil = new GeoJSONLayer({ url: DATA + 'soil_severity.geojson', title: 'Soil burn severity', renderer: sevRenderer('gridcode'), visible: false, opacity: 0.9, popupTemplate: { title: 'Soil burn severity: {SBS}', content: 'BAER final soil burn severity, Sept. 14, 2021.' } });
+          layers.seed = new GeoJSONLayer({ url: DATA + 'seed_sources.geojson', title: 'Surviving seed sources', renderer: { type: 'simple', symbol: fill(SEED, 0.7) }, visible: false, popupTemplate: { title: 'Surviving seed source', content: 'Burned at low or very low severity (or outside the fire), at least 25 percent canopy cover in 2020, conifer type.' } });
+          layers.patches = new GeoJSONLayer({ url: DATA + 'patches.geojson', title: 'High severity patches', renderer: patchRenderer(), outFields: ['*'], visible: false,
+            popupTemplate: { title: 'High severity patch {patch_id}', content: [{ type: 'fields', fieldInfos: [
+              { fieldName: 'acres_total', label: 'Patch size, whole fire (acres)', format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'acres_basin', label: 'Inside the Basin (acres)', format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'depth_max_m', label: 'Deepest interior point (m from edge)', format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'dist_seed_mean_m', label: 'Mean distance to seed source (m)', format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'acres_high_soil', label: 'Also high soil severity (acres)', format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'acres_far', label: `Beyond ${S.seed_distance_threshold_m} m of seed (acres)`, format: { digitSeparator: true, places: 0 } },
+              { fieldName: 'owner_major', label: 'Main ownership' },
+            ] }] } });
+          layers.patchOutline = new GeoJSONLayer({ url: DATA + 'patches.geojson', title: 'Patch outlines', renderer: { type: 'simple', symbol: { type: 'simple-fill', color: [0, 0, 0, 0], outline: { color: [11, 31, 65, 0.8], width: 1 } } }, visible: false, popupEnabled: false });
+          layers.need = new GeoJSONLayer({ url: DATA + 'need.geojson', title: 'Replanting need', renderer: needRenderer(), outFields: ['*'],
+            popupTemplate: { title: 'High vegetation burn severity', content: '{expression/desc}', expressionInfos: [{ name: 'desc', expression: `
+              var soil = IIf($feature.soil_high == 1, 'Soil burn severity was also high.', 'Soil burn severity was not high.');
+              var band = Decode($feature.dist_band, ${S.dist_bands.map(d => `${d.band}, '${d.label}'`).join(', ')}, 'unknown');
+              return soil + ' Distance to the nearest seed source: ' + band + '. ' + Text(Round($feature.acres, 0), '#,###') + ' acres in this piece.';` }] } });
+
+          const map = new Map({ basemap: 'topo-vector', layers: [layers.seed, layers.veg, layers.soil, layers.need, layers.patches, layers.patchOutline, layers.perimeter, layers.frame] });
+          view = new MapView({ container: 'viewDiv', map, center: [-120.02, 38.84], zoom: 12, constraints: { snapToZoom: false }, popup: { dockEnabled: false, dockOptions: { buttonEnabled: false } } });
+          view.ui.move('zoom', 'top-left');
+          view.ui.add(new Home({ view }), 'top-left');
+          view.ui.add(new ScaleBar({ view, unit: 'dual' }), 'bottom-right');
+          view.ui.add(new BasemapToggle({ view, nextBasemap: 'hybrid' }), 'top-right');
+          layers.frame.when(() => layers.frame.queryExtent().then(r => { if (r.extent) view.goTo(r.extent.expand(1.15)); }));
+          applyQuestion();
+          document.getElementById('tgSoil').addEventListener('calciteSwitchChange', e => { layers.soil.visible = e.target.checked; });
+          document.getElementById('tgVeg').addEventListener('calciteSwitchChange', e => { layers.veg.visible = e.target.checked; });
+          document.getElementById('tgSeed').addEventListener('calciteSwitchChange', e => { layers.seed.visible = e.target.checked; });
+          document.getElementById('tgPatches').addEventListener('calciteSwitchChange', e => { layers.patchOutline.visible = e.target.checked; });
+        });
+    }
+
+    function applyQuestion() {
+      if (!layers.need) return;
+      const showPatches = question === 'patches';
+      layers.need.visible = !showPatches;
+      layers.patches.visible = showPatches;
+      if (!showPatches) layers.need.renderer = needRenderer();
+      document.getElementById('cutoffSec').hidden = !(question === 'seed' || question === 'priority');
+      document.getElementById('mapNoteTitle').textContent = MAP_COPY[question].title;
+      document.getElementById('mapNoteText').textContent = MAP_COPY[question].text;
+      renderLegend();
+    }
+
+    function renderLegend() {
+      const t = totals(cutoff);
+      let items = [];
+      if (question === 'overlap') items = [
+        { c: NEED.veg, l: 'High vegetation severity', n: t.highVeg - t.both }, { c: NEED.soil, l: 'High vegetation and high soil severity', n: t.both }];
+      else if (question === 'patches') items = S.patch_size_classes.map((c, i) => ({ c: PATCH_RAMP[Math.min(i, PATCH_RAMP.length - 1)], l: `Patch ${c.label}`, n: c.acres }));
+      else if (question === 'seed') items = S.dist_bands.map((d, i) => ({ c: DIST_RAMP[Math.min(i, DIST_RAMP.length - 1)], l: d.label, n: d.high_veg }));
+      else items = [
+        { c: NEED.veg, l: 'High vegetation severity only', n: t.highVeg - t.both - t.far + t.all }, { c: NEED.soil, l: 'Plus high soil severity', n: t.both - t.all },
+        { c: NEED.far, l: `Plus beyond ${cutoff} m of seed`, n: t.far - t.all }, { c: NEED.all, l: 'All three', n: t.all }];
+      items.push({ c: null, l: 'Caldor Fire inside the TRPA boundary', outline: true });
+      document.getElementById('legend').innerHTML = items.map(i => `<div class="legend-item"><span class="box" style="${i.outline ? 'background:#fff;border:2px solid #0B1F41' : `background:${i.c}`}"></span><span>${esc(i.l)}</span>${i.n != null ? `<span class="n">${fmt(i.n)} ac</span>` : ''}</div>`).join('');
+    }
+
+    /* ───────────────────────── CHARTS ───────────────────────── */
+    function htmlLegend(plotId, items) {
+      const plot = document.getElementById(plotId);
+      let el = plot.previousElementSibling;
+      if (!el || !el.classList.contains('chart-legend')) { el = document.createElement('div'); el.className = 'chart-legend'; plot.before(el); }
+      el.innerHTML = items.map(i => `<span><i style="background:${i.color}"></i>${esc(i.label)}</span>`).join('');
+    }
+
+    function chartCross() {
+      const vegs = [1, 2, 3, 4];
+      const traces = [1, 2, 3, 4].map(s => ({
+        type: 'bar', name: `Soil ${SEV_NAME[s].toLowerCase()}`, marker: { color: SEV_COLOR[s], line: { width: 0.5, color: '#fff' } },
+        x: vegs.map(v => SEV_NAME[v]), y: vegs.map(v => (S.crosstab.find(r => r.veg === v && r.soil === s) || {}).acres || 0),
+        hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>',
+      }));
+      htmlLegend('chCross', [1, 2, 3, 4].map(s => ({ color: SEV_COLOR[s], label: `Soil ${SEV_NAME[s].toLowerCase()}` })));
+      Plotly.react('chCross', traces, { ...BASE_LAYOUT, xaxis: { ...BASE_LAYOUT.xaxis, title: { text: 'vegetation burn severity', font: { size: 10 } } } }, PLOT_CONFIG);
+    }
+
+    function chartDist() {
+      const x = S.dist_bands.map(d => d.label);
+      const soil = S.dist_bands.map(d => d.high_veg_high_soil);
+      const other = S.dist_bands.map(d => d.high_veg - d.high_veg_high_soil);
+      const traces = [
+        { type: 'bar', name: 'High vegetation severity', x, y: other, marker: { color: NEED.veg }, hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>' },
+        { type: 'bar', name: 'Also high soil severity', x, y: soil, marker: { color: NEED.soil }, hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>' },
+      ];
+      const k = bandsAtOrBelow(cutoff);
+      const shapes = k > 0 ? [{ type: 'line', xref: 'x', yref: 'paper', x0: k - 0.5, x1: k - 0.5, y0: 0, y1: 1, line: { color: NEED.far, width: 1.5, dash: 'dash' } }] : [];
+      const annotations = k > 0 ? [{ xref: 'x', yref: 'paper', x: k - 0.45, y: 0.98, text: `${cutoff} m`, showarrow: false, xanchor: 'left', font: { size: 10, color: NEED.far } }] : [];
+      htmlLegend('chDist', [{ color: NEED.veg, label: 'High vegetation severity' }, { color: NEED.soil, label: 'Also high soil severity' }]);
+      Plotly.react('chDist', traces, { ...BASE_LAYOUT, shapes, annotations, xaxis: { ...BASE_LAYOUT.xaxis, title: { text: 'distance to nearest seed source', font: { size: 10 } } } }, PLOT_CONFIG);
+    }
+
+    function chartPatch() {
+      const c = S.patch_size_classes;
+      htmlLegend('chPatch', []);
+      Plotly.react('chPatch', [{ type: 'bar', x: c.map(d => d.label), y: c.map(d => d.acres), marker: { color: c.map((_, i) => PATCH_RAMP[Math.min(i, PATCH_RAMP.length - 1)]) }, hovertemplate: '%{y:,.0f} ac inside the Basin<extra></extra>' }],
+        { ...BASE_LAYOUT, xaxis: { ...BASE_LAYOUT.xaxis, title: { text: 'patch size, whole fire', font: { size: 10 } } } }, PLOT_CONFIG);
+    }
+
+    function needStack(rows, keyField, plotId, order) {
+      // rows: {key, code, acres}; stack by need code 1,3,5,7 at the 150 m run cutoff.
+      const keys = order || [...new Set(rows.map(r => r[keyField]))].sort((a, b) => sum(rows, keyField, b) - sum(rows, keyField, a));
+      const codes = [{ v: 1, l: 'High vegetation severity only', c: NEED.veg }, { v: 3, l: 'Plus high soil severity', c: NEED.soil }, { v: 5, l: `Plus beyond ${S.seed_distance_threshold_m} m of seed`, c: NEED.far }, { v: 7, l: 'All three', c: NEED.all }];
+      const traces = codes.map(cd => ({ type: 'bar', name: cd.l, marker: { color: cd.c }, x: keys, y: keys.map(k => rows.filter(r => r[keyField] === k && r.code === cd.v).reduce((a, r) => a + r.acres, 0)), hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>' }));
+      htmlLegend(plotId, codes.map(cd => ({ color: cd.c, label: cd.l })));
+      Plotly.react(plotId, traces, { ...BASE_LAYOUT, xaxis: { ...BASE_LAYOUT.xaxis, tickangle: keys.length > 5 ? -25 : 0 } }, PLOT_CONFIG);
+    }
+    const sum = (rows, f, k) => rows.filter(r => r[f] === k).reduce((a, r) => a + r.acres, 0);
+
+    function chartOwner() { needStack(S.by_owner, 'owner', 'chOwner', ['Federal', 'State', 'Local', 'Private', 'Unknown'].filter(o => S.by_owner.some(r => r.owner === o))); }
+    function chartWhr() {
+      const rows = S.by_whr.map(r => ({ ...r, key: r.name }));
+      const keys = [...new Set(rows.map(r => r.key))].sort((a, b) => sum(rows, 'key', b) - sum(rows, 'key', a)).slice(0, 8);
+      needStack(rows.filter(r => keys.includes(r.key)), 'key', 'chWhr', keys);
+    }
+
+    function chartCutoff() {
+      const x = bands.map(b => `${b} m`);
+      const far = bands.map(b => totals(b).far), all = bands.map(b => totals(b).all);
+      htmlLegend('chCutoff', [{ color: NEED.far, label: 'Beyond the cutoff' }, { color: NEED.all, label: 'Beyond the cutoff and high soil severity' }]);
+      Plotly.react('chCutoff', [
+        { type: 'bar', name: 'Beyond the cutoff', x, y: far, marker: { color: NEED.far }, hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>' },
+        { type: 'bar', name: 'Beyond the cutoff and high soil severity', x, y: all, marker: { color: NEED.all }, hovertemplate: '%{y:,.0f} ac<extra>%{fullData.name}</extra>' },
+      ], { ...BASE_LAYOUT, barmode: 'group', xaxis: { ...BASE_LAYOUT.xaxis, title: { text: 'candidate seed distance cutoff', font: { size: 10 } } } }, PLOT_CONFIG);
+    }
+
+    function renderCharts() { chartCross(); chartDist(); chartPatch(); chartOwner(); chartWhr(); chartCutoff(); }
+
+    /* ───────────────────────── PATCH GRID ───────────────────────── */
+    function buildGrid() {
+      const theme = agGrid.themeQuartz.withParams({ fontFamily: FONT, fontSize: 12, headerFontSize: 12, headerBackgroundColor: '#F4F6F9', headerTextColor: '#5A6577', rowHeight: 30, headerHeight: 32, accentColor: '#007DC3', borderColor: '#DDE3EA' });
+      const n = (f, h, d = 0, w = 120) => ({ field: f, headerName: h, type: 'rightAligned', minWidth: w, valueFormatter: p => fmt(p.value, d) });
+      const rows = S.patches.map(p => ({ ...p, size_label: (S.patch_size_classes.find(c => c.cls === p.size_class) || {}).label || '', pct_far: p.acres_basin ? 100 * p.acres_far / p.acres_basin : 0, pct_soil: p.acres_basin ? 100 * p.acres_high_soil / p.acres_basin : 0 }));
+      gridApi = agGrid.createGrid(document.getElementById('patchGrid'), {
+        theme, rowData: rows,
+        columnDefs: [
+          { field: 'patch_id', headerName: 'Patch', minWidth: 80 },
+          n('acres_total', 'Size, whole fire (ac)', 0, 150), n('acres_basin', 'In Basin (ac)', 0, 120),
+          { field: 'size_label', headerName: 'Size class', minWidth: 120 },
+          n('depth_max_m', 'Deepest point (m)', 0, 130), n('dist_seed_mean_m', 'Mean seed distance (m)', 0, 160),
+          n('acres_high_soil', 'High soil (ac)', 0, 120), n('pct_soil', 'High soil (%)', 0, 110),
+          n('acres_far', `Beyond ${S.seed_distance_threshold_m} m (ac)`, 0, 140), n('pct_far', `Beyond ${S.seed_distance_threshold_m} m (%)`, 0, 130),
+          { field: 'owner_major', headerName: 'Main ownership', minWidth: 130 },
+        ],
+        defaultColDef: { sortable: true, filter: true, resizable: true, flex: 1 },
+        // No pagination: the table is a ranking surface the reader scans top to bottom.
+        onRowClicked: (e) => zoomToPatch(e.data.patch_id),
+        rowSelection: { mode: 'singleRow', checkboxes: false, enableClickSelection: true },
+      });
+      gridApi.applyColumnState({ state: [{ colId: 'acres_basin', sort: 'desc' }] });
+      document.getElementById('gridNote').textContent = `${rows.length} high severity patches touch the Basin. Click a row to zoom the map to the patch.`;
+      document.getElementById('csvBtn').addEventListener('click', () => gridApi.exportDataAsCsv({ fileName: 'caldor_high_severity_patches_basin.csv' }));
+    }
+
+    function zoomToPatch(id) {
+      if (!view || !layers.patches) return;
+      setQuestion('patches');
+      layers.patches.queryFeatures({ where: `patch_id = ${id}`, returnGeometry: true, outFields: ['*'] }).then(r => {
+        if (!r.features.length) return;
+        const f = r.features[0];
+        view.goTo(f.geometry.extent.expand(1.6)).then(() => view.openPopup({ features: [f], location: f.geometry.extent.center }));
+      });
+    }
+
+    /* ───────────────────────── CONTROLS ───────────────────────── */
+    function setQuestion(q) {
+      question = q;
+      document.querySelectorAll('.question button').forEach(b => { const on = b.dataset.q === q; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+      applyQuestion();
+    }
+    function setCutoff(c) {
+      cutoff = c;
+      document.querySelectorAll('#cutoffSeg button').forEach(b => { const on = Number(b.dataset.c) === c; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); });
+      renderStats(); renderLegend(); chartDist();
+      if (layers.need && question === 'priority') layers.need.renderer = needRenderer();
+    }
+    function buildCutoffSeg() {
+      const seg = document.getElementById('cutoffSeg');
+      seg.innerHTML = bands.map(b => `<button role="radio" aria-checked="${b === cutoff}" class="${b === cutoff ? 'active' : ''}" data-c="${b}">${b} m</button>`).join('');
+      seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setCutoff(Number(b.dataset.c))));
+    }
+
+    document.querySelectorAll('.question button').forEach(b => b.addEventListener('click', () => setQuestion(b.dataset.q)));
+    document.getElementById('panelToggle').addEventListener('click', () => { document.body.classList.toggle('panel-collapsed'); const i = document.querySelector('#panelToggle calcite-icon'); i.icon = document.body.classList.contains('panel-collapsed') ? 'chevrons-right' : 'chevrons-left'; });
+    const toggleDrawer = (open) => { document.body.classList.toggle('drawer-collapsed', !open); document.getElementById('btnCollapse').iconStart = open ? 'chevron-down' : 'chevron-up'; if (open) setTimeout(() => REDRAW.forEach(fn => fn()), 180); };
+    document.getElementById('btnCollapse').addEventListener('click', () => toggleDrawer(document.body.classList.contains('drawer-collapsed')));
+    document.getElementById('btnDrawer').addEventListener('click', () => toggleDrawer(true));
+    document.querySelectorAll('#drawerBar .tabs button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#drawerBar .tabs button').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-selected', String(x === b)); });
+      document.querySelectorAll('.dpane').forEach(p => p.classList.toggle('active', p.id === `pane-${b.dataset.pane}`));
+      if (b.dataset.pane === 'charts') setTimeout(() => REDRAW.forEach(fn => fn()), 30);
+    }));
+    let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => REDRAW.forEach(fn => fn()), 200); });
+
+    /* ───────────────────────── INIT ───────────────────────── */
+    (async function init() {
+      try {
+        const resp = await fetch(DATA + 'summary.json', { cache: 'no-cache' });
+        if (!resp.ok) throw new Error(`summary.json ${resp.status}`);
+        S = await resp.json();
+      } catch (err) {
+        document.getElementById('loadNote').textContent = 'The analysis summary could not be loaded. Run scripts/reforestation_need.py and serve this folder over HTTP.';
+        document.getElementById('frameNote').textContent = 'No data.';
+        console.error(err);
+        return;
+      }
+      bands = S.seed_distance_bands_m;
+      cutoff = bands.includes(S.seed_distance_threshold_m) ? S.seed_distance_threshold_m : bands[0];
+      buildCutoffSeg();
+      renderStats();
+      renderLegend();
+      buildMap();
+      renderCharts();
+      REDRAW.push(renderCharts);
+      buildGrid();
+      document.getElementById('cutoffSec').hidden = true;
+      document.getElementById('loadNote').textContent = `Analysis run ${S.generated}. Severity as mapped in 2021. Draft for planning discussion.`;
+    })();
+  </script>
+</body>
+</html>

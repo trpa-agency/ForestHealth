@@ -1,0 +1,121 @@
+# Caldor reforestation need: where might we need to replant trees inside the Tahoe Basin
+# portion of the 2021 Caldor Fire footprint. No secrets here. Read by
+# scripts/reforestation_need.py. Paths under F: are the TRPA GIS share.
+
+project:
+  name: caldor-reforestation
+  fire: Caldor Fire, 2021 (CA-ENF-024030)
+  description: >
+    Overlap of high vegetation burn severity and high soil burn severity, high severity
+    patch sizes, and distance from surviving seed sources, for the part of the Caldor Fire
+    inside the TRPA boundary.
+
+paths:
+  # Scratch file geodatabase. Local disk, because the F: share is slow for raster work.
+  # Gitignored. Rasters that should live on the share can be copied there afterward.
+  gdb: "data/caldor_reforestation.gdb"
+  fetched: "data/fetched"       # REST responses saved as Esri JSON before JSONToFeatures
+  outputs: "outputs"            # CSV summary tables (committed)
+  web: "web/data"               # GeoJSON and summary.json the app reads (committed)
+  logs: "logs"
+
+crs:
+  working_epsg: 26910           # NAD83 UTM 10N, the native CRS of the BAER and RAVG products
+  cell_size_m: 30
+
+sources:
+  # Vegetation burn severity. The published layer is the RAVG style 4 class product the
+  # Fire map service carries (gridcode 1 unburned/very low, 2 low, 3 moderate, 4 high,
+  # 0 outside, 9 non-processing mask). If the source raster turns up on F:, set
+  # veg_severity.raster to its path and the script will prefer it over the polygons.
+  veg_severity:
+    rest: "https://maps.trpa.org/server/rest/services/Fire/MapServer/5"
+    field: gridcode
+    raster: null
+    classes: {1: "Unburned / Very Low", 2: "Low", 3: "Moderate", 4: "High"}
+    high_value: 4
+    seed_values: [1, 2]         # severity classes treated as surviving seed source
+  # BAER final soil burn severity (BARC4, dissolved by class, UTM 10N). Sept. 14, 2021.
+  soil_severity:
+    file: "F:/GIS/GIS_DATA/Fire/Caldor/Caldor_Final_Soil_Burn_Severity_for_team/Caldor_Fire_Final_Soil_Burn_Severity.shp"
+    rest: "https://maps.trpa.org/server/rest/services/Fire/MapServer/4"
+    field: gridcode
+    classes: {1: "Unburned / Very Low", 2: "Low", 3: "Moderate", 4: "High"}
+    high_value: 4
+  # Fire perimeter. The BAER soil burn severity polygons tile the BAER perimeter
+  # (218,952 acres), so their dissolve is the perimeter unless a perimeter file is given.
+  perimeter:
+    file: "F:/GIS/GIS_DATA/Fire/Caldor/Caldor_Datalayers.gdb/CaldorFirePerimeter"   # incident perimeter, 1 polygon, UTM 10N
+    dissolve_soil_severity: false   # fallback when file is null: dissolve the BAER soil severity polygons
+  # TRPA boundary (one polygon).
+  trpa_boundary:
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/MapServer/4"
+  # Pre-fire canopy cover, California Forest Observatory summer 2020, percent, 30 m, from
+  # the Sierra Nevada Regional Resource Kit download. Defines where trees stood before the
+  # fire, so a surviving low severity pixel only counts as a seed source if it was forest.
+  canopy_cover_prefire:
+    file: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/Download/SNV_RRK/CFO_CanopyCover2020Summer/CFO_CanopyCover2020Summer.tif"
+  # CWHR vegetation type, RRK April 2023. The Value to WHRTYPE lookup comes from the
+  # threshold project raster, whose attribute table carries WHRTYPE for the same values.
+  whr_type:
+    file: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/Download/SNV_RRK/CWHR_vegetation/RRK_Fveg_WHRtype_2023Apr_4regions_v2.tif"
+    lookup_raster: "F:/GIS/PROJECTS/ForestHealth_Intiative/ThresholdUpdate/Data/ForestHealth_ThresholdUpdate.gdb/veg_type_nonurban"
+    lookup_field: WHRTYPE
+    conifer_types: [SMC, JPN, RFR, LPN, WFR, EPN, JUN, SCN, PPN, DFR, KMC, MHC]
+    names:
+      SMC: Sierran Mixed Conifer
+      JPN: Jeffrey Pine
+      RFR: Red Fir
+      LPN: Lodgepole Pine
+      WFR: White Fir
+      EPN: Eastside Pine
+      JUN: Juniper
+      SCN: Subalpine Conifer
+      PPN: Ponderosa Pine
+      MHW: Montane Hardwood
+      MHC: Montane Hardwood-Conifer
+      MCP: Montane Chaparral
+      MRI: Montane Riparian
+      ASP: Aspen
+      WTM: Wet Meadow
+      PGS: Perennial Grassland
+      BAR: Barren
+      URB: Urban
+      LAC: Lacustrine
+      SGB: Sagebrush
+      AGS: Annual Grassland
+  # Parcel ownership (OWNERSHIP_TYPE: Federal, State, Local, Private, blank).
+  ownership:
+    rest: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"
+    field: OWNERSHIP_TYPE
+    codes: {Federal: 1, State: 2, Local: 3, Private: 4, Unknown: 9}
+
+analysis:
+  # Seed source: a pixel burned at unburned/very low or low severity (or outside the fire)
+  # that carried at least this much canopy cover in 2020 and is a conifer type.
+  seed_source:
+    canopy_cover_min_pct: 25
+    require_conifer_type: true
+    include_outside_perimeter: true
+  # Replanting need is only asked of pixels that were forest before the fire: a conifer
+  # CWHR type, or at least this much 2020 canopy cover (so aspen and hardwood stands count,
+  # chaparral and barren do not). The severity cross tabulation still covers every pixel.
+  need_frame:
+    prefire_forest_only: true
+    canopy_cover_min_pct: 25
+  # Distance from a seed source beyond which natural conifer regeneration is unlikely.
+  # Planning value; Welch et al. 2016 and Shive et al. 2018 show regeneration falling off
+  # steeply with Euclidean distance to live seed trees. Bands let the app show other cutoffs.
+  seed_distance_threshold_m: 150
+  seed_distance_bands_m: [50, 100, 120, 150, 200, 300]   # upper edges; last band is open. 120 m is the TRPA threshold report's figure, 150 m Haffey et al. 2018
+  # Extent of the raster work: the perimeter buffered this far, so seed sources beyond the
+  # fire edge and beyond the Basin boundary are seen by the distance calculation.
+  buffer_m: 600
+  # High vegetation severity patch sizes, acres, upper edges; last class is open.
+  patch_size_classes_acres: [10, 100, 200]   # 200 ac is the TRPA Landscape Fire Dynamics standard for a large high severity patch; 10 and 100 ac follow PSW-GTR-270 chapter 4
+  # Connectivity for patch delineation.
+  patch_connectivity: EIGHT
+
+web:
+  # Vertex thinning tolerance for the GeoJSON the app loads, meters.
+  generalize_tolerance_m: 5

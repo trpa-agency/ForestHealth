@@ -195,6 +195,13 @@ get recorded here and in `thresholds/_INDEX.md`.
 
 ### Track B: plot network, scoped to VP9 and VP10
 
+- **Oct. 19, 2026: sample design decided (Mason and Andy).** Current design is
+  `plot-network-design/docs/SAMPLE-DESIGN-2026-10-19.md` and supersedes the Track B bullets
+  below where they conflict: model-assisted estimator with LiDAR; public-land frame with 30 m
+  buffers and no slope cut; one spsurvey GRTS selection by forest type weighted 1.5 on RRK
+  tail cells and 0.5 on slopes over 50 percent; 40/40/40 minimum, 70/40/40 full; ranked list
+  3x the full target; hike-distance access classes; freeze at contract execution (December
+  2026), not Oct. 16. Still synthetic only; Andy runs it on real layers.
 - Freeze is Oct. 16, posting Nov. 2. The real risk is that `run.synthetic` is still `true`,
   no REST sources are wired, and the chain has never run on real layers. Track B time goes
   there.

@@ -74,7 +74,7 @@ This only holds in UTM 10N. In California Albers the same cells are rotated 1.8 
 
 ## What this notebook does not do
 
-Cell size is not a stratification; forest type and structure strata come from `02_strata`. The bin size sweep that earlier drafts ran (the criteria behind Pro's Evaluate Bin Sizes for Point Aggregation) is gone from here: it answers a display question, and on 125 sites its within cell test cannot run at any size. The sample design cell size follows from the sample size in `src/sample_size.py`, not from a point pattern. The reimplementation stays in `src/tessellation.py` if a dense point pattern ever warrants it."""),
+Cell size is not a stratification; forest type strata and structure weights come from `00_sample_design_template`. The bin size sweep that earlier drafts ran (the criteria behind Pro's Evaluate Bin Sizes for Point Aggregation) is gone from here: it answers a display question, and on 125 sites its within cell test cannot run at any size. The sample design cell size follows from the sample size in `src/sample_size.py`, not from a point pattern. The reimplementation stays in `src/tessellation.py` if a dense point pattern ever warrants it."""),
 
 ("code", HEADER),
 

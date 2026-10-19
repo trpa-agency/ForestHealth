@@ -8,7 +8,7 @@ remeasurement cycles, so balancing on them does not lock the design to a
 current-condition snapshot the way structure strata would.
 
 Both functions operate on numpy arrays or pandas Series aligned to the
-candidate point frame written by notebooks/01_frame.ipynb.
+candidate frame built in section 2 of notebooks/00_sample_design_template.ipynb.
 """
 
 from __future__ import annotations

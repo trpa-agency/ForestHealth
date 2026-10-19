@@ -11,9 +11,25 @@ python scripts/build_sample_design_template.py
 python -m jupyter nbconvert --to notebook --execute --inplace notebooks/00_sample_design_template.ipynb
 ```
 
-## The deeper chain
+## What is in this folder
 
-`01_frame`, `02_strata` (height to QMD calibration), `03_allocate_draw`, `04_evaluate`, from `scripts/build_notebooks.py`, predate the Oct 19, 2026 design and still carry the split sample; use them for the height to QMD calibration only. `scripts/grts_draw.R` and `scripts/grts_split_draw.R` are superseded by `scripts/grts_select.R`. `06_tessellation`, from `scripts/build_tessellation_notebook.py`, builds the 400 ha owl grid extension and the 133 ha sample design grid the plots are tagged with. Edit builders, never `.ipynb` files.
+| Path | What it is | Status |
+|---|---|---|
+| `docs/SAMPLE-DESIGN-2026-10-19.md` | The design record: decisions, reasons, precision, assumptions, open items | Current |
+| `notebooks/00_sample_design_template.ipynb` | The sample design, sections 0 to 7 (built by `scripts/build_sample_design_template.py`) | Current |
+| `scripts/grts_select.R` | The frozen spsurvey selection the template calls | Current |
+| `src/` | Methods: `design_template.py` (frame, weights, selection, Appendix A), `strata.py`, `covariates.py`, `layers.py`, `sample_size.py`, `qa.py`, `tessellation.py`, `ownership_overlay.py`, `plot_geometry.py`, `plot_metrics.py` | Current |
+| `notebooks/06_tessellation.ipynb` | The 400 ha owl grid extension for TEON and the 133 ha sample design grid the plots are tagged with (built by `scripts/build_tessellation_notebook.py`; ownership rerun alone by `scripts/rerun_ownership.py`) | Current |
+| `tests/` | `python -m pytest tests -q` | Current |
+| `docs/METHODS.md`, `docs/INPUTS_OUTPUTS.md` | What the code does and what it reads and writes | Current section at the top of each; older sections describe the archived chain |
+| `docs/HANDOFF-ANDY-2026-09-24.md` | Run order, data access, and working with Claude Code | Design sections superseded |
+| `docs/CHANGELOG.md` | Dated changes, newest first | Current |
+| `PLAN.md`, `docs/CHANGES-2026-09-19.md` | The Sept 5 plan and the Sept 19 change note | History; the revision note at the top of `PLAN.md` says what changed |
+| `forms/` | Plot protocol v1.0 draft, data schema, Survey123 v1.1 form (Sept 19 to 23) | Drafts; the RFP scope of Sept 25 and 29 governs the protocol |
+| `html/` | The briefing page, web twin of the Sept 23 deck | Predates the Oct 19 design |
+| `archive/split-sample-2026-09/` | The superseded 01 to 04 chain and its R scripts | Archived; see its README |
+
+Edit builders, never `.ipynb` files.
 
 ## Where the numbers live
 

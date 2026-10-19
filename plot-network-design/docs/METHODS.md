@@ -29,7 +29,7 @@ Sources are set in `config.yaml` under `sources:` and may be local files under `
 
 ## Current design (Oct 19, 2026)
 
-`docs/SAMPLE-DESIGN-2026-10-19.md` is the authority. Where the sections below describe a split sample, per-cell allocation, caty_n balance, disturbance weights, or legacy sites, they describe the earlier chain in notebooks 01 to 04 and are superseded. The template notebook implements the current design: public-land frame, forest type strata, proportional selection on the tail and steep multiplier, nested min and full levels from one ranked list, hike-distance access classes, and RFP Appendix A.
+`docs/SAMPLE-DESIGN-2026-10-19.md` is the authority. Where the sections below describe a split sample, per-cell allocation, caty_n balance, disturbance weights, or legacy sites, they describe the earlier chain in notebooks 01 to 04, now in `archive/split-sample-2026-09/`, and are superseded. The template notebook implements the current design: public-land frame, forest type strata, proportional selection on the tail and steep multiplier, nested min and full levels from one ranked list, hike-distance access classes, and RFP Appendix A.
 
 ## Processing steps
 

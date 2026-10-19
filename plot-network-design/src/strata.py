@@ -189,7 +189,7 @@ def apply_nevada_floor(alloc: pd.DataFrame, cell_state_acres: pd.DataFrame, cfg:
 
 
 # ---------------------------------------------------------------------------
-# GRTS (compact Python version; frozen draw uses spsurvey in scripts/grts_draw.R)
+# GRTS (compact Python version for iteration; the frozen selection is spsurvey in scripts/grts_select.R)
 # ---------------------------------------------------------------------------
 
 def _hierarchical_address(x: np.ndarray, y: np.ndarray, levels: int, rng: np.random.Generator) -> np.ndarray:

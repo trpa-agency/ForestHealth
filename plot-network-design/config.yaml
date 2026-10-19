@@ -156,26 +156,35 @@ threshold:
   cover_sparse_pct: 15
   tpa_max: {JP: [200, 70, 55], SMC: [300, 90, 75], RF: [300, 100, 80]}     # early, mid, late
   ba_max:  {JP: [30, 80, 100], SMC: [40, 130, 180], RF: [50, 175, 250]}
-  tpa_dbh_floor_in: null                 # FIX with Shengli to match RRK/F3 before first plot
+  tpa_dbh_floor_in: 4.0                  # the adopted standards count every tree 4.0 in and larger (Sept 23 2026); Shengli question withdrawn
 
 plot:
-  # Protocol v1.0, September 19, 2026. Nested fixed-radius plot, one center.
-  # Radii and expansion factors are the single source of truth in src/plot_geometry.py;
-  # these values are carried here for the frame and evaluation notebooks.
-  primary_radius_ft: 58.9                # quarter acre, all trees 4.0 in to below the breakpoint
+  # Status plot, September 25, 2026 (RFP scope: status plots only). One quarter-acre fixed-radius
+  # plot, one center, every tree 4.0 in and larger. No macroplot, no breakpoint, no fuels or
+  # understory footprint. Radii and expansion factors are the single source of truth in
+  # src/plot_geometry.py; these values are carried here for the frame and evaluation notebooks.
+  plot_type: "status"
+  primary_radius_ft: 58.9                # quarter acre, all trees 4.0 in and larger
   primary_area_ac: 0.250203
-  macroplot_radius_m: 56.4               # 1 ha, trees at or above the breakpoint
-  microplot_radius_ft: 6.8               # 1/300 ac, saplings 1.0 to 3.9 in
-  subplot_radius_ft: 24.0                # understory and fuels footprint, no tree tally
+  macroplot_radius_m: null               # dropped Sept 25 2026; the quarter acre carries all trees
+  microplot_radius_ft: 6.8               # 1/300 ac, saplings 1.0 to 3.9 in and seedlings
+  subplot_radius_ft: null                # no fuels or understory footprint in this RFP
   dbh_floor_in: 4.0
-  breakpoint_dia_in: 24.0                # stored per plot in the form; CA FIA uses 24, Interior West uses 21
-  positional_tolerance_m: 1.0            # under 0.3 m on aspen plots
+  breakpoint_dia_in: null                # retired with the macroplot
+  height_sample_trees: [3, 5]            # total height on 3 to 5 dominant trees per plot only
+  canopy_points: 100                     # 4 lines x 25 points, crown cover and effective cover at each
+  tags: false
+  per_tree_position: false
+  positional_tolerance_m: 1.0            # target; 1 to 3 m accepted with a 30 min occupation or laser offset; over 3 m reoccupied
   window: "3x3"                          # the sampling unit (frame.unit_px) is the 3x3 window; plot on its centre pixel
 
 split_sample:
-  # Half A: stratified by forest type, balanced on side x landform x elevation band via caty_n, legacy sites honoured.
-  # Half B: unequal probability by structural cell using the allocation block below. Half B weights are Andy's to set.
-  half_a_share: 0.5
+  # SUPERSEDED Sept 25 2026: the RFP sample is a single stratified selection by forest type, equal counts
+  # at the minimum (40 per type), spatially balanced on side x landform x elevation band via caty_n, no
+  # legacy sites and no weighted half. half_a_share: 1.0 turns the weighted half off; the balance block
+  # still applies. Andy leads the selection (two-stage hex GRTS is acceptable if run in spsurvey with
+  # forest type as the stratum so inclusion probabilities are carried).
+  half_a_share: 1.0
   half_a_by_type: {SMC: 0.54, JP: 0.26, RF: 0.20}   # area shares from the threshold repo
   seed_offset_b: 1
   balance:
@@ -196,8 +205,7 @@ frame:
   unit_px: 3
   min_unit_fraction: 0.5                 # a unit needs this share of its pixels in the population, plus its centre pixel
   max_slope_pct: 70
-  edge_buffer_m: 20                      # primary plot radius (18 m) + tolerance, from roads/trails/streams/structures/parcel edges;
-                                         # the 56.4 m macroplot may cross an edge, it only tallies trees at or above the breakpoint
+  edge_buffer_m: 20                      # primary plot radius (18 m) + tolerance, from roads/trails/streams/structures/parcel edges
   exclude_existing_plot_buffer_m: 50
   max_access_distance_m: null            # null keeps all and prices as class 4
   max_solid_fraction: 0.85               # cells where > 85% of above-2 m pulses are single-return are roofs or rock, not canopy; excluded
@@ -224,9 +232,9 @@ strata:
     cover: [sparse, open, closed]
 
 allocation:
-  levels: {min: 60, option: 100, full: 300}
+  levels: {min: 120, option: 150, full: 150}   # Sept 25 2026: 40 per type at min; full adds 30 SMC; option task beyond 150 at the same rate
   floor_per_cell: {min: 2, option: 2, full: 5}
-  type_shares: {SMC: 0.60, RF: 0.20, JP: 0.20}
+  type_shares: {SMC: 0.3334, RF: 0.3333, JP: 0.3333}   # equal allocation at the minimum (40/40/40); full design SMC 70, RF 40, JP 40
   seral_shares: {early: 0.20, mid: 0.40, late: 0.40}
   density_shares: {low: 0.34, moderate: 0.33, high: 0.33}
   tail_boost: 1.5
@@ -238,11 +246,11 @@ draw:
   method: "grts"
   seed: 20261016
   oversample_factor: 2.5
-  min_distance_m: 120                    # between any two selected sites, legacy included: two macroplot radii
-                                         # (112.8 m) rounded up, so no two macroplots overlap. spsurvey mindis.
+  min_distance_m: 40                     # between any two selected sites: two primary plot radii (35.9 m) plus tolerance,
+                                         # so no two plot footprints overlap. spsurvey mindis. Was 120 m with the macroplot.
   weight_by_representativeness: false
   remeasure_share: 0.08
-  legacy_sources: ["ltw_plots", "burn_plots"]   # TEON removed Sept 23 2026: no monuments, phone-fixed centers, cannot be re-occupied
+  legacy_sources: []                     # Sept 25 2026: no legacy plots of any kind in this RFP; every plot is new
 
 access:
   classes:

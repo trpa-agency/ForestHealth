@@ -1,5 +1,7 @@
 # Handoff to Andy McClary, September 24, 2026
 
+> **Oct 19, 2026:** the design sections below (split sample, caty_n balance, legacy sites, 120 m separation, Oct 16 freeze, 300 target) are superseded by `docs/SAMPLE-DESIGN-2026-10-19.md`. The run order, data access, and working-with-Claude-Code sections still apply.
+
 **From:** Mason Bindl (protocol and RFP from here on). **To:** Andy McClary, who leads the sample design code in `plot-network-design/` with Claude Code as his assistant. **Freeze:** October 16, 2026. **RFP posts:** November 2, 2026.
 
 ## What the network is for

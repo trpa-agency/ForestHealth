@@ -178,20 +178,16 @@ plot:
   positional_tolerance_m: 1.0            # target; 1 to 3 m accepted with a 30 min occupation or laser offset; over 3 m reoccupied
   window: "3x3"                          # the sampling unit (frame.unit_px) is the 3x3 window; plot on its centre pixel
 
-split_sample:
-  # SUPERSEDED Sept 25 2026: the RFP sample is a single stratified selection by forest type, equal counts
-  # at the minimum (40 per type), spatially balanced on side x landform x elevation band via caty_n, no
-  # legacy sites and no weighted half. half_a_share: 1.0 turns the weighted half off; the balance block
-  # still applies. Andy leads the selection (two-stage hex GRTS is acceptable if run in spsurvey with
-  # forest type as the stratum so inclusion probabilities are carried).
-  half_a_share: 1.0
-  half_a_by_type: {SMC: 0.54, JP: 0.26, RF: 0.20}   # area shares from the threshold repo
-  seed_offset_b: 1
-  balance:
-    tpi_radius_px: 30                    # pixels of the grid the DEM is sampled to (900 m at 30 m, a landform scale); Andy tunes
-    lake_axis_azimuth_deg: 20            # NNE long axis; anchor set below
-    lake_axis_anchor_xy: null            # [x, y] in frame CRS, lake centroid; null uses the boundary centroid; or swap in a PRISM split
-    elev_bands_m: [2200]                 # elevation band edges, metres; one edge gives two bands. Andy decides with Becky
+balance:
+  # Oct 19 2026 (Mason and Andy): one stratified selection by forest type. Basin side and topographic
+  # position are NOT enforced through caty_n any more. spsurvey's caty_n sets EXPECTED counts per category,
+  # and an area-proportional caty_n is the same thing as equal probability, so it never guaranteed balance.
+  # GRTS spatial balance spreads the sample across side and landform; section 6 reports realized against
+  # expected counts per type x side x TPI class. Elevation band dropped: ten categories per type is already
+  # four plots per category at 40 per type.
+  tpi_radius_px: 30                      # pixels of the grid the DEM is sampled to (900 m at 30 m, a landform scale); Andy tunes
+  lake_axis_azimuth_deg: 20              # NNE long axis; anchor set below
+  lake_axis_anchor_xy: null              # [x, y] in the working CRS, lake centroid; null uses the boundary centroid
 
 frame:
   # Sampling unit, decided Sept. 23, 2026: a unit_px by unit_px block of LiDAR pixels
@@ -204,8 +200,13 @@ frame:
   # source re-defines every unit; nothing selected on one grid carries to the other.
   unit_px: 3
   min_unit_fraction: 0.5                 # a unit needs this share of its pixels in the population, plus its centre pixel
-  max_slope_pct: 70
-  edge_buffer_m: 20                      # primary plot radius (18 m) + tolerance, from roads/trails/streams/structures/parcel edges
+  max_slope_pct: null                    # Oct 19 2026: no slope cut. Slopes over weights.slope_break_pct stay in the population at
+                                         # a lower inclusion probability (weights.steep_multiplier); unsafe sites are rejected in the field
+  edge_buffer_m: 30                      # Oct 19 2026: 30 m (plot radius 18 m plus GNSS and edge margin) around roads, trails,
+                                         # streams, and structures, cut from the frame before selection
+  public_owner_values: [Federal, State, Local]   # Oct 19 2026: all public owners (sources.ownership field). Private and unmapped
+                                         # ownership leave the frame. Sept 29 2026 decision: public lands only, no wilderness
+  private_edge_buffer_m: 30              # plot footprint stays on public land: 30 m off any private parcel
   exclude_existing_plot_buffer_m: 50
   max_access_distance_m: null            # null keeps all and prices as class 4
   max_solid_fraction: 0.85               # cells where > 85% of above-2 m pulses are single-return are roofs or rock, not canopy; excluded
@@ -232,32 +233,40 @@ strata:
     cover: [sparse, open, closed]
 
 allocation:
-  levels: {min: 120, option: 150, full: 150}   # Sept 25 2026: 40 per type at min; full adds 30 SMC; option task beyond 150 at the same rate
-  floor_per_cell: {min: 2, option: 2, full: 5}
-  type_shares: {SMC: 0.3334, RF: 0.3333, JP: 0.3333}   # equal allocation at the minimum (40/40/40); full design SMC 70, RF 40, JP 40
-  seral_shares: {early: 0.20, mid: 0.40, late: 0.40}
-  density_shares: {low: 0.34, moderate: 0.33, high: 0.33}
-  tail_boost: 1.5
-  tail_cells: ["late_high", "late_low", "early_high"]   # seral_density keys boosted
-  nevada_floor: {SMC: 3, RF: 2, JP: 3}                   # per type at the min level
-  disturbance_shares: {post_fire: 0.15, treatment: 0.15}
+  # Oct 19 2026: status plots per forest type. min is the RFP minimum (120), full the full design (150, the extra 30 in
+  # SMC). The full level is the min level plus the first (full - min) backups in GRTS order, so one selection serves both.
+  levels: {min: 120, full: 150}
+  n_by_type:
+    min:  {SMC: 40, JP: 40, RF: 40}
+    full: {SMC: 70, JP: 40, RF: 40}
+  backup_multiple: 3                     # ranked list per type = 3 x the full target (SMC 210, JP 120, RF 120)
+  nevada_check: true                     # report expected and realized Nevada plots per type; no floor
+
+weights:
+  # Oct 19 2026: unequal inclusion probability within forest type, one selection, no split halves.
+  # multiplier = tail_multiplier (tail cells) x steep_multiplier (centre slope over slope_break_pct).
+  # Tail cells come from the RRK seral and stand density assessment rasters now (strata.source: rrk) and from
+  # LiDAR only if the source is switched before the freeze. Weights change efficiency, never bias: every unit
+  # carries a known inclusion probability. Post-fire and treatment weights were dropped Oct 19 2026.
+  tail_multiplier: 1.5
+  tail_cells: ["late_high", "late_low", "early_high"]   # seral_density keys (rrk mode: high = exceeds the VP10 maxima)
+  slope_break_pct: 50
+  steep_multiplier: 0.5
 
 draw:
   method: "grts"
-  seed: 20261016
-  oversample_factor: 2.5
-  min_distance_m: 40                     # between any two selected sites: two primary plot radii (35.9 m) plus tolerance,
-                                         # so no two plot footprints overlap. spsurvey mindis. Was 120 m with the macroplot.
-  weight_by_representativeness: false
+  seed: 20261016                         # not yet frozen; the freeze happens at contract execution (Oct 19 2026 decision)
+  min_distance_m: 100                    # between any two selected sites; plot footprints (36 m apart at most) never overlap
   remeasure_share: 0.08
   legacy_sources: []                     # Sept 25 2026: no legacy plots of any kind in this RFP; every plot is new
 
 access:
-  classes:
-    1: {max_dist_m: 400,  max_slope_pct: 30}
-    2: {max_dist_m: 1500, max_slope_pct: 50}
-    3: {max_dist_m: 4000, max_slope_pct: 70}
-    4: {max_dist_m: null, max_slope_pct: null}
+  # Oct 19 2026: hike distance from the nearest drivable road along the cheapest path over the terrain (surface
+  # distance on the DEM; the lake and NoData are impassable). Three classes, breaks in miles. Sets the unit rate.
+  breaks_mi: [0.5, 1.5]                  # class 1 under 0.5 mi, class 2 0.5 to 1.5 mi, class 3 over 1.5 mi
+  drivable_where: "1=1"                  # CONFIRM: definition query on sources.roads for roads a crew can drive to
+                                         # (exclude closed, gated, and OHV-only routes); Andy fills in from the roads layer
+  slope_cost: true                       # true: surface distance, sqrt(1 + slope^2) per cell; false: planar distance
 
 tessellation:
   # 06_tessellation: two grids, both pure arcpy GenerateTessellation.
@@ -338,6 +347,6 @@ tessellation:
 
 run:
   synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers (F: and Vector.sde through arcpy)
-  freeze: false          # true writes the frozen design layer with the seed recorded; Oct 16, 2026, and nothing changes after
+  freeze: false          # true records the seed and writes the frozen design; done at contract execution (Oct 19 2026 decision)
   rscript: "Rscript"     # spsurvey selection. Rscript on PATH, or the full path, e.g. "C:/Program Files/R/R-4.4.1/bin/Rscript.exe"
   publish_strip_fields: ["remeasure_flag"]

@@ -1,0 +1,29 @@
+need_code,need_class,band,distance_band,acres
+1,High vegetation severity only,1,0-50 m,421.88
+1,High vegetation severity only,2,50-100 m,857.55
+1,High vegetation severity only,3,100-120 m,223.06
+1,High vegetation severity only,4,120-150 m,397.42
+1,High vegetation severity only,5,150-200 m,0.00
+1,High vegetation severity only,6,200-300 m,0.00
+1,High vegetation severity only,7,>300 m,0.00
+3,High vegetation and high soil severity,1,0-50 m,1.33
+3,High vegetation and high soil severity,2,50-100 m,18.68
+3,High vegetation and high soil severity,3,100-120 m,6.67
+3,High vegetation and high soil severity,4,120-150 m,14.90
+3,High vegetation and high soil severity,5,150-200 m,0.00
+3,High vegetation and high soil severity,6,200-300 m,0.00
+3,High vegetation and high soil severity,7,>300 m,0.00
+5,High vegetation severity, beyond 150 m of seed,1,0-50 m,0.00
+5,High vegetation severity, beyond 150 m of seed,2,50-100 m,0.00
+5,High vegetation severity, beyond 150 m of seed,3,100-120 m,0.00
+5,High vegetation severity, beyond 150 m of seed,4,120-150 m,0.00
+5,High vegetation severity, beyond 150 m of seed,5,150-200 m,440.56
+5,High vegetation severity, beyond 150 m of seed,6,200-300 m,815.52
+5,High vegetation severity, beyond 150 m of seed,7,>300 m,1423.33
+7,High vegetation and soil severity, beyond 150 m of seed,1,0-50 m,0.00
+7,High vegetation and soil severity, beyond 150 m of seed,2,50-100 m,0.00
+7,High vegetation and soil severity, beyond 150 m of seed,3,100-120 m,0.00
+7,High vegetation and soil severity, beyond 150 m of seed,4,120-150 m,0.00
+7,High vegetation and soil severity, beyond 150 m of seed,5,150-200 m,16.23
+7,High vegetation and soil severity, beyond 150 m of seed,6,200-300 m,47.15
+7,High vegetation and soil severity, beyond 150 m of seed,7,>300 m,120.76

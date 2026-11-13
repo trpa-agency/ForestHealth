@@ -1,0 +1,21 @@
+veg_code,veg_class,soil_code,soil_class,acres
+0,0,1,Unburned / Very Low,0.89
+0,0,2,Low,0.22
+0,0,3,Moderate,0.00
+0,0,4,High,0.00
+1,Unburned / Very Low,1,Unburned / Very Low,1216.28
+1,Unburned / Very Low,2,Low,946.51
+1,Unburned / Very Low,3,Moderate,49.37
+1,Unburned / Very Low,4,High,9.79
+2,Low,1,Unburned / Very Low,100.08
+2,Low,2,Low,1271.88
+2,Low,3,Moderate,101.86
+2,Low,4,High,2.45
+3,Moderate,1,Unburned / Very Low,16.46
+3,Moderate,2,Low,876.01
+3,Moderate,3,Moderate,306.24
+3,Moderate,4,High,0.67
+4,High,1,Unburned / Very Low,8.90
+4,High,2,Low,916.27
+4,High,3,Moderate,3815.18
+4,High,4,High,227.07

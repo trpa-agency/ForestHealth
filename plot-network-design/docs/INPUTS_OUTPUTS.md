@@ -1,6 +1,23 @@
 # Inputs and outputs
 
-Extracted from PLAN.md section 13; keep the two in sync.
+## Current: notebook 00, Oct 19, 2026 design
+
+Inputs, all through `config.yaml` `sources:`: `veg_type_nonurban` (frame and forest type), TRPA boundary, Urban Area, designated wilderness, ownership (`OWNERSHIP_TYPE`), roads (all, and drivable through `access.drivable_where`), trails, streams, structures, the 2022 bare earth DEM (slope, TPI, hike distance), state line, management zone, and the RRK seral, cover, TPA, basal area, and stand density assessment rasters (tail cells and evaluation). Fire perimeters and treatment units are carried as attributes only.
+
+| Output (`outputs/`) | What it holds |
+|---|---|
+| `frame_accounting.csv` | Acres removed at each frame step, pixel and unit level |
+| `structure_classes.csv`, `weights_by_type.csv` | Structure classes by type; units, area, multiplier, and expected plots by tail and steep flags |
+| `precision_by_type.csv` | CI half widths, design-based and model-assisted, and expected Nevada plots |
+| `grts_select.gpkg`, `grts_select_balance.csv` | Raw spsurvey selection and sp_balance |
+| `eval_realized_vs_expected.csv`, `eval_vp9_crosstab.csv`, `eval_vp10_crosstab.csv`, `eval_covariate_balance.csv`, `qa_report.csv` | Section 6 checks |
+| `plots_design_<date>.gpkg`, `plots_design_<date>_internal.gpkg` | Every selected site with level, order, inclusion probabilities, weights, and hex keys; public copy strips the remeasure flag |
+| `installation_order_<date>.csv`, `backup_list_<date>.csv` | The min and full sites in order, and the backups in order per type |
+| `appendix_a_<date>.md`, `appendix_a_*_<date>.csv`, `appendix_a_frame_map_<date>.png` | RFP Appendix A: counts by type, access class, and owner at 120 and 150, list depth, frame map |
+
+## Earlier chain (Sept 5 to Oct 18, archived)
+
+Extracted from PLAN.md section 13.
 
 
 All paths are in `config.yaml` (`sources:` for inputs, `lidar:` and `paths:` for outputs). Nothing is hardcoded. Resolution is native unless stated; every 30 m product shares one grid snapped to `lidar.grid_origin`, CRS EPSG:26910.

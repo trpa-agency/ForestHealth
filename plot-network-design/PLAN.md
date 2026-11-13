@@ -7,6 +7,8 @@
 
 This document is the soup-to-nuts plan for producing the plot location layer, allocation table, backup list, and installation order that the field-only RFP references. It replaces the August 31 methods outline. The code that implements it lives in this repo (`notebooks/`, `src/`, `scripts/`), configured by `config.yaml`, and documented in `docs/METHODS.md`.
 
+> **Oct. 19, 2026: this plan is history.** The current design is `docs/SAMPLE-DESIGN-2026-10-19.md`; it replaces the allocation, split sample, legacy sites, freeze date, and 300 plot target below. The notes that follow record what changed between Sept. 5 and Sept. 23.
+>
 > **Revisions since Sept. 5.** Where this document and `config.yaml` disagree, the config is current. Three decisions postdate the text below and are not yet threaded through every section:
 >
 > 1. **Sept. 19, protocol v1.0.** The plot is a nested fixed-radius design with one centre: a quarter-acre primary plot (58.9 ft) for all trees 4.0 in and larger, a 56.4 m macroplot for trees at or above the breakpoint, a 1/300 acre microplot for saplings, and a 24 ft subplot for understory and fuels. It replaces the 1/7 acre plot in sections 2, 7, and 9 (`plot:` block, `src/plot_geometry.py`, `docs/CHANGES-2026-09-19.md`).

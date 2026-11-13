@@ -16,14 +16,22 @@ module holds only what none of them had:
     population_check        acres by type against report Table 1
     strata_config_for_source, proxy_columns, elevation_band
                             the rrk or lidar proxy columns strata.classify_cells expects
-    half_a_counts, allocate_half_b, half_b_levels
-                            the split sample on top of strata.allocate
-    write_selection_inputs, run_rscript, python_split_selection, normalise_spsurvey_sites
-                            the spsurvey call and the Python fallback
-    level_labels, install_order_split
-                            nested level labels and one installation order for both halves
+    hike_distance_m, access_class_mi
+                            access class from hike distance to a drivable road (Oct 19 2026)
+    inclusion_multiplier, selection_targets, design_ip, expected_counts
+                            the one-selection design: tail and steep multipliers, per-type
+                            targets and list lengths, inclusion probabilities, expected counts
+    write_selection_inputs, run_rscript, python_selection, normalise_spsurvey_sites
+                            the spsurvey call (scripts/grts_select.R) and the Python fallback
+    assign_levels           min, full, and backup labels and one installation order
+    appendix_a_tables       counts by type, access class, and owner for RFP Appendix A
     spatial_balance, vp9_class, vp10_class, hex_keys
                             evaluation and export helpers
+
+Design as of Oct 19 2026 (Mason and Andy): one GRTS selection stratified by forest type,
+unequal probability within type (1.5x tail cells, 0.5x slopes over 50 percent), a ranked
+list three times the full target per type, min 40/40/40, and full 70/40/40 as the min plus
+the first 30 SMC over sample sites in order.
 
 Sampling language: the sample is selected, sites are selected sites. Config keys and
 function names that already carried another word keep it.
@@ -239,9 +247,14 @@ def make_synthetic_sources(cfg: dict, seed: int = 1, n: int = 1100, src_epsg: in
         for j in range(-6, 7):
             pc.append(affinity.rotate(box(cx + i * 0.16 * R, cy + j * 0.14 * R, cx + (i + 1) * 0.16 * R, cy + (j + 1) * 0.14 * R), 7, origin=(cx, cy)))
     parcels_g = gpd.GeoDataFrame({"APN": [f"{k:04d}" for k in range(len(pc))]}, geometry=pc, crs=scrs)
-    owners = ["USFS", "CSP", "NDF", "CTC", "Private"]
+    # Ownership/MapServer/0 shape: OWNERSHIP_TYPE in Federal, State, Local, Private. One private strip plus scattered
+    # private inholdings exercise the public frame cut and the private edge buffer.
+    owners = ["Federal", "State", "Federal", "Local", "Private"]
     own_polys = [affinity.rotate(box(cx + (k - 2.5) * 0.4 * R, cy - R, cx + (k - 1.5) * 0.4 * R, cy + R), -20, origin=(cx, cy)) for k in range(5)]
-    ownership_g = gpd.GeoDataFrame({"OWNER": owners}, geometry=own_polys, crs=scrs)
+    inholdings = [Point(cx + rng.uniform(-0.8, 0.8) * R, cy + rng.uniform(-0.7, 0.7) * R).buffer(rng.uniform(150, 450), cap_style=3) for _ in range(25)]
+    holes = gpd.GeoSeries(inholdings, crs=scrs).union_all()
+    ownership_g = gpd.GeoDataFrame({"OWNERSHIP_TYPE": owners + ["Private"] * len(inholdings)},
+                                   geometry=[p.difference(holes) for p in own_polys] + inholdings, crs=scrs)
     states_g = gpd.GeoDataFrame({"STUSPS": ["CA", "NV"]},
                                 geometry=[box(cx - 1.2 * R, cy - 1.2 * R, cx + 0.30 * R, cy + 1.2 * R), box(cx + 0.30 * R, cy - 1.2 * R, cx + 1.2 * R, cy + 1.2 * R)], crs=scrs)
     fire_g = gpd.GeoDataFrame({"FIRE_NAME": ["Angora", "Caldor"], "YEAR": [2007, 2021]},
@@ -557,70 +570,120 @@ def elevation_band(elev_m, edges: Iterable[float]) -> np.ndarray:
     return np.array([f"e{i + 1}" for i in idx], dtype=object)
 
 
-# --------------------------------------------------------------------------- allocation
+# --------------------------------------------------------------------------- access
 
-def half_a_counts(cfg: dict, level: str) -> dict:
-    """Half A sites per forest type at a nested level: n * half_a_share split by half_a_by_type (largest remainder)."""
-    from src.sample_size import allocate_by_share
-    n = cfg["allocation"]["levels"][level]
-    na = int(round(n * cfg["split_sample"]["half_a_share"]))
-    return allocate_by_share(na, cfg["split_sample"]["half_a_by_type"])
-
-
-def half_b_levels(cfg: dict) -> dict:
-    """Half B total per level: the level's n minus Half A."""
-    return {lvl: cfg["allocation"]["levels"][lvl] - sum(half_a_counts(cfg, lvl).values()) for lvl in cfg["allocation"]["levels"]}
-
-
-def allocate_half_b(cells: pd.DataFrame, cfg: dict, level: str, log=None) -> pd.DataFrame:
+def hike_distance_m(road_mask: np.ndarray, dem: np.ndarray, cell_m: float, slope_cost: bool = True, log=None) -> np.ndarray:
     """
-    strata.allocate for Half B's share of a level. When floor_per_cell times the cell
-    count exceeds Half B's n, the floor is lowered to the largest feasible value and the
-    row carries a note, so the notebook keeps running and the decision (fewer cells or a
-    lower floor) is visible to whoever owns it.
+    Distance in metres from every pixel to the nearest drivable road pixel along the
+    cheapest path over the grid (8 neighbours). With slope_cost the cost of crossing a
+    pixel is its surface distance factor, sqrt(1 + slope^2), so a steep approach counts
+    longer than its map distance; NaN in the DEM (the lake, outside the Basin) is
+    impassable. Uses scikit-image's MCP_Geometric; when scikit-image is missing it falls
+    back to planar Euclidean distance and logs a warning, because that understates steep
+    approaches and moves sites toward lower access classes.
     """
-    nb = half_b_levels(cfg)[level]
-    c = copy.deepcopy(cfg)
-    c["allocation"]["levels"][level] = nb
-    floor = cfg["allocation"]["floor_per_cell"][level]
-    feasible = max(nb // max(len(cells), 1), 0)
-    note = ""
-    if floor * len(cells) > nb:
-        note = f"floor lowered {floor} -> {feasible}: {len(cells)} cells x {floor} exceeds Half B n={nb}"
-        c["allocation"]["floor_per_cell"][level] = feasible
+    if not road_mask.any():
         if log:
-            log.warning(f"{level}: {note}")
-    out = strata.allocate(cells, c, level)
-    out["half_b_n"] = nb
-    out["note"] = note
+            log.warning("no drivable road pixels; hike distance is undefined (NaN)")
+        return np.full(road_mask.shape, np.nan)
+    try:
+        from skimage.graph import MCP_Geometric
+    except ImportError:
+        from scipy.ndimage import distance_transform_edt
+        if log:
+            log.warning("scikit-image not installed; access classes use planar distance. conda install -n arcgispro-py3 scikit-image")
+        return distance_transform_edt(~road_mask) * cell_m
+    blocked = np.isnan(dem)
+    if slope_cost:
+        slope, _ = terrain(dem, cell_m)
+        cost = np.sqrt(1.0 + (np.nan_to_num(slope, nan=0.0) / 100.0) ** 2)
+    else:
+        cost = np.ones(dem.shape)
+    cost = np.where(blocked & ~road_mask, np.inf, cost)
+    starts = np.argwhere(road_mask)
+    mcp = MCP_Geometric(cost, fully_connected=True)
+    cum, _ = mcp.find_costs(starts)
+    out = cum * cell_m
+    out[~np.isfinite(out)] = np.nan
     return out
+
+
+def access_class_mi(hike_m, breaks_mi: Iterable[float]) -> np.ndarray:
+    """Access class 1, 2, 3, ... from hike distance in metres and ascending breaks in miles; NaN distance gets the last class."""
+    edges = np.asarray(list(breaks_mi), float) * 1609.344
+    d = np.asarray(hike_m, float)
+    cls = np.searchsorted(edges, np.nan_to_num(d, nan=np.inf), side="right") + 1
+    return cls.astype(int)
+
+
+# --------------------------------------------------------------------------- design (Oct 19 2026)
+
+def inclusion_multiplier(frame: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """
+    Relative inclusion probability within forest type, the aux variable spsurvey's
+    proportional selection reads: tail_multiplier where f"{seral_class}_{density_class}"
+    is in weights.tail_cells, times steep_multiplier where the centre slope exceeds
+    weights.slope_break_pct. Adds is_tail, is_steep, and mult.
+    """
+    w = cfg["weights"]
+    out = frame.copy()
+    key = out["seral_class"].astype(str) + "_" + out["density_class"].astype(str)
+    out["is_tail"] = key.isin(w["tail_cells"])
+    out["is_steep"] = out["slope_pct"].fillna(0) > float(w["slope_break_pct"])
+    out["mult"] = np.where(out["is_tail"], float(w["tail_multiplier"]), 1.0) * np.where(out["is_steep"], float(w["steep_multiplier"]), 1.0)
+    return out
+
+
+def selection_targets(cfg: dict) -> pd.DataFrame:
+    """
+    One row per forest type: n_min, n_full, list_len (backup_multiple x n_full), and the
+    spsurvey arguments n_base (= n_min) and n_over (= list_len - n_min). The full level is
+    the min level plus the first n_full - n_min over sample sites in order.
+    """
+    a = cfg["allocation"]
+    rows = []
+    for t in cfg["forest_types"]["population_acres"]:
+        n_min, n_full = int(a["n_by_type"]["min"][t]), int(a["n_by_type"]["full"][t])
+        if n_full < n_min:
+            raise ValueError(f"{t}: full ({n_full}) is below min ({n_min}); the full level must contain the min level")
+        list_len = int(a["backup_multiple"]) * n_full
+        rows.append({"forest_type": t, "n_min": n_min, "n_full": n_full, "list_len": list_len,
+                     "n_base": n_min, "n_over": list_len - n_min})
+    out = pd.DataFrame(rows)
+    for lvl in ("min", "full"):
+        tot = int(out[f"n_{lvl}"].sum())
+        if tot != int(a["levels"][lvl]):
+            raise ValueError(f"allocation.n_by_type.{lvl} sums to {tot}, allocation.levels.{lvl} says {a['levels'][lvl]}")
+    return out
+
+
+def design_ip(frame: pd.DataFrame, n_by_type: dict, mult_col: str = "mult") -> pd.Series:
+    """First order inclusion probability of every unit for n plots per type: n_t x mult / sum(mult in type)."""
+    tot = frame.groupby("forest_type")[mult_col].transform("sum")
+    n = frame["forest_type"].map(n_by_type).astype(float)
+    return n * frame[mult_col] / tot
+
+
+def expected_counts(frame: pd.DataFrame, n_by_type: dict, by: list[str], mult_col: str = "mult") -> pd.Series:
+    """Expected sample count per group under the design: the sum of inclusion probabilities over the group's units."""
+    return frame.assign(_ip=design_ip(frame, n_by_type, mult_col)).groupby(by)["_ip"].sum().rename("n_expected")
 
 
 # --------------------------------------------------------------------------- selection
 
-def write_selection_inputs(frame: pd.DataFrame, allocA: pd.DataFrame, catyA: pd.DataFrame, allocB: pd.DataFrame,
-                           cfg: dict, processed: Path, log=None) -> dict:
-    """The five files scripts/grts_split_draw.R reads. Returns their paths."""
+def write_selection_inputs(frame: pd.DataFrame, targets: pd.DataFrame, cfg: dict, processed: Path, log=None) -> dict:
+    """The two files scripts/grts_select.R reads: frame_points.gpkg and selection_targets.csv. Returns their paths."""
     import geopandas as gpd
     wcrs = cfg["crs"]["working"]
     processed.mkdir(parents=True, exist_ok=True)
-    keep = [c for c in ["unit_id", "cell_id", "forest_type", "inclusion_weight", "balance_caty", "x", "y"] if c in frame]
+    keep = [c for c in ["unit_id", "forest_type", "mult", "basin_side", "tpi_class", "x", "y"] if c in frame]
     pts = gpd.GeoDataFrame(frame[keep].copy(), geometry=gpd.points_from_xy(frame["x"], frame["y"]), crs=wcrs)
-    paths = {"frame_points": processed / "frame_points.gpkg", "allocation_typeA": processed / "allocation_typeA.csv",
-             "caty_n_typeA": processed / "caty_n_typeA.csv", "allocation_full": processed / "allocation_full.csv",
-             "legacy_sites": processed / "legacy_sites.gpkg"}
+    paths = {"frame_points": processed / "frame_points.gpkg", "selection_targets": processed / "selection_targets.csv"}
     pts.to_file(paths["frame_points"], driver="GPKG")
-    allocA[["forest_type", "n_A"]].to_csv(paths["allocation_typeA"], index=False)
-    catyA[["forest_type", "balance_caty", "n"]].to_csv(paths["caty_n_typeA"], index=False)
-    allocB[["cell_id", "forest_type", "n_B"]].to_csv(paths["allocation_full"], index=False)
-    leg = frame[frame["legacy"]] if "legacy" in frame else frame.iloc[0:0]
-    if paths["legacy_sites"].exists():
-        paths["legacy_sites"].unlink()
-    if len(leg):
-        gpd.GeoDataFrame(leg[[c for c in ["unit_id", "cell_id", "forest_type", "legacy_source"] if c in leg]].copy(),
-                         geometry=gpd.points_from_xy(leg["x"], leg["y"]), crs=wcrs).to_file(paths["legacy_sites"], driver="GPKG")
+    targets[["forest_type", "n_base", "n_over"]].to_csv(paths["selection_targets"], index=False)
     if log:
-        log.info(f"Selection inputs: {len(pts):,} units, {len(leg)} legacy sites, {len(allocB)} Half B cells -> {processed}")
+        log.info(f"selection inputs: {len(pts):,} units; n_base {targets.set_index('forest_type')['n_base'].to_dict()}, "
+                 f"n_over {targets.set_index('forest_type')['n_over'].to_dict()} -> {processed}")
     return paths
 
 
@@ -644,112 +707,96 @@ def run_rscript(cfg: dict, script: str, args: list, cwd: Path, log=None) -> subp
     return res
 
 
-def python_split_selection(frame: pd.DataFrame, nA_by_type: dict, nB_by_cell: dict, cfg: dict, log=None) -> pd.DataFrame:
+def python_selection(frame: pd.DataFrame, targets: pd.DataFrame, cfg: dict, log=None) -> pd.DataFrame:
     """
-    The split sample with strata.grts_draw, for iteration or when R is absent.
-    Half A: equal probability within forest type (grts_draw stratified on forest_type by
-    passing it as cell_id), legacy sites honoured. Half B: unequal probability by cell on
-    inclusion_weight, from the units left after removing everything within
-    draw.min_distance_m of a Half A site. Returns both halves with a `half` column.
+    The same design with strata.grts_draw, for iteration or when R is absent: stratified
+    by forest type, unequal probability on mult, a ranked list of list_len sites per type.
+    Returns unit rows with stratum, status (base or over), and grts_rank within type.
+    Not the frozen selection.
     """
-    from scipy.spatial import cKDTree
     d = cfg["draw"]
-    seed, over, mindis = int(d["seed"]), float(d["oversample_factor"]), float(d["min_distance_m"])
-    legacy = frame["legacy"] if "legacy" in frame else pd.Series(False, index=frame.index)
-
     fa = frame.assign(cell_id=frame["forest_type"])
-    selA = strata.grts_draw(fa, nA_by_type, None, seed=seed, oversample_factor=over, legacy_mask=legacy, min_distance_m=mindis)
-    selA = selA.assign(half="A", stratum=selA["cell_id"])
-    selA["cell_id"] = frame.loc[selA.index, "cell_id"].values
-
-    if len(selA):
-        tree = cKDTree(selA[["x", "y"]].to_numpy(float))
-        near = tree.query_ball_point(frame[["x", "y"]].to_numpy(float), r=mindis)
-        free = np.array([len(v) == 0 for v in near])
-    else:
-        free = np.ones(len(frame), dtype=bool)
-    fb = frame[free & ~legacy.values]
-    if log:
-        log.info(f"Half B frame: {len(fb):,} of {len(frame):,} units after removing Half A sites and their {mindis:.0f} m buffers")
-    w = fb["inclusion_weight"] if "inclusion_weight" in fb else None
-    selB = strata.grts_draw(fb, nB_by_cell, w, seed=seed + int(cfg["split_sample"]["seed_offset_b"]),
-                            oversample_factor=over, legacy_mask=None, min_distance_m=mindis)
-    selB = selB.assign(half="B", stratum=selB["cell_id"])
-    return pd.concat([selA, selB])
+    t = targets.set_index("forest_type")
+    factor = float((t["list_len"] / t["n_base"]).max())
+    sel = strata.grts_draw(fa, t["n_base"].to_dict(), fa["mult"], seed=int(d["seed"]), oversample_factor=factor,
+                           legacy_mask=None, min_distance_m=float(d["min_distance_m"]))
+    sel = sel[sel["grts_rank"] <= sel["cell_id"].map(t["list_len"])].copy()
+    short = (sel.groupby("cell_id").size() - t["list_len"]).loc[lambda s: s < 0]
+    if len(short) and log:
+        log.warning(f"Python GRTS returned fewer sites than the list length for {short.to_dict()}")
+    sel["stratum"] = sel["cell_id"]
+    sel["status"] = np.where(sel["status"] == "primary", "base", "over")
+    sel["ip"] = design_ip(frame, t["n_base"].to_dict()).reindex(sel.index).values
+    sel["wgt"] = 1.0 / sel["ip"]
+    return sel.drop(columns=["cell_id", "inclusion_weight"], errors="ignore").reset_index(drop=True)
 
 
 def normalise_spsurvey_sites(sites, frame: pd.DataFrame) -> pd.DataFrame:
     """
-    outputs/grts_split_draw.gpkg (spsurvey) to the schema python_split_selection
-    returns: unit_id, half, stratum, status (legacy, primary, backup), grts_rank within
-    half and stratum, wgt, ip, plus every frame column joined back on unit_id.
+    outputs/grts_select.gpkg (spsurvey) to the schema python_selection returns: unit_id,
+    stratum, status (base or over), grts_rank within stratum (base first, then over, each in
+    spsurvey's order), siteID, wgt, ip, plus every frame column joined back on unit_id.
     """
     s = pd.DataFrame(sites.drop(columns="geometry", errors="ignore"))
-    s = s.rename(columns={"siteuse2": "status"})
-    s["status"] = s["status"].str.lower().replace({"base": "primary", "over": "backup"})
+    s["status"] = s["siteuse"].str.lower().map({"base": "base", "over": "over"})
     s["_ord"] = np.arange(len(s))
-    s = s.sort_values(["half", "stratum", "_ord"])
-    new = s["status"] != "legacy"
-    s["grts_rank"] = 0
-    s.loc[new, "grts_rank"] = s[new].groupby(["half", "stratum"]).cumcount() + 1
-    keep = ["unit_id", "half", "stratum", "status", "grts_rank", "siteID", "wgt", "ip", "seed"]
-    keep = [c for c in keep if c in s]
+    s["_b"] = (s["status"] != "base").astype(int)
+    s = s.sort_values(["stratum", "_b", "_ord"])
+    s["grts_rank"] = s.groupby("stratum").cumcount() + 1
+    keep = [c for c in ["unit_id", "stratum", "status", "grts_rank", "siteID", "wgt", "ip"] if c in s]
     out = s[keep].merge(frame, on="unit_id", how="left", suffixes=("", "_frame"))
     return out.reset_index(drop=True)
 
 
-# --------------------------------------------------------------------------- order and levels
+def assign_levels(sel: pd.DataFrame, targets: pd.DataFrame) -> pd.DataFrame:
+    """
+    Level and order for every selected site, within forest type by grts_rank:
+      rank 1 to n_min                      level "min"   (the RFP minimum)
+      rank n_min + 1 to n_full             level "full"  (added when the full design is funded)
+      rank above n_full                    level "backup", backup_order 1, 2, ... in rank order
+    Backups replace a rejected site in order, starting at the first unused rank in the type:
+    at the min level that is rank n_min + 1, so the full level's sites double as the min
+    level's first backups. install_order interleaves types by rank so any prefix of the
+    order is balanced across types and space; min sites come before full sites.
+    """
+    t = targets.set_index("forest_type")
+    out = sel.copy()
+    n_min = out["stratum"].map(t["n_min"])
+    n_full = out["stratum"].map(t["n_full"])
+    out["level"] = np.where(out["grts_rank"] <= n_min, "min", np.where(out["grts_rank"] <= n_full, "full", "backup"))
+    out["backup_order"] = np.where(out["level"] == "backup", out["grts_rank"] - n_full, np.nan)
+    prim = out[out["level"] != "backup"].sort_values(["level", "grts_rank", "stratum"], key=lambda c: c.map({"min": 0, "full": 1}) if c.name == "level" else c)
+    out["install_order"] = np.nan
+    out.loc[prim.index, "install_order"] = np.arange(1, len(prim) + 1)
+    out["plot_id"] = "FH-" + out["stratum"].astype(str) + "-" + out["grts_rank"].astype(int).astype(str).str.zfill(3)
+    return out.sort_values(["install_order", "stratum", "grts_rank"], na_position="last").reset_index(drop=True)
 
-def level_labels(sel: pd.DataFrame, group_col: str, counts_by_level: dict, levels: list) -> pd.Series:
+
+def to_markdown(df: pd.DataFrame) -> str:
+    """A pipe table without the tabulate dependency (not in arcgispro-py3 by default)."""
+    d = df.reset_index()
+    head = "| " + " | ".join(str(c) for c in d.columns) + " |"
+    rule = "|" + "|".join("---" for _ in d.columns) + "|"
+    body = ["| " + " | ".join(str(v) for v in row) + " |" for row in d.itertuples(index=False)]
+    return "\n".join([head, rule] + body)
+
+
+def appendix_a_tables(sel: pd.DataFrame) -> dict:
     """
-    Nested level label per primary or legacy site from its rank within a group against
-    the group's count at each level. counts_by_level: {level: {group: n}}. Backups get
-    "backup"; sites past the last level get "beyond".
+    RFP Appendix A: plots by forest type and access class, and by forest type and owner,
+    at the min and full levels (cumulative), plus list depth per type. Coordinates are not
+    in these tables; they are furnished at contract execution.
     """
-    out = pd.Series("backup", index=sel.index, dtype=object)
-    prim = sel["status"].isin(["primary", "legacy"])
-    within = sel[prim].sort_values(["grts_rank"]).groupby(group_col).cumcount()
-    for i in within.index:
-        g = sel.at[i, group_col]
-        label = "beyond"
-        for lvl in levels:
-            if within[i] < counts_by_level[lvl].get(g, 0):
-                label = lvl
-                break
-        out[i] = label
+    prim = sel[sel["level"].isin(["min", "full"])]
+    out = {}
+    for lvl, rows in (("min", prim[prim["level"] == "min"]), ("full", prim)):
+        acc = pd.crosstab(rows["forest_type"], rows["access_class"], margins=True, margins_name="total")
+        acc.columns = [f"class_{c}" if c != "total" else c for c in acc.columns]
+        out[f"access_{lvl}"] = acc
+        out[f"owner_{lvl}"] = pd.crosstab(rows["forest_type"], rows["owner"].fillna("unknown"), margins=True, margins_name="total")
+    depth = sel.groupby(["forest_type", "level"]).size().unstack(fill_value=0)
+    out["list_depth"] = depth.reindex(columns=[c for c in ["min", "full", "backup"] if c in depth.columns])
     return out
-
-
-def install_order_split(sel: pd.DataFrame, cfg: dict, allocB_by_level: pd.DataFrame, nA_by_level: dict) -> pd.DataFrame:
-    """
-    One installation order for both halves. Half B primaries take strata.installation_order
-    (tail cells first, round-robin across cells, GRTS rank within cell). Half A primaries
-    are ordered strictly by GRTS rank within forest type, interleaved across types, so any
-    prefix stays an equal-probability spatially balanced subsample. The two orders are
-    interleaved alternately. Levels: Half B from the allocation table, Half A from
-    nA_by_level {level: {type: n}}.
-    """
-    levels = list(cfg["allocation"]["levels"])
-    a = sel[sel["half"] == "A"].copy()
-    b = sel[sel["half"] == "B"].copy()
-
-    b_prim = strata.installation_order(b, cfg, allocB_by_level) if len(b) else b.iloc[0:0].assign(install_order=[], level=[])
-    a_prim = a[a["status"].isin(["primary", "legacy"])].copy()
-    a_prim["_within"] = a_prim.sort_values("grts_rank").groupby("stratum").cumcount()
-    a_prim = a_prim.sort_values(["_within", "stratum"])
-    a_prim["install_order"] = np.arange(1, len(a_prim) + 1)
-    a_prim["level"] = level_labels(a_prim, "stratum", {lvl: nA_by_level[lvl] for lvl in levels}, levels)
-    a_prim = a_prim.drop(columns="_within")
-
-    a_prim["_half_ord"] = a_prim["install_order"]
-    b_prim["_half_ord"] = b_prim["install_order"]
-    prim = pd.concat([a_prim, b_prim]).sort_values(["_half_ord", "half"])
-    prim["install_order"] = np.arange(1, len(prim) + 1)
-    prim = prim.drop(columns="_half_ord")
-    back = sel[sel["status"] == "backup"].copy()
-    back["level"] = "backup"
-    back["install_order"] = np.nan
-    return pd.concat([prim, back]).sort_values(["install_order", "half", "stratum", "grts_rank"], na_position="last")
 
 
 # --------------------------------------------------------------------------- evaluation

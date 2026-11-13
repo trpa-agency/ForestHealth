@@ -27,6 +27,10 @@ Produce the plot location layer, allocation table, backup list, and installation
 
 Sources are set in `config.yaml` under `sources:` and may be local files under `data/raw/` or TRPA ArcGIS REST URLs; `src/layers.py` reads either.
 
+## Current design (Oct 19, 2026)
+
+`docs/SAMPLE-DESIGN-2026-10-19.md` is the authority. Where the sections below describe a split sample, per-cell allocation, caty_n balance, disturbance weights, or legacy sites, they describe the earlier chain in notebooks 01 to 04, now in `archive/split-sample-2026-09/`, and are superseded. The template notebook implements the current design: public-land frame, forest type strata, proportional selection on the tail and steep multiplier, nested min and full levels from one ranked list, hike-distance access classes, and RFP Appendix A.
+
 ## Processing steps
 
 0a. **LAS to CHM and point metrics** (`00a_las_to_chm.ipynb`, work in `src/lidar.py`): built for the ~2 TB LAZ archive on the network drive. Drive inventory by folder and extension with no file opens; header-only tile index; AOI filter by header bounds then polygon; classification sample on random tiles; CRS check. Then per tile, in a multiprocessing pool (`lidar.workers`): copy to `lidar.local_scratch` (one network read), decompress once in memory when under `in_memory_max_points` (else chunked two-pass), DTM from class 2 (mean per cell, nearest-fill, 3x3 smooth; written as a 1 m bare-earth tile), height above ground, 1 m CHM tile (max first-return HAG, pits filled), optional height-normalized LAZ copy, and a partial `.npz` with 30 m counts plus a 0.5 m height histogram. Finished tiles are skipped on rerun. Merge sums the partials exactly (histograms give p95) and writes cover 2 m and 5 m, p95, mid-canopy fraction, return density, ground density.

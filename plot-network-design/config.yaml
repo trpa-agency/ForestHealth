@@ -73,45 +73,45 @@ sources:
     file: "data/raw/wilderness.gpkg"
   mgmt_zone:                                             # USFS forest management zone, carried as an attribute only
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.ForestManagementZone_USFS"
-    field: "ZONE_NAME"                                   # CONFIRM the field name
+    field: "Name"                                        # confirmed Nov 13 2026 (6 zones)
   roads:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Transportation\\SDE.Roads"          # CONFIRM
+    sde: "C:/Users/amcclary/Documents/GitHub/ForestHealth/plot-network-design/data/processed/roads_merged.gdb/roads"   # Andy, Nov 13 2026: USFS_Roads + PROTECT curated OSM roads (scripts/build_roads_merged.py); field drivable
     file: "data/raw/roads.gpkg"
   trails:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Recreation\\SDE.Trails"             # CONFIRM
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Recreation\\SDE.Recreation_Trails"  # confirmed Nov 13 2026 (1,771 lines)
     file: "data/raw/trails.gpkg"
   streams:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Hydro\\SDE.Streams"                 # CONFIRM
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Water\\SDE.Streams"                 # Andy, Nov 13 2026: named major streams only (558 lines), not LTBMU_Streams
     file: "data/raw/streams.gpkg"
   structures:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Structures\\SDE.Buildings"          # CONFIRM
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Impervious\\SDE.Buildings_TahoeArea"   # confirmed Nov 13 2026 (235,795 footprints)
     file: "data/raw/structures.gpkg"
   parcels:                                               # parcel edges for the edge buffer; the Ownership layer is parcel based and carries APN
     use: rest
-    rest: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"           # Ownership: APN, JURISDICTION, COUNTY, OWNERSHIP_TYPE, PARCEL_ACRES
+    rest: "https://maps.trpa.org/server/rest/services/Parcels/FeatureServer/0"         # Nov 13 2026: Ownership/MapServer publishes no layers; Parcels 0 carries APN, OWNERSHIP_TYPE
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Parcels\\SDE.Parcels"               # CONFIRM
     file: "data/raw/parcels.gpkg"
   dem:                                                   # slope, aspect, TPI, elevation; projected and snapped to the strata grid by the template
-    rrk: "F:\\GIS\\DB_CONNECT\\Raster.sde\\SDE.DEM_BareEarth_LiDAR_2022"          # 2022 vendor bare earth, about 0.7 m, on F: today
+    rrk: "F:\\GIS\\DB_CONNECT\\Raster.sde\\SDE.DEM_BAREEARTH_LIDAR_2022_1M"      # 2022 bare earth, 1 m (renamed in Raster.sde; found Nov 13 2026)
     lidar: "\\\\vcenter2\\GIS_DATA\\LiDAR\\2022\\Derived\\dtm_1m_tiles\\dtm_2022_1m.vrt"   # or C:\\GIS\\dem-mosaic output
   ownership:                                             # Mason, Sept 24 2026: Ownership service, OWNERSHIP_TYPE in Federal, State, Local, Private
     use: rest
-    rest: "https://maps.trpa.org/server/rest/services/Ownership/MapServer/0"
+    rest: "https://maps.trpa.org/server/rest/services/Parcels/FeatureServer/0"   # Nov 13 2026: Federal 4,760, State 5,220, Local 1,092, Private 49,796, blank 407 parcels
     field: "OWNERSHIP_TYPE"
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Ownership\\SDE.LandOwnership"       # CONFIRM if an SDE copy is wanted instead
     file: "data/raw/ownership.gpkg"
   state_line:
     use: rest
     rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/16"    # CA NV States
-    field: "STUSPS"                                      # CONFIRM the field on layer 16; values CA and NV (tessellation.state_field)
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.States"          # CONFIRM
+    field: "STUSPS"                                      # confirmed Nov 13 2026 on layer 16
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Census\\SDE.CA_NV_Census_State_Boundary"   # fallback; rest is used
     file: "data/raw/states.gpkg"
   # Disturbance
   treatments_2027_2031:
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Vegetation\\SDE.FuelTreatments"     # CONFIRM; TFFT and LTW units 2027 to 2031 (Brian Garrett)
     file: "data/raw/tfft_ltw_treatments_2027_2031.gpkg"
   fire_severity:
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Vegetation\\SDE.FirePerimeters"     # CONFIRM; 2007 and later
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Fire\\SDE.Caldor_Fire_Soil_Burn_Severity"   # Andy, Nov 13 2026: Caldor only; attribute, not a weight
     file: "data/raw/fire_severity_2007_2025.gpkg"
   # Evaluation only. The rrk form is always read for the VP9 and VP10 cross tabs, whatever strata.source is.
   rrk_seral:
@@ -264,7 +264,7 @@ access:
   # Oct 19 2026: hike distance from the nearest drivable road along the cheapest path over the terrain (surface
   # distance on the DEM; the lake and NoData are impassable). Three classes, breaks in miles. Sets the unit rate.
   breaks_mi: [0.5, 1.5]                  # class 1 under 0.5 mi, class 2 0.5 to 1.5 mi, class 3 over 1.5 mi
-  drivable_where: "1=1"                  # CONFIRM: definition query on sources.roads for roads a crew can drive to
+  drivable_where: "drivable = 1"         # Nov 13 2026: PROTECT all; USFS existing, maint level 2 to 5, not gated
                                          # (exclude closed, gated, and OHV-only routes); Andy fills in from the roads layer
   slope_cost: true                       # true: surface distance, sqrt(1 + slope^2) per cell; false: planar distance
 
@@ -346,7 +346,7 @@ tessellation:
   seral_canopy_classes: {1: early, 2: mid_open, 3: mid_closed, 4: late_open, 5: late_closed}
 
 run:
-  synthetic: true        # true = generate a toy Basin to exercise the chain; false = real layers (F: and Vector.sde through arcpy)
+  synthetic: false       # true = generate a toy Basin to exercise the chain; false = real layers (F: and Vector.sde through arcpy)
   freeze: false          # true records the seed and writes the frozen design; done at contract execution (Oct 19 2026 decision)
-  rscript: "Rscript"     # spsurvey selection. Rscript on PATH, or the full path, e.g. "C:/Program Files/R/R-4.4.1/bin/Rscript.exe"
+  rscript: "C:/Program Files/R/R-4.2.2/bin/Rscript.exe"   # spsurvey 5.5.1 (binary for R 4.2); spsurvey selection. Rscript on PATH, or the full path, e.g. "C:/Program Files/R/R-4.4.1/bin/Rscript.exe"
   publish_strip_fields: ["remeasure_flag"]

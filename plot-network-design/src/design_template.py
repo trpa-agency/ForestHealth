@@ -380,7 +380,25 @@ class SourceReader:
             arcpy.management.ProjectRaster(src, out, d.spatialReference, resampling, d.meanCellWidth)
         if self.log:
             self.log.info(f"{key}: projected and snapped to {Path(tpl).name} ({d.spatialReference.name}, {d.meanCellWidth} m) -> {out}")
-        return read_raster(out, self.cfg, log=self.log, nodata_to_nan=True)
+        arr, tr, crs = read_raster(out, self.cfg, log=self.log, nodata_to_nan=True)
+        # ProjectRaster honours snapRaster but not the extent environment, so the output is on the
+        # template's grid but larger. Crop or pad (NaN) onto the template window by cell offset.
+        tarr, ttr, _ = self.raster(template_key, form)
+        cw = abs(ttr.a)
+        dc = (ttr.c - tr.c) / cw                     # template left edge, in source columns
+        dr = (tr.f - ttr.f) / cw                     # template top edge, in source rows
+        if abs(dc - round(dc)) > 1e-3 or abs(dr - round(dr)) > 1e-3 or abs(abs(tr.a) - cw) > 1e-6:
+            raise ValueError(f"{key}_on_grid is not snapped to {template_key} (offset {dc:.3f}, {dr:.3f} cells)")
+        c0, r0 = int(round(dc)), int(round(dr))
+        H, W = tarr.shape
+        res = np.full((H, W), np.nan, dtype=float)
+        sr0, sc0 = max(r0, 0), max(c0, 0)
+        sr1, sc1 = min(r0 + H, arr.shape[0]), min(c0 + W, arr.shape[1])
+        if sr1 > sr0 and sc1 > sc0:
+            res[sr0 - r0:sr1 - r0, sc0 - c0:sc1 - c0] = arr[sr0:sr1, sc0:sc1]
+        if self.log:
+            self.log.info(f"{key}: windowed {arr.shape} onto {template_key} {tarr.shape} at row {r0}, col {c0}")
+        return res, ttr, crs
 
     def rat(self, key: str = "veg_type", form: str | None = None) -> pd.DataFrame:
         if self.synthetic:

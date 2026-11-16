@@ -66,10 +66,9 @@ sources:
     where: "Description IN ('Mixed-Use', 'Residential', 'Tourist')"                   # applies to the sde form only
     file: "data/raw/trpa_urban_boundary.gpkg"
   wilderness:                                            # congressionally designated Forest Service wilderness (Boundaries 13). Mason, Sept 24 2026.
-    use: rest                                            # This is the layer the report's "excluding designated wilderness" means; frame.exclude_wilderness stays true.
-    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/13"    # Wilderness: WILDERNESSNAME, GIS_ACRES
-    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Planning\\SDE.RegionalLandUse"   # fallback: the land use plan class, not the same thing
-    where: "Description = 'Wilderness'"
+    use: sde                                             # Andy, Nov 16 2026: SDE.Jurisdictions.SDE.Wilderness (3 polygons: WILDERNESSNAME, GIS_ACRES); frame.exclude_wilderness stays true.
+    sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.Wilderness"
+    rest: "https://maps.trpa.org/server/rest/services/Boundaries/FeatureServer/13"    # same layer as a service; not read
     file: "data/raw/wilderness.gpkg"
   mgmt_zone:                                             # USFS forest management zone, carried as an attribute only
     sde: "F:\\GIS\\DB_CONNECT\\Vector.sde\\SDE.Jurisdictions\\SDE.ForestManagementZone_USFS"

@@ -161,11 +161,15 @@ print("\\nWilderness REMOVED (report text):"); print(dropped.to_string(index=Fal
 
 EXCL_WILD = bool(cfg["frame"]["exclude_wilderness"])
 population = conifer & ~m_wild if EXCL_WILD else conifer
-pop_tab, pop_ok = (dropped, ok_dropped) if EXCL_WILD else (kept, ok_kept)
-log.info(f"frame.exclude_wilderness={EXCL_WILD}: population {pop_tab.iloc[-1]['acres']:,.0f} ac vs report {sum(report.values()):,}")
-if not pop_ok:
-    raise SystemExit(f"population is {pop_tab.iloc[-1]['diff_pct']}% from report Table 1 (tolerance {tol}%). "
-                     "Check the Wilderness setting, the urban clause, and whr_to_type before going on.")'''),
+pop_tab = dropped if EXCL_WILD else kept
+# Nov 16 2026: report Table 1 (115,396 ac) matches the frame raster WITH wilderness kept (0.18 percent), so the
+# check against the report runs on that table: it validates the crosswalk and the urban clause. Designated
+# wilderness (sources.wilderness, SDE.Jurisdictions.SDE.Wilderness) then leaves the population, and its acres are logged.
+log.info(f"frame.exclude_wilderness={EXCL_WILD}: population {pop_tab.iloc[-1]['acres']:,.0f} ac; report Table 1 {sum(report.values()):,}; "
+         f"wilderness conifer removed {kept.iloc[-1]['acres'] - dropped.iloc[-1]['acres']:,.0f} ac" if EXCL_WILD else "")
+if not ok_kept:
+    raise SystemExit(f"frame raster is {kept.iloc[-1]['diff_pct']}% from report Table 1 with wilderness kept (tolerance {tol}%). "
+                     "Check the urban clause and whr_to_type before going on.")'''),
 ("code", '''# ownership: public frame and the private edge buffer
 own = reader.layer("ownership")
 OWN_FIELD = reader.option("ownership", "field", "OWNERSHIP_TYPE")
